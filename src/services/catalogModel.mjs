@@ -6,6 +6,36 @@ export function safeExternalUrl(value) {
   } catch { return null; }
 }
 
+function sourceMergeKey(source) {
+  const provider = String(source?.providerName ?? source?.provider ?? '').trim().toLowerCase();
+  if (provider) return `provider:${provider}`;
+  const url = safeExternalUrl(source?.url);
+  if (url) return `url:${url.toLowerCase()}`;
+  return `id:${String(source?.id ?? source?.kind ?? source?.status ?? 'unknown')}`;
+}
+
+export function mergeSources(...groups) {
+  const merged = new Map();
+  for (const group of groups) {
+    if (!Array.isArray(group)) continue;
+    for (const raw of group) {
+      if (!raw || typeof raw !== 'object') continue;
+      const source = { ...raw, url: safeExternalUrl(raw.url) };
+      const key = sourceMergeKey(source);
+      const previous = merged.get(key);
+      merged.set(key, previous ? {
+        ...previous,
+        ...source,
+        id: previous.id ?? source.id,
+        url: source.url ?? previous.url,
+        availability: source.availability ?? previous.availability,
+        lastCheckedAt: source.lastCheckedAt ?? previous.lastCheckedAt,
+      } : source);
+    }
+  }
+  return [...merged.values()];
+}
+
 const matchTitle = value => String(value ?? '').normalize('NFKC').replace(/[™®]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 export function sourcesForGame(appId, localSources, references, title = '') {
   const candidates = references.sources.filter(item => item.appId === appId
