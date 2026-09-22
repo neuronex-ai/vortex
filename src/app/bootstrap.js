@@ -35,5 +35,11 @@ export function bootApplication() {
     });
   }
 
+  if (["catalog", "account", "favorites"].includes(page?.id)) {
+    import("../pages/fusio-ai/index.jsx").then(({ mountFusioAI }) => {
+      mountFusioAI();
+    });
+  }
+
   return { appRoot, page };
 }
