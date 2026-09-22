@@ -9,7 +9,13 @@ const cors = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const NVIDIA_API_KEY = Deno.env.get("NVIDIA_API_KEY") ?? "";
-const NVIDIA_MODEL = Deno.env.get("NVIDIA_MODEL") ?? "openai/gpt-oss-20b";
+const CONFIGURED_NVIDIA_MODEL = (Deno.env.get("NVIDIA_MODEL") ?? "").trim();
+const FAST_NVIDIA_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b";
+const NVIDIA_MODELS = [...new Set([
+  FAST_FAST_NVIDIA_MODEL,
+  CONFIGURED_FAST_NVIDIA_MODEL,
+  "openai/gpt-oss-20b",
+].filter(Boolean))];
 const NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -460,11 +466,6 @@ async function searchCatalog(args: any) {
 
   const selected = rows.slice(0, limit);
 
-  if (args?.has_external_source !== true && selected.length) {
-    const sourceRows = await resolveExternalSources(selected.map((row: any) => Number(row.steam_app_id)));
-    sourceMap = new Map(sourceRows.map((item: any) => [item.steamAppId, item.sources]));
-  }
-
   return {
     filters: filterPayload(args, true),
     games: selected.map((row: any) => ({
@@ -578,11 +579,6 @@ async function findSimilarGames(args: any) {
   }
 
   const selected = rows.slice(0, limit);
-  if (args?.has_external_source !== true && selected.length) {
-    const sourceRows = await resolveExternalSources(selected.map((row: any) => Number(row.steam_app_id)));
-    sourceMap = new Map(sourceRows.map((item: any) => [item.steamAppId, item.sources]));
-  }
-
   return {
     foundReference: true,
     reference: gameRef(reference),
@@ -647,35 +643,56 @@ function sanitizeMessages(input: unknown) {
 }
 
 async function callNvidia(messages: any[], toolChoice: any = "auto", includeTools = true) {
-  const body: any = {
-    model: NVIDIA_MODEL,
-    messages,
-    temperature: 0.15,
-    top_p: 0.9,
-    max_tokens: 1600,
-    stream: false,
-  };
-  if (includeTools) {
-    body.tools = tools;
-    body.tool_choice = toolChoice;
+  const failures: string[] = [];
+
+  for (const model of FAST_NVIDIA_MODELS) {
+    const body: any = {
+      model,
+      messages,
+      temperature: model === FAST_FAST_NVIDIA_MODEL ? 0.55 : 0.15,
+      top_p: 0.95,
+      max_tokens: 1200,
+      stream: false,
+    };
+
+    if (model === FAST_FAST_NVIDIA_MODEL) {
+      body.chat_template_kwargs = { enable_thinking: true };
+      body.reasoning_budget = 640;
+    }
+
+    if (includeTools) {
+      body.tools = tools;
+      body.tool_choice = toolChoice;
+    }
+
+    try {
+      const response = await fetch(NVIDIA_ENDPOINT, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${NVIDIA_API_KEY}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(24000),
+      });
+
+      if (response.ok) {
+        return response.json();
+      }
+
+      const detail = (await response.text()).replace(/\s+/g, " ").slice(0, 360);
+      failures.push(`${model}: HTTP ${response.status} ${detail}`);
+
+      if (response.status === 401 || response.status === 403) {
+        break;
+      }
+    } catch (error) {
+      failures.push(`${model}: ${error instanceof Error ? error.message : "request failed"}`);
+    }
   }
 
-  const response = await fetch(NVIDIA_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${NVIDIA_API_KEY}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(50000),
-  });
-
-  if (!response.ok) {
-    const detail = (await response.text()).slice(0, 800);
-    throw new Error(`NVIDIA ${response.status}: ${detail}`);
-  }
-  return response.json();
+  throw new Error(`NVIDIA request failed across configured models: ${failures.join(" | ").slice(0, 1000)}`);
 }
 
 function collectGameReferences(value: any, games: Map<number, any>, actions: any[]) {
@@ -712,7 +729,7 @@ async function runAgent(history: any[]) {
   const games = new Map<number, any>();
   const actions: any[] = [];
 
-  for (let round = 0; round < 6; round += 1) {
+  for (let round = 0; round < 4; round += 1) {
     const response = await callNvidia(messages);
     const message = response?.choices?.[0]?.message;
     if (!message) throw new Error("NVIDIA returned no assistant message");
@@ -721,7 +738,7 @@ async function runAgent(history: any[]) {
     if (!toolCalls.length) {
       return {
         content: String(message.content ?? "").trim(),
-        model: response.model ?? NVIDIA_MODEL,
+        model: response.model ?? FAST_NVIDIA_MODEL,
         usage: response.usage ?? null,
         games: [...games.values()].slice(0, 20),
         actions: actions.slice(0, 4),
@@ -730,7 +747,7 @@ async function runAgent(history: any[]) {
 
     messages.push({ role: "assistant", content: message.content ?? null, tool_calls: toolCalls });
 
-    for (const call of toolCalls.slice(0, 5)) {
+    const executed = await Promise.all(toolCalls.slice(0, 5).map(async (call: any) => {
       let args = {};
       try { args = JSON.parse(call?.function?.arguments ?? "{}"); } catch { args = {}; }
 
@@ -741,6 +758,10 @@ async function runAgent(history: any[]) {
         result = { error: error instanceof Error ? error.message : "Tool failed" };
       }
 
+      return { call, result };
+    }));
+
+    for (const { call, result } of executed) {
       collectGameReferences(result, games, actions);
       messages.push({
         role: "tool",
@@ -758,7 +779,7 @@ async function runAgent(history: any[]) {
 
   return {
     content: String(final?.choices?.[0]?.message?.content ?? "").trim(),
-    model: final?.model ?? NVIDIA_MODEL,
+    model: final?.model ?? FAST_NVIDIA_MODEL,
     usage: final?.usage ?? null,
     games: [...games.values()].slice(0, 20),
     actions: actions.slice(0, 4),
