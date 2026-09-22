@@ -65,3 +65,26 @@ O cliente só consegue ler fontes com `is_authorized = true`, `is_visible = true
 - `sync-steam-details` — sincroniza até 50 jogos pendentes por chamada.
 
 As duas exigem JWT com role `service_role` e não são chamadas pelo navegador.
+
+
+## Configuração manual do secret Steam
+
+O conector de automação não injeta credenciais brutas no projeto. No Dashboard do Supabase:
+
+1. Abra **Database → Vault**.
+2. Crie um novo secret.
+3. Nome: `steam_web_api_key`.
+4. Valor: a sua Steam Web API key.
+5. Salve.
+
+Depois disso, a função `public.discover_steam_catalog_page` e a Edge Function `discover-steam-catalog` passam a conseguir ler a chave somente no servidor.
+
+Não coloque essa chave em `.env` exposto ao Vite, no GitHub ou em qualquer arquivo servido ao navegador.
+
+## Execução administrativa
+
+Além das Edge Functions, existe o RPC server-side:
+
+`public.discover_steam_catalog_page(last_appid, max_results, if_modified_since)`
+
+Ele usa a chave do Vault e alimenta `steam_catalog_apps`. O limite interno usado pelo Fusion é 5.000 App IDs por chamada, mesmo que a API oficial aceite lotes maiores, para manter as execuções previsíveis.
