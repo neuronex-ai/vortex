@@ -36,8 +36,8 @@ export function bootApplication() {
   }
 
   if (["catalog", "account", "favorites"].includes(page?.id)) {
-    import("../pages/fusio-ai/index.jsx").then(({ mountFusioAI }) => {
-      mountFusioAI();
+    import("../pages/fusion-ai/index.jsx").then(({ mountFusionAI }) => {
+      mountFusionAI();
     });
   }
 
