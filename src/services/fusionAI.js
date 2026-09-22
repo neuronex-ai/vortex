@@ -45,5 +45,7 @@ export async function sendFusionAIMessage(messages) {
     model: data.model ?? null,
     usage: data.usage ?? null,
     latencyMs: Number(data.latencyMs ?? 0) || null,
+    games: Array.isArray(data.games) ? data.games : [],
+    actions: Array.isArray(data.actions) ? data.actions : [],
   };
 }

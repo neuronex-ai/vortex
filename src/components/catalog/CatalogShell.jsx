@@ -54,23 +54,74 @@ const navItems = [
   { label: "Categorias", href: "#categorias" },
 ];
 
-const filters = ["Todos", "Com fontes", "Coop local", "Ação", "Aventura", "Indie", "RPG"];
+const EMPTY_FILTERS = {
+  genres: [],
+  tags: [],
+  modes: [],
+  has_source: false,
+  nucleus: false,
+  controller: "",
+};
+
+const quickFilters = [
+  { label: "Todos", kind: "clear" },
+  { label: "Com fontes", kind: "boolean", key: "has_source" },
+  { label: "Coop local", kind: "mode", value: "local_coop" },
+  { label: "Na mesma tela", kind: "mode", value: "same_screen" },
+  { label: "Coop online", kind: "mode", value: "online_coop" },
+  { label: "Terror", kind: "tag", value: "Terror" },
+  { label: "Ação", kind: "genre", value: "Ação" },
+  { label: "Aventura", kind: "genre", value: "Aventura" },
+];
+
 const categories = [
   "Coop local",
   "Ação",
   "Aventura",
   "Terror",
-  "Casual",
+  "Terror de Sobrevivência",
+  "Sobrevivência",
   "Indie",
   "RPG",
   "Estratégia",
+];
+
+const advancedGroups = [
+  {
+    label: "Gêneros",
+    kind: "genre",
+    options: ["Ação", "Aventura", "RPG", "Estratégia", "Simulação", "Indie", "Corrida", "Esportes"],
+  },
+  {
+    label: "Temas e estilo",
+    kind: "tag",
+    options: ["Terror", "Terror de Sobrevivência", "Zumbis", "Sobrevivência", "Mundo Aberto", "Fantasia", "Ficção Científica", "Tiro", "Roguelike", "Soulslike"],
+  },
+  {
+    label: "Como jogar",
+    kind: "mode",
+    options: [
+      ["single_player", "Um jogador"],
+      ["multiplayer", "Multiplayer"],
+      ["coop_any", "Coop"],
+      ["online_coop", "Coop online"],
+      ["local_coop", "Coop local nativo"],
+      ["same_screen", "Na mesma tela"],
+      ["lan_coop", "Coop em LAN"],
+      ["online_pvp", "PvP online"],
+      ["local_pvp", "PvP local"],
+      ["crossplay", "Crossplay"],
+      ["remote_together", "Remote Play Together"],
+    ],
+  },
 ];
 
 const ease = [0.22, 1, 0.36, 1];
 
 export function CatalogShell() {
   const [activeNav, setActiveNav] = useState("Explorar");
-  const [activeFilter, setActiveFilter] = useState("Todos");
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [draftQuery, setDraftQuery] = useState("");
   const [query, setQuery] = useState("");
   const [searchAttempt, setSearchAttempt] = useState(0);
@@ -103,7 +154,7 @@ export function CatalogShell() {
       try {
         const result = await fetchGamePage({
           query,
-          filter: activeFilter,
+          filters,
           sort,
           cursor: currentCursor,
           limit: PAGE_SIZE,
@@ -129,7 +180,7 @@ export function CatalogShell() {
     return () => {
       active = false;
     };
-  }, [activeFilter, currentCursor, page, query, sort, searchAttempt]);
+  }, [filters, currentCursor, page, query, sort, searchAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -221,6 +272,28 @@ export function CatalogShell() {
     return () => window.removeEventListener("popstate", openFromUrl);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function handleFusionOpenGame(event) {
+      const slug = event?.detail?.slug;
+      if (!slug) return;
+
+      try {
+        const game = await fetchGameBySlug(slug);
+        if (!cancelled && game) openGame(game);
+      } catch {
+        // Keep the current screen unchanged if the referenced game is no longer available.
+      }
+    }
+
+    window.addEventListener("fusion:open-game", handleFusionOpenGame);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("fusion:open-game", handleFusionOpenGame);
+    };
+  }, []);
+
   function resetPagination() {
     setPage(1);
     setCursorStack([null]);
@@ -267,10 +340,71 @@ export function CatalogShell() {
     document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
 
-  function selectFilter(filter) {
-    setActiveFilter(filter);
+  function resetFilters() {
+    setFilters(EMPTY_FILTERS);
     resetPagination();
-    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function toggleArrayFilter(key, value) {
+    setFilters((current) => {
+      const list = current[key] ?? [];
+      const exists = list.includes(value);
+      return {
+        ...current,
+        [key]: exists ? list.filter((item) => item !== value) : [...list, value],
+      };
+    });
+    resetPagination();
+  }
+
+  function toggleQuickFilter(filter) {
+    if (filter.kind === "clear") {
+      resetFilters();
+      return;
+    }
+    if (filter.kind === "boolean") {
+      setFilters((current) => ({ ...current, [filter.key]: !current[filter.key] }));
+      resetPagination();
+      return;
+    }
+    if (filter.kind === "mode") toggleArrayFilter("modes", filter.value);
+    if (filter.kind === "tag") toggleArrayFilter("tags", filter.value);
+    if (filter.kind === "genre") toggleArrayFilter("genres", filter.value);
+  }
+
+  function isQuickActive(filter) {
+    if (filter.kind === "clear") {
+      return !filters.genres.length
+        && !filters.tags.length
+        && !filters.modes.length
+        && !filters.has_source
+        && !filters.nucleus
+        && !filters.controller;
+    }
+    if (filter.kind === "boolean") return Boolean(filters[filter.key]);
+    if (filter.kind === "mode") return filters.modes.includes(filter.value);
+    if (filter.kind === "tag") return filters.tags.includes(filter.value);
+    if (filter.kind === "genre") return filters.genres.includes(filter.value);
+    return false;
+  }
+
+  function activeFilterLabel() {
+    const total = filters.genres.length + filters.tags.length + filters.modes.length
+      + Number(Boolean(filters.has_source)) + Number(Boolean(filters.nucleus)) + Number(Boolean(filters.controller));
+    if (!total) return "Jogos em destaque";
+    if (total === 1) {
+      if (filters.genres[0]) return filters.genres[0];
+      if (filters.tags[0]) return filters.tags[0];
+      if (filters.modes[0]) {
+        const option = advancedGroups.find((group) => group.kind === "mode")?.options
+          .find(([value]) => value === filters.modes[0]);
+        if (option) return option[1];
+      }
+      if (filters.has_source) return "Com fontes";
+      if (filters.nucleus) return "Nucleus";
+      if (filters.controller) return "Com controle";
+    }
+    return "Filtros combinados";
   }
 
   function changeSort(event) {
@@ -436,7 +570,7 @@ export function CatalogShell() {
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.target.value)}
             autoComplete="off"
-            placeholder="Pesquise por nome, gênero ou descrição..."
+            placeholder="Pesquise por nome, gênero, tema ou descrição..."
             aria-label="Pesquisar jogos"
           />
           <motion.button type="submit" whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}>
@@ -458,20 +592,115 @@ export function CatalogShell() {
         {favoriteError && <p role="alert">{favoriteError}</p>}
 
         <div className="catalog-filter-row" aria-label="Filtros de visualização">
-          {filters.map((filter) => (
+          {quickFilters.map((filter) => (
             <motion.button
-              key={filter}
+              key={filter.label}
               type="button"
-              className={activeFilter === filter ? "is-selected" : undefined}
-              aria-pressed={activeFilter === filter}
-              onClick={() => selectFilter(filter)}
+              className={isQuickActive(filter) ? "is-selected" : undefined}
+              aria-pressed={isQuickActive(filter)}
+              onClick={() => toggleQuickFilter(filter)}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.95 }}
             >
-              {filter}
+              {filter.label}
             </motion.button>
           ))}
+          <motion.button
+            type="button"
+            className={advancedOpen ? "is-selected" : "catalog-filter-more"}
+            aria-expanded={advancedOpen}
+            onClick={() => setAdvancedOpen((value) => !value)}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Filtros +
+          </motion.button>
         </div>
+
+        <AnimatePresence initial={false}>
+          {advancedOpen && (
+            <motion.div
+              className="catalog-advanced-filters"
+              initial={{ opacity: 0, y: -6, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -4, height: 0 }}
+            >
+              {advancedGroups.map((group) => (
+                <div className="catalog-advanced-filters__group" key={group.label}>
+                  <strong>{group.label}</strong>
+                  <div>
+                    {group.options.map((option) => {
+                      const value = Array.isArray(option) ? option[0] : option;
+                      const label = Array.isArray(option) ? option[1] : option;
+                      const key = group.kind === "genre" ? "genres" : group.kind === "tag" ? "tags" : "modes";
+                      const active = filters[key].includes(value);
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          className={active ? "is-selected" : undefined}
+                          onClick={() => toggleArrayFilter(key, value)}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              <div className="catalog-advanced-filters__group">
+                <strong>Compatibilidade</strong>
+                <div>
+                  <button
+                    type="button"
+                    className={filters.controller === "any" ? "is-selected" : undefined}
+                    onClick={() => {
+                      setFilters((current) => ({ ...current, controller: current.controller === "any" ? "" : "any" }));
+                      resetPagination();
+                    }}
+                  >
+                    Com controle
+                  </button>
+                  <button
+                    type="button"
+                    className={filters.controller === "full" ? "is-selected" : undefined}
+                    onClick={() => {
+                      setFilters((current) => ({ ...current, controller: current.controller === "full" ? "" : "full" }));
+                      resetPagination();
+                    }}
+                  >
+                    Controle completo
+                  </button>
+                  <button
+                    type="button"
+                    className={filters.nucleus ? "is-selected" : undefined}
+                    onClick={() => {
+                      setFilters((current) => ({ ...current, nucleus: !current.nucleus }));
+                      resetPagination();
+                    }}
+                  >
+                    Nucleus verificado
+                  </button>
+                  <button
+                    type="button"
+                    className={filters.has_source ? "is-selected" : undefined}
+                    onClick={() => {
+                      setFilters((current) => ({ ...current, has_source: !current.has_source }));
+                      resetPagination();
+                    }}
+                  >
+                    Fonte externa
+                  </button>
+                </div>
+              </div>
+
+              <button className="catalog-advanced-filters__clear" type="button" onClick={resetFilters}>
+                Limpar filtros
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.section>
 
       <motion.section
@@ -486,7 +715,7 @@ export function CatalogShell() {
         <div className="catalog-content__heading">
           <div>
             <span className="catalog-eyebrow">Biblioteca</span>
-            <h2 id="catalog-heading">{activeFilter === "Todos" ? "Jogos em destaque" : activeFilter}</h2>
+            <h2 id="catalog-heading">{activeFilterLabel()}</h2>
           </div>
 
           <div className="catalog-toolbar">
@@ -560,7 +789,10 @@ export function CatalogShell() {
             <h2 id="coop-heading">Coop local</h2>
             <p>Jogos da seleção com coop local informado pela Steam.</p>
           </div>
-          <button type="button" onClick={() => selectFilter("Coop local")}>Ver todos</button>
+          <button type="button" onClick={() => {
+            setFilters({ ...EMPTY_FILTERS, modes: ["local_coop"] });
+            resetPagination();
+          }}>Ver todos</button>
         </div>
 
         <div className="game-grid game-grid--compact">
@@ -596,14 +828,24 @@ export function CatalogShell() {
       >
         <span className="catalog-eyebrow">Descoberta</span>
         <h2 id="categories-heading">Categorias</h2>
-        <p>Explore os jogos da seleção por gênero.</p>
+        <p>Explore por gênero, tema ou forma de jogar.</p>
 
         <div className="category-grid">
           {categories.map((category) => (
             <motion.button
               type="button"
               key={category}
-              onClick={() => selectFilter(category)}
+              onClick={() => {
+                    const genreNames = advancedGroups[0].options;
+                    if (genreNames.includes(category)) {
+                      setFilters({ ...EMPTY_FILTERS, genres: [category] });
+                    } else if (category === "Coop local") {
+                      setFilters({ ...EMPTY_FILTERS, modes: ["local_coop"] });
+                    } else {
+                      setFilters({ ...EMPTY_FILTERS, tags: [category] });
+                    }
+                    resetPagination();
+                  }}
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -646,6 +888,7 @@ export function CatalogShell() {
             onClose={closeGame}
             isFavorite={favoriteGames.some((item) => item.id === selectedGame.id)}
             onToggleFavorite={toggleFavorite}
+            onOpenGame={openGame}
           />
         )}
       </AnimatePresence>

@@ -29,9 +29,12 @@ test("Fusion AI exposes catalog, provider and Nucleus tools to the agent", async
     assert.match(edge, new RegExp('name: "' + tool + '"'));
   }
 
-  assert.match(edge, /hub\.splitscreen\.me\/api\/v1\/handlers/);
+  assert.match(edge, /resolve-nucleus-support/);
   assert.match(edge, /resolve-game-sources/);
   assert.match(edge, /search_steam_fallback_ids/);
+  assert.match(edge, /steam_more_like_this_ids/);
+  assert.match(edge, /browse_fusion_catalog_v2/);
+  assert.match(edge, /name: "open_game"/);
 });
 
 test("Fusion AI shell mirrors the Synapse launcher pattern without AI branding icons", async () => {

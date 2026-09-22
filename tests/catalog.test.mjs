@@ -143,8 +143,8 @@ test('Service browses the live Supabase catalog and hydrates missing Steam searc
     }],
   ]);
   const rows = [
-    { id: 18, steam_app_id: 367520, slug: 'hollow-knight', title: 'Hollow Knight', short_description: 'Ancient caverns', header_image: 'cover.jpg', genres: ['Action'], adult_content: false },
-    { id: 9, steam_app_id: 413150, slug: 'stardew-valley', title: 'Stardew Valley', local_coop: true, adult_content: false },
+    { id: 18, steam_app_id: 367520, slug: 'hollow-knight', title: 'Hollow Knight', short_description: 'Ancient caverns', header_image: 'cover.jpg', genres: ['Action'], steam_category_ids: [2], adult_content: false },
+    { id: 9, steam_app_id: 413150, slug: 'stardew-valley', title: 'Stardew Valley', local_coop: true, steam_category_ids: [1,2,9,39], adult_content: false },
   ];
   const steamResults = {
     terraria: { id: 25, steam_app_id: 105600, slug: 'terraria', title: 'Terraria', required_age: 0, adult_content: false, content_descriptors: { ids: [] }, short_description: 'Dig, fight, explore' },
@@ -155,7 +155,8 @@ test('Service browses the live Supabase catalog and hydrates missing Steam searc
     let result = rows.filter(row => row.adult_content !== true);
     const q = String(params.p_query ?? '').trim().toLowerCase();
     if (q) result = result.filter(row => [row.title, row.short_description].some(value => String(value ?? '').toLowerCase().includes(q)));
-    if (params.p_filter === 'Coop local') result = result.filter(row => row.local_coop);
+    const modes = params.p_filters?.modes ?? [];
+    if (modes.includes('local_coop')) result = result.filter(row => (row.steam_category_ids ?? []).includes(39));
     const offset = Number(params.p_offset ?? 0);
     const limit = Number(params.p_limit ?? 21);
     return result.slice(offset, offset + limit);
@@ -176,7 +177,7 @@ test('Service browses the live Supabase catalog and hydrates missing Steam searc
     },
     rpc(name, params) {
       calls.push({ rpc: name, params });
-      if (name === 'browse_fusion_catalog') return Promise.resolve({ data: publicRows(params), error: null });
+      if (name === 'browse_fusion_catalog_v2') return Promise.resolve({ data: publicRows(params), error: null });
       if (name === 'search_steam_fallback_ids') {
         const key = String(params.p_query ?? '').trim().toLowerCase();
         const row = steamResults[key];

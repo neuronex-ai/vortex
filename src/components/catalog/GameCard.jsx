@@ -32,9 +32,15 @@ export function GameCard({ game, onOpen, onToggleFavorite, isFavorite = false, c
           )}
           <div className="game-card__shade" />
           <div className="game-card__badges">
-            {game.localCoop && <span>Coop local</span>}
+            {(game.playLabels ?? []).slice(0, 2).map((label) => <span key={label}>{label}</span>)}
             <span>{game.year || "Steam"}</span>
-            <span>{game.hasSource ? "Fonte disponível" : "Sem fonte externa"}</span>
+            <span>{
+              game.hasSource === true
+                ? "Fonte disponível"
+                : game.hasSource === false
+                  ? "Sem fonte externa"
+                  : "Fonte não verificada"
+            }</span>
           </div>
         </div>
 
@@ -47,7 +53,7 @@ export function GameCard({ game, onOpen, onToggleFavorite, isFavorite = false, c
           <p>{game.description}</p>
 
           <div className="game-card__meta">
-            <span>{game.genres[0] || "Jogo"}</span>
+            <span>{game.genres[0] || game.tags[0] || "Jogo"}</span>
             <span>{game.players}</span>
           </div>
         </div>

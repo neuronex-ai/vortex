@@ -95,5 +95,14 @@ Deno.serve(async (request) => {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json(data);
+  const { data: enrichment, error: enrichmentError } = await admin.rpc("enrich_steam_store_metadata", {
+    p_app_ids: appIds,
+  });
+
+  return Response.json({
+    ...(data ?? {}),
+    enrichment: enrichmentError
+      ? { ok: false, error: enrichmentError.message }
+      : enrichment,
+  });
 });

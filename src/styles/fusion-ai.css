@@ -497,3 +497,67 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.fusion-ai__game-links {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  white-space: normal;
+}
+
+.fusion-ai__game-links > button {
+  display: grid;
+  grid-template-columns: 44px minmax(0,1fr) auto;
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 11px;
+  background: rgba(255,255,255,.025);
+  color: #d6d7da;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fusion-ai__game-links > button:hover {
+  border-color: rgba(255,255,255,.13);
+  background: rgba(255,255,255,.055);
+}
+
+.fusion-ai__game-links img {
+  width: 44px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.fusion-ai__game-links span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.fusion-ai__game-links strong,
+.fusion-ai__game-links small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fusion-ai__game-links strong {
+  color: #e4e5e7;
+  font-size: 10px;
+  font-weight: 690;
+}
+
+.fusion-ai__game-links small {
+  color: #70747c;
+  font-size: 8.5px;
+}
+
+.fusion-ai__game-links b {
+  padding-right: 4px;
+  color: #777a82;
+  font-size: 11px;
+}
