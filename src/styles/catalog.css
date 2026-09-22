@@ -409,12 +409,33 @@ button { color: inherit; }
 .game-grid--compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .game-card {
+  position: relative;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.06);
   border-radius: 18px;
   background: #111214;
   box-shadow: 0 18px 44px rgba(0,0,0,.18);
 }
+
+.game-card__favorite {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  background: rgba(9,9,10,.7);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+.game-card__favorite svg { width: 17px; fill: transparent; stroke: currentColor; stroke-width: 1.8; }
+.game-card__favorite.is-favorite { color: #ff9a9a; }
+.game-card__favorite.is-favorite svg { fill: currentColor; }
 
 .game-card__button {
   display: block;
@@ -597,6 +618,7 @@ button { color: inherit; }
 
 .catalog-footer > span { color: #999da5; font-weight: 700; }
 .catalog-footer div { display: flex; gap: 18px; }
+.catalog-footer a:hover { color: #bfc2c8; }
 
 .game-detail-backdrop {
   position: fixed;

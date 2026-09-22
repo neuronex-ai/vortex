@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  addFavorite,
+  fetchFavoriteGames,
   fetchFeaturedCoop,
   fetchGameBySlug,
   fetchGamePage,
   PAGE_SIZE,
+  removeFavorite,
 } from "../../services/gameCatalog.js";
+import { supabase } from "../../lib/supabase.js";
 import { GameCard } from "./GameCard.jsx";
 import { GameDetail } from "./GameDetail.jsx";
 import "../../styles/catalog-enhancements.css";
@@ -72,6 +76,9 @@ export function CatalogShell() {
   const [sort, setSort] = useState("popular");
   const [games, setGames] = useState([]);
   const [coopGames, setCoopGames] = useState([]);
+  const [favoriteGames, setFavoriteGames] = useState([]);
+  const [user, setUser] = useState(null);
+  const [favoriteError, setFavoriteError] = useState("");
   const [selectedGame, setSelectedGame] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -133,6 +140,41 @@ export function CatalogShell() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    async function loadAccount() {
+      const { data } = await supabase.auth.getUser();
+      if (active) setUser(data.user ?? null);
+    }
+
+    loadAccount();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) setUser(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setFavoriteError("");
+
+    if (!user) {
+      setFavoriteGames([]);
+      return () => { active = false; };
+    }
+
+    fetchFavoriteGames()
+      .then((items) => { if (active) setFavoriteGames(items); })
+      .catch(() => { if (active) setFavoriteError("Não foi possível carregar seus favoritos agora."); });
+
+    return () => { active = false; };
+  }, [user]);
+
+  useEffect(() => {
     const openFromUrl = async () => {
       const slug = new URLSearchParams(window.location.search).get("game");
       if (!slug) {
@@ -163,6 +205,25 @@ export function CatalogShell() {
     url.searchParams.set("game", game.slug);
     window.history.pushState({}, "", url);
     setSelectedGame(game);
+  }
+
+  async function toggleFavorite(game) {
+    if (!user) {
+      window.location.assign("/app/auth.html?next=/app/");
+      return;
+    }
+
+    const isFavorite = favoriteGames.some((item) => item.id === game.id);
+    setFavoriteError("");
+    setFavoriteGames((items) => isFavorite ? items.filter((item) => item.id !== game.id) : [game, ...items]);
+
+    try {
+      if (isFavorite) await removeFavorite(game.id);
+      else await addFavorite(game.id);
+    } catch {
+      setFavoriteGames((items) => isFavorite ? [game, ...items] : items.filter((item) => item.id !== game.id));
+      setFavoriteError("Não foi possível atualizar seus favoritos. Tente novamente.");
+    }
   }
 
   function closeGame() {
@@ -260,11 +321,11 @@ export function CatalogShell() {
 
         <motion.a
           className="catalog-site-link"
-          href="/"
+          href="/app/auth.html?next=/app/"
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
         >
-          <span>Voltar ao site</span>
+          <span>Entrar</span>
           {arrowIcon}
         </motion.a>
 
@@ -424,7 +485,7 @@ export function CatalogShell() {
             <motion.div className="game-grid" layout>
               <AnimatePresence mode="popLayout">
                 {games.map((game) => (
-                  <GameCard key={game.id} game={game} onOpen={openGame} />
+                  <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite={favoriteGames.some((item) => item.id === game.id)} />
                 ))}
               </AnimatePresence>
             </motion.div>
@@ -468,10 +529,23 @@ export function CatalogShell() {
 
         <div className="game-grid game-grid--compact">
           {coopGames.map((game) => (
-            <GameCard key={game.id} game={game} onOpen={openGame} compact />
+            <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite={favoriteGames.some((item) => item.id === game.id)} compact />
           ))}
         </div>
       </motion.section>
+
+      {user && (
+        <motion.section className="catalog-secondary-section" aria-labelledby="favorites-heading" initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.45, ease }}>
+          <div className="catalog-section-heading">
+            <div>
+              <span className="catalog-eyebrow">Sua biblioteca</span>
+              <h2 id="favorites-heading">Favoritos</h2>
+              <p>{favoriteError || (favoriteGames.length ? "Jogos que você guardou para jogar depois." : "Marque o coração de um jogo para ele aparecer aqui.")}</p>
+            </div>
+          </div>
+          {favoriteGames.length > 0 && <div className="game-grid game-grid--compact">{favoriteGames.map((game) => <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite compact />)}</div>}
+        </motion.section>
+      )}
 
       <motion.section
         className="catalog-secondary-section"
@@ -507,6 +581,8 @@ export function CatalogShell() {
         <div>
           <span>Uma experiência Vórtex</span>
           <span>Metadados: Steam</span>
+          <a href="/politica-de-privacidade">Privacidade</a>
+          <a href="/termos-de-uso">Termos</a>
         </div>
       </footer>
 

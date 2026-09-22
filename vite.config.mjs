@@ -21,8 +21,23 @@ function toInputName(path) {
 const rootPages = collectHtmlFiles(projectRoot);
 const blogPages = collectHtmlFiles(resolve(projectRoot, "blog"));
 const appPages = collectHtmlFiles(resolve(projectRoot, "app"));
+const legalPages = [
+  resolve(projectRoot, "politica-de-privacidade", "index.html"),
+  resolve(projectRoot, "termos-de-uso", "index.html"),
+];
+const legalRouteTargets = new Map([
+  ["/politica-de-privacidade", "/politica-de-privacidade/index.html"],
+  ["/termos-de-uso", "/termos-de-uso/index.html"],
+]);
+
+function rewriteLegalRoute(request) {
+  const [pathname, query = ""] = request.url.split("?");
+  const target = legalRouteTargets.get(pathname);
+
+  if (target) request.url = query ? `${target}?${query}` : target;
+}
 const htmlInputs = Object.fromEntries(
-  [...rootPages, ...blogPages, ...appPages].map((path) => [toInputName(path), path]),
+  [...rootPages, ...blogPages, ...appPages, ...legalPages].map((path) => [toInputName(path), path]),
 );
 
 export default defineConfig({
@@ -41,6 +56,18 @@ export default defineConfig({
   plugins: [
     {
       name: "vortex-app-bootstrap",
+      configureServer(server) {
+        server.middlewares.use((request, _response, next) => {
+          rewriteLegalRoute(request);
+          next();
+        });
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use((request, _response, next) => {
+          rewriteLegalRoute(request);
+          next();
+        });
+      },
       transformIndexHtml: {
         order: "post",
         handler() {

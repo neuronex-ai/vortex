@@ -17,5 +17,11 @@ export function bootApplication() {
     });
   }
 
+  if (page?.id === "auth") {
+    import("../pages/auth/index.jsx").then(({ mountAuthPage }) => {
+      mountAuthPage();
+    });
+  }
+
   return { appRoot, page };
 }

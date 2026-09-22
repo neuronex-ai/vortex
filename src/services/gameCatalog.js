@@ -188,3 +188,27 @@ export async function fetchDistributionSources(gameId) {
     lastCheckedAt: source.last_checked_at,
   }));
 }
+
+export async function fetchFavoriteGames() {
+  const { data, error } = await supabase
+    .from("game_favorites")
+    .select(`game_id, games(${gameFields})`)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((favorite) => favorite.games)
+    .filter(Boolean)
+    .map(mapGameRow);
+}
+
+export async function addFavorite(gameId) {
+  const { error } = await supabase.from("game_favorites").insert({ game_id: gameId });
+  if (error) throw error;
+}
+
+export async function removeFavorite(gameId) {
+  const { error } = await supabase.from("game_favorites").delete().eq("game_id", gameId);
+  if (error) throw error;
+}

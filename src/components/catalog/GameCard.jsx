@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
-export function GameCard({ game, onOpen, compact = false }) {
+export function GameCard({ game, onOpen, onToggleFavorite, isFavorite = false, compact = false }) {
   const [imageFailed, setImageFailed] = useState(false);
 
   return (
@@ -14,12 +14,7 @@ export function GameCard({ game, onOpen, compact = false }) {
       whileHover={{ y: -5 }}
       transition={{ duration: 0.22 }}
     >
-      <button
-        className="game-card__button"
-        type="button"
-        onClick={() => onOpen(game)}
-        aria-label={`Abrir detalhes de ${game.title}`}
-      >
+      <button className="game-card__button" type="button" onClick={() => onOpen(game)} aria-label={`Abrir detalhes de ${game.title}`}>
         <div className={imageFailed ? "game-card__media is-image-missing" : "game-card__media"}>
           {!imageFailed && game.image && (
             <img
@@ -55,6 +50,15 @@ export function GameCard({ game, onOpen, compact = false }) {
             <span>{game.players}</span>
           </div>
         </div>
+      </button>
+      <button
+        className={isFavorite ? "game-card__favorite is-favorite" : "game-card__favorite"}
+        type="button"
+        onClick={() => onToggleFavorite(game)}
+        aria-label={isFavorite ? `Remover ${game.title} dos favoritos` : `Adicionar ${game.title} aos favoritos`}
+        aria-pressed={isFavorite}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4 4.9 14a5.1 5.1 0 0 1 7.1-7.3L12 6.8l.1-.1a5.1 5.1 0 0 1 7.1 7.3Z" /></svg>
       </button>
     </motion.article>
   );

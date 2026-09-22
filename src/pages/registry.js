@@ -3,10 +3,13 @@ import { normalizePath } from "../lib/path.js";
 export const pages = [
   { id: "home", path: "/", source: "index.html" },
   { id: "catalog", path: "/app/", source: "app/index.html" },
+  { id: "auth", path: "/app/auth.html", source: "app/auth.html" },
   { id: "blog", path: "/blog.html", source: "blog.html" },
   { id: "changelog", path: "/changelog.html", source: "changelog.html" },
   { id: "contact", path: "/contact.html", source: "contact.html" },
   { id: "privacy-policy", path: "/privacy-policy.html", source: "privacy-policy.html" },
+  { id: "privacy", path: "/politica-de-privacidade/", source: "politica-de-privacidade/index.html" },
+  { id: "terms", path: "/termos-de-uso/", source: "termos-de-uso/index.html" },
   { id: "waitlist", path: "/waitlist.html", source: "waitlist.html" },
   { id: "not-found", path: "/404.html", source: "404.html" },
 ];
