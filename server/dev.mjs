@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {searchGames,gameDetails,downloadsFor,status} from './provider.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.ico':'image/x-icon'};
-const routes=new Set(['index.html','catalogo.html','jogo.html','blog.html','changelog.html','contact.html','waitlist.html','privacy-policy.html','404.html']);
+const routes=new Set(['index.html','catalogo.html','jogo.html','como-funciona.html','privacidade.html','blog.html','changelog.html','contact.html','waitlist.html','privacy-policy.html','404.html']);
 const server=http.createServer(async(req,res)=>{
   const json=(body,code=200)=>{res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(body));};
   try {
@@ -17,7 +17,7 @@ const server=http.createServer(async(req,res)=>{
     if(match){ const value=match[2]?await downloadsFor(match[1]):await gameDetails(match[1]);return json(value||{error:'Jogo não encontrado.'},value?200:404); }
     if(url.pathname.startsWith('/api/')) return json({error:'Página não encontrada.'},404);
     let relative=decodeURIComponent(url.pathname).replace(/^\/+/, '')||'index.html';
-    if(!routes.has(relative)&&! /^(assets|css|js|blog)\/[a-zA-Z0-9_./-]+$/.test(relative)) return json({error:'Página não encontrada.'},404);
+    if(!routes.has(relative)&&! /^(assets|css|js)\/[a-zA-Z0-9_./-]+$/.test(relative)) return json({error:'Página não encontrada.'},404);
     const file=path.resolve(root,relative);
     if(!file.startsWith(root)||relative.split(/[\\/]/).some(s=>s==='..'||s.startsWith('.'))) return json({error:'Página não encontrada.'},404);
     const ext=path.extname(file); if(!mime[ext]||!(await stat(file)).isFile()) return json({error:'Página não encontrada.'},404);

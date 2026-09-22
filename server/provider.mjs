@@ -2,14 +2,15 @@ import { load } from 'cheerio';
 import { readFile, writeFile } from 'node:fs/promises';
 const ORIGIN = 'https://steamrip.com';
 const CACHE = new URL('../data/catalog.json', import.meta.url);
-const adult = /\b(hentai|porn(?:ographic|ografia|ô)?|erotic[a-z]*|erótic[a-z]*|nsfw|sex(?:ual)?\s*(?:game|content|simulator)|adult[ -]only|adults only|18\s*\+|uncensored|fetish|nude|nudity|nudez|sexual content)\b/i;
+// The catalog excludes games whose purpose is erotic or pornographic. Mature
+// action, horror and narrative games remain eligible, as requested.
+const adult = /\b(hentai|porn(?:ographic|ografia|ô)?|erotic[a-z]*|erótic[a-z]*|nsfw|sex(?:ual)?\s*(?:game|simulator)|adult[ -]only|adults only|18\s*\+|uncensored|fetish|xxx|dating\s*simulator)\b/i;
 const text = value => load(`<div>${value || ''}</div>`)('div').text().replace(/\s+/g, ' ').trim();
 export const cleanTitle = value => text(value).replace(/\s*free\s+download.*$/i, '').trim();
 export const normalize = value => cleanTitle(value).normalize('NFKD').replace(/[\u0300-\u036f™®]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 export function isAdult(value) { return adult.test(String(value || '')); }
 export function safeSteam(data) {
-  const ids = data?.content_descriptors?.ids || [];
-  return !!data?.name && !ids.some(id => [1,3,4].includes(id)) && !isAdult(`${data.name} ${data.short_description} ${(data.genres || []).map(x=>x.description).join(' ')} ${data.content_descriptors?.notes || ''}`);
+  return !!data?.name && !isAdult(`${data.name} ${data.short_description} ${(data.genres || []).map(x=>x.description).join(' ')}`);
 }
 export async function remote(url, json = false) {
   const response = await fetch(url, { signal: AbortSignal.timeout(12000), redirect:'error', headers: { 'User-Agent': 'VortexCatalog/1.0', Accept: json ? 'application/json' : 'text/html' } });
