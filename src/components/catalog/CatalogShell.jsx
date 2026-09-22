@@ -789,17 +789,30 @@ export function CatalogShell() {
             <h2 id="coop-heading">Coop local</h2>
             <p>Jogos da seleção com coop local informado pela Steam.</p>
           </div>
-          <button type="button" onClick={() => {
-            setFilters({ ...EMPTY_FILTERS, modes: ["local_coop"] });
-            resetPagination();
-          }}>Ver todos</button>
         </div>
 
-        <div className="game-grid game-grid--compact">
+        <div className="game-grid game-grid--shelf">
           {!coopGames.length && <p>Nenhum jogo com coop local disponível nesta seleção.</p>}
-          {coopGames.map((game) => (
+          {coopGames.slice(0, 9).map((game) => (
             <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite={favoriteGames.some((item) => item.id === game.id)} compact />
           ))}
+          {coopGames.length >= 10 && (
+            <motion.button
+              type="button"
+              className="catalog-see-all-card"
+              onClick={() => {
+                setFilters({ ...EMPTY_FILTERS, modes: ["local_coop"] });
+                resetPagination();
+                document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span>Ver todos</span>
+              <small>Explorar coop local</small>
+              <b>→</b>
+            </motion.button>
+          )}
         </div>
       </motion.section>
 
@@ -811,9 +824,26 @@ export function CatalogShell() {
               <h2 id="favorites-heading">Favoritos</h2>
               <p>{favoriteError || (favoriteGames.length ? "Jogos que você guardou para jogar depois." : "Marque o coração de um jogo para ele aparecer aqui.")}</p>
             </div>
-            <a className="catalog-section-link" href="/app/favorites.html">Gerenciar favoritos →</a>
           </div>
-          {favoriteGames.length > 0 && <div className="game-grid game-grid--compact">{favoriteGames.map((game) => <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite compact />)}</div>}
+          {favoriteGames.length > 0 && (
+            <div className="game-grid game-grid--shelf">
+              {favoriteGames.slice(0, 9).map((game) => (
+                <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite compact />
+              ))}
+              {favoriteGames.length >= 10 && (
+                <motion.a
+                  className="catalog-see-all-card"
+                  href="/app/favorites.html"
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <span>Ver todos</span>
+                  <small>Abrir seus favoritos</small>
+                  <b>→</b>
+                </motion.a>
+              )}
+            </div>
+          )}
         </motion.section>
       )}
 

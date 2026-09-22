@@ -51,20 +51,107 @@ const suggestions = [
   "Me indique jogos de aventura para dois controles sem precisar do Nucleus.",
 ];
 
-function LinkifiedText({ text }) {
-  const parts = String(text || "").split(/(https?:\/\/[^\s)\]}>,]+)/g);
+function RichInline({ text }) {
+  const parts = String(text || "").split(/(https?:\/\/[^\s)\]}>,]+|\*\*[^*]+\*\*|__[^_]+__|\`[^\`]+\`|_[^_\n]+_)/g);
+
   return (
     <>
-      {parts.map((part, index) =>
-        /^https?:\/\//i.test(part) ? (
-          <a key={index} href={part} target="_blank" rel="noreferrer noopener">
-            {part}
-          </a>
-        ) : (
-          <React.Fragment key={index}>{part}</React.Fragment>
-        ),
-      )}
+      {parts.map((part, index) => {
+        if (!part) return null;
+        if (/^https?:\/\//i.test(part)) {
+          return (
+            <a key={index} href={part} target="_blank" rel="noreferrer noopener">
+              {part}
+            </a>
+          );
+        }
+        if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+          return <strong key={index}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith("_") && part.endsWith("_")) {
+          return <em key={index}>{part.slice(1, -1)}</em>;
+        }
+        if (part.startsWith("`") && part.endsWith("`")) {
+          return <code key={index}>{part.slice(1, -1)}</code>;
+        }
+        return <React.Fragment key={index}>{part}</React.Fragment>;
+      })}
     </>
+  );
+}
+
+function RichMessage({ text }) {
+  const lines = String(text || "").replace(/\r\n?/g, "\n").split("\n");
+  const blocks = [];
+
+  for (let index = 0; index < lines.length;) {
+    const line = lines[index].trim();
+
+    if (!line) {
+      index += 1;
+      continue;
+    }
+
+    const heading = line.match(/^#{1,3}\s+(.+)$/);
+    if (heading) {
+      blocks.push({ type: "heading", value: heading[1] });
+      index += 1;
+      continue;
+    }
+
+    const bullet = line.match(/^[-*•]\s+(.+)$/);
+    if (bullet) {
+      const items = [];
+      while (index < lines.length) {
+        const match = lines[index].trim().match(/^[-*•]\s+(.+)$/);
+        if (!match) break;
+        items.push(match[1]);
+        index += 1;
+      }
+      blocks.push({ type: "bullets", items });
+      continue;
+    }
+
+    const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+    if (numbered) {
+      const items = [];
+      while (index < lines.length) {
+        const match = lines[index].trim().match(/^\d+[.)]\s+(.+)$/);
+        if (!match) break;
+        items.push(match[1]);
+        index += 1;
+      }
+      blocks.push({ type: "numbers", items });
+      continue;
+    }
+
+    blocks.push({ type: "paragraph", value: line });
+    index += 1;
+  }
+
+  return (
+    <div className="fusion-ai__rich-text">
+      {blocks.map((block, index) => {
+        if (block.type === "heading") {
+          return <h4 key={index}><RichInline text={block.value} /></h4>;
+        }
+        if (block.type === "bullets") {
+          return (
+            <ul key={index}>
+              {block.items.map((item, itemIndex) => <li key={itemIndex}><RichInline text={item} /></li>)}
+            </ul>
+          );
+        }
+        if (block.type === "numbers") {
+          return (
+            <ol key={index}>
+              {block.items.map((item, itemIndex) => <li key={itemIndex}><RichInline text={item} /></li>)}
+            </ol>
+          );
+        }
+        return <p key={index}><RichInline text={block.value} /></p>;
+      })}
+    </div>
   );
 }
 
@@ -428,7 +515,7 @@ export function FusionAI() {
                       <div>
                         {message.role === "assistant" ? (
                           <>
-                            <LinkifiedText text={message.content} />
+                            <RichMessage text={message.content} />
                             {message.meta?.games?.length ? (
                               <div className="fusion-ai__game-links" aria-label="Jogos citados">
                                 {message.meta.games.map((game) => (
@@ -450,7 +537,7 @@ export function FusionAI() {
                             ) : null}
                           </>
                         ) : (
-                          message.content
+                          <RichMessage text={message.content} />
                         )}
                       </div>
                     </article>

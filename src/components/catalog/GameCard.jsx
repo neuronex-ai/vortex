@@ -3,6 +3,16 @@ import { motion } from "framer-motion";
 
 export function GameCard({ game, onOpen, onToggleFavorite, isFavorite = false, compact = false }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const sourceBadge = game.hasSource === true
+    ? "Fonte disponível"
+    : game.hasSource === false
+      ? "Sem fonte externa"
+      : "Fonte não verificada";
+  const coverBadges = [
+    ...(game.playLabels ?? []).slice(0, 2),
+    game.year || "Steam",
+    sourceBadge,
+  ].filter(Boolean).slice(0, 3);
 
   return (
     <motion.article
@@ -32,15 +42,7 @@ export function GameCard({ game, onOpen, onToggleFavorite, isFavorite = false, c
           )}
           <div className="game-card__shade" />
           <div className="game-card__badges">
-            {(game.playLabels ?? []).slice(0, 2).map((label) => <span key={label}>{label}</span>)}
-            <span>{game.year || "Steam"}</span>
-            <span>{
-              game.hasSource === true
-                ? "Fonte disponível"
-                : game.hasSource === false
-                  ? "Sem fonte externa"
-                  : "Fonte não verificada"
-            }</span>
+            {coverBadges.map((label) => <span key={label}>{label}</span>)}
           </div>
         </div>
 

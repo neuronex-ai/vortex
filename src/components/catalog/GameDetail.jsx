@@ -122,6 +122,46 @@ function toggleListValue(list, value) {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
+function SteamTrailer({ movie, storeUrl }) {
+  const [failed, setFailed] = useState(false);
+  const mp4 = movie?.mp4?.max || movie?.mp4?.["480"] || movie?.webm?.max || null;
+  const hls = movie?.hls_h264 || null;
+  const canPlayNativeHls = typeof document !== "undefined"
+    && Boolean(document.createElement("video").canPlayType("application/vnd.apple.mpegurl"));
+  const stream = mp4 || (canPlayNativeHls ? hls : null);
+
+  if (stream && !failed) {
+    return (
+      <video
+        className="game-detail-v2__trailer"
+        src={stream}
+        poster={movie?.thumbnail || undefined}
+        controls
+        playsInline
+        preload="metadata"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <a
+      className="game-detail-v2__trailer-fallback"
+      href={storeUrl}
+      target="_blank"
+      rel="noreferrer noopener"
+      aria-label={`Assistir ${movie?.name || "trailer"} na Steam`}
+    >
+      {movie?.thumbnail && <img src={movie.thumbnail} alt="" />}
+      <span className="game-detail-v2__trailer-overlay">
+        <b>▶</b>
+        <strong>{movie?.name || "Trailer oficial"}</strong>
+        <small>Assistir na Steam ↗</small>
+      </span>
+    </a>
+  );
+}
+
 export function GameDetail({
   game,
   onClose,
@@ -130,6 +170,7 @@ export function GameDetail({
   onOpenGame,
 }) {
   const closeRef = useRef(null);
+  const similarRef = useRef(null);
   const [detailGame, setDetailGame] = useState(game);
   const [sources, setSources] = useState([]);
   const [sourcesError, setSourcesError] = useState("");
@@ -252,11 +293,29 @@ export function GameDetail({
     return values.slice(0, 10);
   }, [detailGame]);
 
+  const mediaItems = useMemo(() => {
+    const movies = Array.isArray(detailGame.movies) ? detailGame.movies : [];
+    const primaryMovie = movies.find((movie) => movie?.highlight) || movies[0] || null;
+    const items = [];
+    if (primaryMovie) {
+      items.push({
+        type: "video",
+        id: `movie-${primaryMovie.id || primaryMovie.name || "steam"}`,
+        movie: primaryMovie,
+        thumbnail: primaryMovie.thumbnail || detailGame.image,
+      });
+    }
+    gallery.forEach((image, index) => {
+      items.push({ type: "image", id: `image-${index}-${image}`, image, thumbnail: image });
+    });
+    return items;
+  }, [detailGame.movies, detailGame.image, gallery]);
+
   useEffect(() => {
     setActiveImage(0);
   }, [detailGame.id]);
 
-  const currentImage = gallery[activeImage] || detailGame.image;
+  const currentMedia = mediaItems[activeImage] || { type: "image", image: detailGame.image };
   const canOpenSource = (source) => Boolean(
     source?.url
     && source.kind !== "external_reference"
@@ -277,6 +336,15 @@ export function GameDetail({
     ["online_coop", "Coop online"],
     ["multiplayer", "Multiplayer"],
   ];
+
+  function revealSimilars() {
+    if (!similarOpen) setSimilarOpen(true);
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        similarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 110);
+    });
+  }
 
   return (
     <motion.div
@@ -308,46 +376,58 @@ export function GameDetail({
           {closeIcon}
         </button>
 
-        <div className="game-detail-v2__layout">
-          <section className="game-detail-v2__media">
-            <div className="game-detail-v2__stage">
-              <AnimatePresence mode="wait">
-                {currentImage ? (
-                  <motion.img
-                    key={currentImage}
-                    src={currentImage}
-                    alt=""
-                    initial={{ opacity: 0.45, scale: 1.015 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                ) : (
-                  <div className="game-detail-v2__fallback">{detailGame.title.slice(0, 1)}</div>
-                )}
-              </AnimatePresence>
-              <div className="game-detail-v2__stage-shade" />
-              {hydrating && <span className="game-detail-v2__syncing">Carregando detalhes…</span>}
+        <section className="game-detail-v2__media-hero">
+          <div className="game-detail-v2__stage">
+            <AnimatePresence mode="wait">
+              {currentMedia?.type === "video" ? (
+                <motion.div
+                  key={currentMedia.id}
+                  className="game-detail-v2__video-wrap"
+                  initial={{ opacity: 0.35 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SteamTrailer movie={currentMedia.movie} storeUrl={detailGame.storeUrl} />
+                </motion.div>
+              ) : currentMedia?.image ? (
+                <motion.img
+                  key={currentMedia.id || currentMedia.image}
+                  src={currentMedia.image}
+                  alt=""
+                  initial={{ opacity: 0.45, scale: 1.015 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              ) : (
+                <div className="game-detail-v2__fallback">{detailGame.title.slice(0, 1)}</div>
+              )}
+            </AnimatePresence>
+            {currentMedia?.type !== "video" && <div className="game-detail-v2__stage-shade" />}
+            {hydrating && <span className="game-detail-v2__syncing">Carregando detalhes…</span>}
+          </div>
+
+          {mediaItems.length > 1 && (
+            <div className="game-detail-v2__thumbs" aria-label="Mídia do jogo">
+              {mediaItems.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={index === activeImage ? "is-active" : undefined}
+                  onClick={() => setActiveImage(index)}
+                  aria-label={item.type === "video" ? "Ver trailer" : `Ver imagem ${index + 1}`}
+                >
+                  {item.thumbnail && <img src={item.thumbnail} alt="" loading="lazy" />}
+                  {item.type === "video" && <span className="game-detail-v2__thumb-play">▶</span>}
+                </button>
+              ))}
             </div>
+          )}
+        </section>
 
-            {gallery.length > 1 && (
-              <div className="game-detail-v2__thumbs" aria-label="Galeria do jogo">
-                {gallery.map((image, index) => (
-                  <button
-                    key={image}
-                    type="button"
-                    className={index === activeImage ? "is-active" : undefined}
-                    onClick={() => setActiveImage(index)}
-                    aria-label={`Ver imagem ${index + 1}`}
-                  >
-                    <img src={image} alt="" loading="lazy" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="game-detail-v2__summary">
+        <div className="game-detail-v2__content-shell">
+          <header className="game-detail-v2__identity-block">
             <div className="game-detail-v2__chips">
               {capabilities.localCoop && <span>Coop local nativo</span>}
               {capabilities.sameScreen && <span>Na mesma tela</span>}
@@ -361,100 +441,99 @@ export function GameDetail({
             <h2 id="game-detail-title">{detailGame.title}</h2>
             <p className="game-detail-v2__lede">{detailGame.description}</p>
 
-            <section className="game-detail-v2__downloads" aria-label="Downloads externos">
-              <h3>Download do jogo</h3>
-              {sourcesLoading ? <p>Consultando provedores…</p> : downloads.length ? downloads.map(source => (
-                <a key={source.id} href={source.url} target="_blank" rel="noopener noreferrer">
-                  <strong>↓ Download · {source.providerName}</strong>
-                  <span>{source.status}{source.size ? ' · ' + source.size : ''} ↗</span>
-                </a>
-              )) : <p>{sourcesError || "Nenhum link externo encontrado para este jogo."}</p>}
-            </section>
-            <div className="game-detail-v2__primary-actions">
+            <div className="game-detail-v2__identity-actions">
               {onToggleFavorite && (
-                <button
+                <motion.button
                   type="button"
                   className={isFavorite ? "is-favorite" : undefined}
                   onClick={() => onToggleFavorite(detailGame)}
+                  whileTap={{ scale: 0.97 }}
                 >
                   {isFavorite ? "♥ Salvo nos favoritos" : "♡ Adicionar aos favoritos"}
-                </button>
+                </motion.button>
               )}
-              <button
-                type="button"
-                onClick={() => setSimilarOpen((value) => !value)}
-                aria-expanded={similarOpen}
-              >
-                {similarOpen ? "Fechar similares" : "Ver similares"}
-              </button>
               {detailGame.storeUrl && (
                 <a href={detailGame.storeUrl} target="_blank" rel="noreferrer">
                   Ver na Steam ↗
                 </a>
               )}
             </div>
+          </header>
 
-            <div className="game-detail-v2__fact-grid">
-              <Fact label="Preço" value={detailGame.price} />
-              <Fact label="Como jogar" value={(detailGame.playLabels ?? []).join(" · ") || detailGame.players} />
-              <Fact label="Metacritic" value={detailGame.metacritic ?? "—"} />
-              <Fact label="Controle" value={detailGame.controllerSupport || "Não informado"} />
-              <Fact label="Avaliação Steam" value={detailGame.steamRating != null ? `${detailGame.steamRating}%` : "Não informado"} />
-              <Fact label="Espaço no PC" value={storageRequirement?.value || "Não informado"} />
-            </div>
-          </section>
-        </div>
-
-        <div className="game-detail-v2__body">
-          <main className="game-detail-v2__main">
-            {detailGame.about && (
-              <section className="game-detail-v2__panel">
-                <div className="game-detail-v2__section-heading">
-                  <span>Visão geral</span>
-                  <h3>Sobre o jogo</h3>
-                </div>
-                <AboutContent text={detailGame.about} />
-              </section>
-            )}
-
-            <section className="game-detail-v2__panel">
+          <div className="game-detail-v2__info-band">
+            <section className="game-detail-v2__panel game-detail-v2__panel--compact">
               <div className="game-detail-v2__section-heading">
-                <span>Modos</span>
-                <h3>Como dá para jogar?</h3>
+                <span>Ficha técnica</span>
+                <h3>Detalhes do jogo</h3>
               </div>
-              <div className="game-detail-v2__play-grid">
-                {capabilities.singlePlayer && <span><b>Um jogador</b><small>Jogar sozinho</small></span>}
-                {capabilities.multiplayer && <span><b>Multiplayer</b><small>Mais de uma pessoa</small></span>}
-                {capabilities.onlineCoop && <span><b>Coop online</b><small>Juntos pela internet</small></span>}
-                {capabilities.localCoop && <span><b>Coop local</b><small>Nativo, sem Nucleus</small></span>}
-                {capabilities.sameScreen && <span><b>Na mesma tela</b><small>Tela compartilhada/dividida</small></span>}
-                {capabilities.lanCoop && <span><b>Coop em LAN</b><small>Rede local</small></span>}
-                {capabilities.onlinePvp && <span><b>PvP online</b><small>Competitivo pela internet</small></span>}
-                {capabilities.crossplay && <span><b>Crossplay</b><small>Entre plataformas</small></span>}
-                {capabilities.remoteTogether && <span><b>Remote Play Together</b><small>Recurso da Steam</small></span>}
-                {nucleus?.supported && (
-                  <span className="is-nucleus">
-                    <b>Nucleus</b>
-                    <small>{nucleus.verified ? "Handler verificado" : "Handler disponível"}{nucleus.maxPlayers ? " · até " + nucleus.maxPlayers + " jogadores" : ""}</small>
-                  </span>
-                )}
-              </div>
-              {!capabilities.localCoop && nucleus?.supported && (
-                <p className="game-detail-v2__muted">
-                  O modo local é feito via Nucleus; a Steam não informa coop local nativo para este jogo.
-                </p>
+              <dl className="game-detail-v2__meta-list">
+                <div><dt>Desenvolvedor</dt><dd>{developer || "Não informado"}</dd></div>
+                <div><dt>Publicadora</dt><dd>{publisher || "Não informado"}</dd></div>
+                <div><dt>Lançamento</dt><dd>{detailGame.year || "Não informado"}</dd></div>
+                <div><dt>Plataformas</dt><dd>{platforms.join(", ") || "PC"}</dd></div>
+                <div><dt>Recomendações</dt><dd>{detailGame.recommendations?.toLocaleString("pt-BR") || "—"}</dd></div>
+              </dl>
+              {detailGame.website && (
+                <a className="game-detail-v2__text-link" href={detailGame.website} target="_blank" rel="noreferrer">
+                  Site oficial ↗
+                </a>
               )}
-              <div className="game-detail-v2__tag-cloud game-detail-v2__tag-cloud--taxonomy">
-                {[...detailGame.genres, ...detailGame.tags]
-                  .filter(Boolean)
-                  .filter((tag, index, list) => list.indexOf(tag) === index)
-                  .slice(0, 20)
-                  .map((tag) => <span key={tag}>{tag}</span>)}
-              </div>
             </section>
 
+            <section className="game-detail-v2__downloads" aria-label="Downloads externos">
+              <div className="game-detail-v2__section-heading">
+                <span>Disponibilidade</span>
+                <h3>Download do jogo</h3>
+              </div>
+              {sourcesLoading ? (
+                <p>Consultando provedores…</p>
+              ) : downloads.length ? (
+                downloads.map((source) => (
+                  <a key={source.id} href={source.url} target="_blank" rel="noopener noreferrer">
+                    <strong>↓ Download · {source.providerName}</strong>
+                    <span>{source.status}{source.size ? " · " + source.size : ""} ↗</span>
+                  </a>
+                ))
+              ) : (
+                <p>{sourcesError || "Nenhum link externo encontrado para este jogo."}</p>
+              )}
+              <div className="game-detail-v2__safety">
+                As fontes externas são referências de terceiros; o Fusion não hospeda nem baixa arquivos de jogos.
+              </div>
+            </section>
+          </div>
+
+          <motion.section
+            className="game-detail-v2__similar-cta"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div>
+              <span>Descoberta inteligente</span>
+              <h3>Quer encontrar algo realmente parecido?</h3>
+              <p>O Fusion cruza similares da Steam com os filtros do catálogo.</p>
+            </div>
+            <motion.button
+              type="button"
+              onClick={revealSimilars}
+              whileTap={{ scale: 0.96 }}
+              animate={similarLoading ? { opacity: [1, 0.62, 1], scale: [1, 0.985, 1] } : { opacity: 1, scale: 1 }}
+              transition={similarLoading ? { duration: 1.05, repeat: Infinity, ease: "easeInOut" } : { duration: 0.18 }}
+            >
+              {similarLoading ? "Rastreando similares…" : similarOpen ? "Ir para similares ↓" : "Ver similares →"}
+            </motion.button>
+          </motion.section>
+
+          <AnimatePresence initial={false}>
             {similarOpen && (
-              <section className="game-detail-v2__panel game-detail-v2__similar">
+              <motion.section
+                ref={similarRef}
+                className="game-detail-v2__panel game-detail-v2__similar"
+                initial={{ opacity: 0, y: 14, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -8, height: 0 }}
+                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <div className="game-detail-v2__section-heading">
                   <span>Descobrir</span>
                   <h3>Jogos similares</h3>
@@ -502,7 +581,10 @@ export function GameDetail({
                 </div>
 
                 {similarLoading ? (
-                  <p className="game-detail-v2__muted">Buscando similares…</p>
+                  <div className="game-detail-v2__tracking">
+                    <span />
+                    <p>Rastreando títulos, modos e compatibilidade…</p>
+                  </div>
                 ) : similarError ? (
                   <p className="game-detail-v2__muted">{similarError}</p>
                 ) : similarGames.length ? (
@@ -525,88 +607,87 @@ export function GameDetail({
                 ) : (
                   <p className="game-detail-v2__muted">Nenhum similar encontrado com essa combinação.</p>
                 )}
-              </section>
+              </motion.section>
             )}
+          </AnimatePresence>
 
+          <section className="game-detail-v2__panel">
+            <div className="game-detail-v2__section-heading">
+              <span>Resumo</span>
+              <h3>Características</h3>
+            </div>
+            <div className="game-detail-v2__fact-grid">
+              <Fact label="Preço" value={detailGame.price} />
+              <Fact label="Como jogar" value={(detailGame.playLabels ?? []).join(" · ") || detailGame.players} />
+              <Fact label="Metacritic" value={detailGame.metacritic ?? "—"} />
+              <Fact label="Controle" value={detailGame.controllerSupport || "Não informado"} />
+              <Fact label="Avaliação Steam" value={detailGame.steamRating != null ? `${detailGame.steamRating}%` : "Não informado"} />
+              <Fact label="Espaço no PC" value={storageRequirement?.value || "Não informado"} />
+            </div>
+          </section>
+
+          {detailGame.about && (
             <section className="game-detail-v2__panel">
               <div className="game-detail-v2__section-heading">
-                <span>Seu PC</span>
-                <h3>Meu PC roda?</h3>
+                <span>Visão geral</span>
+                <h3>Sobre o jogo</h3>
               </div>
-              <div className="game-detail-v2__requirements">
-                <div>
-                  <span>Mínimo</span>
-                  <RequirementsList value={detailGame.requirements.minimum} />
-                </div>
-                <div>
-                  <span>Recomendado</span>
-                  <RequirementsList value={detailGame.requirements.recommended} />
-                </div>
-              </div>
+              <AboutContent text={detailGame.about} />
             </section>
-          </main>
+          )}
 
-          <aside className="game-detail-v2__aside">
-            <section className="game-detail-v2__panel game-detail-v2__panel--compact">
-              <div className="game-detail-v2__section-heading">
-                <span>Ficha técnica</span>
-                <h3>Detalhes</h3>
-              </div>
-              <dl className="game-detail-v2__meta-list">
-                <div><dt>Desenvolvedor</dt><dd>{developer || "Não informado"}</dd></div>
-                <div><dt>Publicadora</dt><dd>{publisher || "Não informado"}</dd></div>
-                <div><dt>Lançamento</dt><dd>{detailGame.year || "Não informado"}</dd></div>
-                <div><dt>Plataformas</dt><dd>{platforms.join(", ") || "PC"}</dd></div>
-                <div><dt>Recomendações</dt><dd>{detailGame.recommendations?.toLocaleString("pt-BR") || "—"}</dd></div>
-              </dl>
-              {detailGame.website && (
-                <a className="game-detail-v2__text-link" href={detailGame.website} target="_blank" rel="noreferrer">
-                  Site oficial ↗
-                </a>
-              )}
-            </section>
-
-            <section className="game-detail-v2__panel game-detail-v2__panel--compact">
-              <div className="game-detail-v2__section-heading">
-                <span>Disponibilidade</span>
-                <h3>Fontes externas</h3>
-              </div>
-
-              {sourcesError ? <p role="alert" className="game-detail-v2__muted">{sourcesError}</p> : sourcesLoading ? (
-                <div className="game-detail-v2__muted">Consultando fontes…</div>
-              ) : sources.length ? (
-                <div className="game-detail-v2__sources">
-                  {sources.map((source) => {
-                    const openable = canOpenSource(source);
-                    const status = source.availability === "unavailable"
-                      ? "Indisponível na última verificação"
-                      : source.status;
-                    const content = <>
-                      <span>
-                        <strong>{source.providerName}{source.host ? ' · ' + source.host : ''}</strong>
-                        <small>{status}</small>
-                        {openable && source.size && <small>Tamanho informado: {source.size}</small>}
-                        {source.version && <small>{source.version}</small>}
-                      </span>
-                      {openable && <b>{sourceActionLabel(source)} ↗</b>}
-                    </>;
-                    return openable ? (
-                      <div key={source.id}>
-                        <a href={source.url} target="_blank" rel="noopener noreferrer">{content}</a>
-                      </div>
-                    ) : <div className="game-detail-v2__source-unavailable" key={source.id}>{content}</div>;
-                  })}
-                </div>
-              ) : (
-                <div className="game-detail-v2__muted">Nenhuma fonte disponível.</div>
-              )}
-            </section>
-
-            <div className="game-detail-v2__safety">
-              A seleção segue a classificação do catálogo Fusion. As fontes externas
-              são referências de terceiros; o Fusion não hospeda nem baixa arquivos de jogos.
+          <section className="game-detail-v2__panel">
+            <div className="game-detail-v2__section-heading">
+              <span>Modos</span>
+              <h3>Como dá para jogar?</h3>
             </div>
-          </aside>
+            <div className="game-detail-v2__play-grid">
+              {capabilities.singlePlayer && <span><b>Um jogador</b><small>Jogar sozinho</small></span>}
+              {capabilities.multiplayer && <span><b>Multiplayer</b><small>Mais de uma pessoa</small></span>}
+              {capabilities.onlineCoop && <span><b>Coop online</b><small>Juntos pela internet</small></span>}
+              {capabilities.localCoop && <span><b>Coop local</b><small>Nativo, sem Nucleus</small></span>}
+              {capabilities.sameScreen && <span><b>Na mesma tela</b><small>Tela compartilhada/dividida</small></span>}
+              {capabilities.lanCoop && <span><b>Coop em LAN</b><small>Rede local</small></span>}
+              {capabilities.onlinePvp && <span><b>PvP online</b><small>Competitivo pela internet</small></span>}
+              {capabilities.crossplay && <span><b>Crossplay</b><small>Entre plataformas</small></span>}
+              {capabilities.remoteTogether && <span><b>Remote Play Together</b><small>Recurso da Steam</small></span>}
+              {nucleus?.supported && (
+                <span className="is-nucleus">
+                  <b>Nucleus</b>
+                  <small>{nucleus.verified ? "Handler verificado" : "Handler disponível"}{nucleus.maxPlayers ? " · até " + nucleus.maxPlayers + " jogadores" : ""}</small>
+                </span>
+              )}
+            </div>
+            {!capabilities.localCoop && nucleus?.supported && (
+              <p className="game-detail-v2__muted">
+                O modo local é feito via Nucleus; a Steam não informa coop local nativo para este jogo.
+              </p>
+            )}
+            <div className="game-detail-v2__tag-cloud game-detail-v2__tag-cloud--taxonomy">
+              {[...detailGame.genres, ...detailGame.tags]
+                .filter(Boolean)
+                .filter((tag, index, list) => list.indexOf(tag) === index)
+                .slice(0, 20)
+                .map((tag) => <span key={tag}>{tag}</span>)}
+            </div>
+          </section>
+
+          <section className="game-detail-v2__panel">
+            <div className="game-detail-v2__section-heading">
+              <span>Seu PC</span>
+              <h3>Meu PC roda?</h3>
+            </div>
+            <div className="game-detail-v2__requirements">
+              <div>
+                <span>Mínimo</span>
+                <RequirementsList value={detailGame.requirements.minimum} />
+              </div>
+              <div>
+                <span>Recomendado</span>
+                <RequirementsList value={detailGame.requirements.recommended} />
+              </div>
+            </div>
+          </section>
         </div>
       </motion.article>
     </motion.div>

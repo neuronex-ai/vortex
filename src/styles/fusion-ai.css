@@ -263,7 +263,7 @@
 
 .fusion-ai__messages article > div {
   min-width: 0;
-  white-space: pre-wrap;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 
@@ -291,6 +291,73 @@
   text-decoration: underline;
   text-decoration-color: rgba(255, 255, 255, 0.28);
   text-underline-offset: 3px;
+}
+
+.fusion-ai__rich-text {
+  display: grid;
+  gap: 9px;
+  white-space: normal;
+}
+
+.fusion-ai__rich-text p,
+.fusion-ai__rich-text h4,
+.fusion-ai__rich-text ul,
+.fusion-ai__rich-text ol {
+  margin: 0;
+}
+
+.fusion-ai__rich-text h4 {
+  margin-top: 3px;
+  color: #f0f0f2;
+  font-size: 12px;
+  font-weight: 740;
+  line-height: 1.45;
+  letter-spacing: -.012em;
+}
+
+.fusion-ai__rich-text strong {
+  color: #f0f0f2;
+  font-weight: 760;
+}
+
+.fusion-ai__rich-text em {
+  color: #e0e1e4;
+}
+
+.fusion-ai__rich-text code {
+  padding: 2px 5px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 6px;
+  background: rgba(255,255,255,.045);
+  color: #ececef;
+  font: 600 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.fusion-ai__rich-text ul,
+.fusion-ai__rich-text ol {
+  display: grid;
+  gap: 7px;
+  padding-left: 18px;
+}
+
+.fusion-ai__rich-text li {
+  padding-left: 2px;
+}
+
+.fusion-ai__rich-text li::marker {
+  color: #74777e;
+}
+
+.fusion-ai__messages .is-assistant .fusion-ai__rich-text p {
+  color: #d3d4d7;
+}
+
+.fusion-ai__messages .is-user .fusion-ai__rich-text {
+  gap: 6px;
+}
+
+.fusion-ai__messages .is-user .fusion-ai__rich-text strong {
+  color: #fff;
 }
 
 .fusion-ai__thinking {
