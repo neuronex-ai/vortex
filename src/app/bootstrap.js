@@ -12,7 +12,7 @@ export function bootApplication() {
   }
 
   if (page?.id === "catalog") {
-    import("../pages/catalog/index.js").then(({ mountCatalogPage }) => {
+    import("../pages/catalog/index.jsx").then(({ mountCatalogPage }) => {
       mountCatalogPage();
     });
   }
