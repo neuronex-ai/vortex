@@ -806,3 +806,117 @@ button { color: inherit; }
   .catalog-filter-row { margin-top: 10px; }
   .catalog-content { margin-top: 56px; }
 }
+
+
+/* Supabase-backed catalog */
+.catalog-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+
+.catalog-pagination span {
+  color: #737780;
+  font-size: 11px;
+  text-align: center;
+}
+
+.catalog-pagination button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+  background: #171719;
+  color: #e3e4e7;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.catalog-pagination button:first-child { justify-self: start; }
+.catalog-pagination button:last-child { justify-self: end; }
+
+.catalog-pagination button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.game-skeleton {
+  min-height: 285px;
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 18px;
+  background:
+    linear-gradient(110deg, #111214 8%, #191a1d 18%, #111214 33%);
+  background-size: 200% 100%;
+  animation: fusion-skeleton 1.25s linear infinite;
+}
+
+@keyframes fusion-skeleton {
+  to { background-position-x: -200%; }
+}
+
+.game-detail__about {
+  margin: 0;
+  color: #a4a7ae;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.game-detail__requirements--real {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.game-detail__requirements--real strong {
+  display: block;
+  color: #c8cad0;
+  font-weight: 500;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.game-detail__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.game-detail__steam,
+.game-detail__download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  margin: 0;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.game-detail__steam {
+  border: 1px solid rgba(255,255,255,.10);
+  background: #f2f2f3;
+  color: #0b0b0c;
+}
+
+@media (max-width: 680px) {
+  .catalog-pagination {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .catalog-pagination span {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .game-detail__requirements--real,
+  .game-detail__actions {
+    grid-template-columns: 1fr;
+  }
+}
