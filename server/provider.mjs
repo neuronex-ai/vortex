@@ -21,7 +21,7 @@ const sourceHeaders = {
 };
 async function sourceIp() {
   const answer = await (await fetch('https://dns.google/resolve?name=steamrip.com&type=A', {signal:AbortSignal.timeout(6000)})).json();
-  const ip = answer.Answer?.find(record => record.type === 1 && /^\d{1,3}(\.\d{1,3}){3}$/.test(record.data))?.data;
+  const ip = answer.Answer?.find(record => record.type === 1 && record.data.split('.').length === 4)?.data;
   if (!ip) throw new Error('Source DNS unavailable');
   return ip;
 }
