@@ -646,25 +646,11 @@ export async function fetchSimilarGames(game, filters = {}, limit = 12) {
   ordered = ordered.filter((item) => matchesClientFilters(item, filters));
 
   if (filters.has_source && ordered.length) {
-    const ids = ordered.map((item) => Number(item.steamAppId));
-    const { data: sourceRows, error: sourceError } = await supabase
-      .from("game_source_cache")
-      .select("steam_app_id,sources")
-      .in("steam_app_id", ids);
-    if (sourceError) throw sourceError;
-
-    const withSources = new Set(
-      (sourceRows ?? [])
-        .filter((row) =>
-          Array.isArray(row.sources)
-          && row.sources.some((source) =>
-            source?.url
-            && source?.availability !== "unavailable"
-          )
-        )
-        .map((row) => Number(row.steam_app_id)),
-    );
-    ordered = ordered.filter((item) => withSources.has(item.steamAppId));
+    const verified = [];
+    for (let index = 0; index < ordered.length; index += 20) {
+      verified.push(...await resolveSourceAvailability(ordered.slice(index, index + 20)));
+    }
+    ordered = verified.filter((item) => item.hasSource === true);
   }
 
   if (filters.nucleus && ordered.length) {
