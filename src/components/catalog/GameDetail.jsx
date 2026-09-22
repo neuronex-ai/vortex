@@ -13,7 +13,7 @@ const closeIcon = (
 );
 
 function sourceActionLabel(source) {
-  return source.kind === "external_reference" ? "Ver fonte no GitHub" : "Ver download externo";
+  return "Ver download externo";
 }
 
 function AboutContent({ text }) {
@@ -141,6 +141,7 @@ export function GameDetail({
   }, [detailGame.id]);
 
   const currentImage = gallery[activeImage] || detailGame.image;
+  const downloads = sources.filter(source => source.url && source.kind !== "external_reference");
   const developer = detailGame.developers?.join(", ");
   const publisher = detailGame.publishers?.join(", ");
 
@@ -225,6 +226,15 @@ export function GameDetail({
             <h2 id="game-detail-title">{detailGame.title}</h2>
             <p className="game-detail-v2__lede">{detailGame.description}</p>
 
+            <section className="game-detail-v2__downloads" aria-label="Downloads externos">
+              <h3>Download do jogo</h3>
+              {sourcesLoading ? <p>Consultando provedores…</p> : downloads.length ? downloads.map(source => (
+                <a key={source.id} href={source.url} target="_blank" rel="noopener noreferrer">
+                  <strong>↓ Download · {source.providerName}</strong>
+                  <span>{source.status}{source.size ? ' · ' + source.size : ''} ↗</span>
+                </a>
+              )) : <p>{sourcesError || "Nenhum link externo encontrado para este jogo."}</p>}
+            </section>
             <div className="game-detail-v2__primary-actions">
               {onToggleFavorite && (
                 <button
@@ -339,9 +349,6 @@ export function GameDetail({
                     return source.url ? (
                       <div key={source.id}>
                         <a href={source.url} target="_blank" rel="noopener noreferrer">{content}</a>
-                        {source.referenceUrl && source.referenceUrl !== source.url && (
-                          <a className="game-detail-v2__provenance" href={source.referenceUrl} target="_blank" rel="noopener noreferrer">Consultar referência no GitHub ↗</a>
-                        )}
                       </div>
                     ) : <div className="game-detail-v2__source-unavailable" key={source.id}>{content}</div>;
                   })}

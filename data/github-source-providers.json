@@ -5,10 +5,26 @@
       "repository": "AveryChangedMan/SteamRipClient",
       "adapter": "steamrip-client-json",
       "providerName": "SteamRIP",
-      "allowedHosts": ["steamrip.com", "www.steamrip.com"],
+      "allowedHosts": [
+        "steamrip.com",
+        "www.steamrip.com"
+      ],
       "commit": "a13f49bf299b1646299e10dde1e67f91825f44dc",
       "path": "Redist/Deps/steamrip_full_games_may_2026_BASE.json",
       "license": "AGPL-3.0",
+      "enabled": true
+    },
+    {
+      "name": "FitGirl catalog",
+      "repository": "vladmandic/fitgirl",
+      "adapter": "fitgirl-json",
+      "providerName": "FitGirl",
+      "allowedHosts": [
+        "fitgirl-repacks.site"
+      ],
+      "commit": "367f3299320e0181f96f84a616a14d689717f4a4",
+      "path": "fitgirl.json",
+      "license": "MIT",
       "enabled": true
     }
   ]

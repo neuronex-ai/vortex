@@ -40,3 +40,19 @@ O cruzamento prioriza `appId`/`steam_app_id`. Quando a fonte não informa ID, ac
 ## Verificação
 
 `npm run test:catalog` cobre filtros, busca por descrição, ordenação, paginação, correspondências ambíguas, URLs, preservação dos dados Steam e favoritos com banco simulado. A consulta real de metadados é somente leitura; não grava favoritos em contas reais. A avaliação visual fica com o responsável pelo projeto.
+
+## Atualização: busca Steam e múltiplos provedores
+
+A busca agora consulta a função existente search_steam_fallback_ids quando o termo tem de 2 a 80 caracteres. Essa função pesquisa na Steam e sincroniza os metadados no banco. O cliente mescla os resultados sem duplicar appIds e preserva os IDs usados pelos favoritos. Links profundos de jogos descobertos também são resolvidos pelo banco após recarregar a página. Os resultados ficam em cache por um minuto; falhas podem ser tentadas novamente sem precisar alterar o termo.
+
+Jogos presentes no índice mantêm sua classificação editorial. Para novos jogos, o cliente exige adult_content=false, required_age=0, lista de descritores explícita e vazia e ausência de tags de conteúdo bloqueado. Metadados ausentes não são tratados como classificação aprovada. Isso é um filtro baseado nos dados Steam, não uma classificação etária independente.
+
+O snapshot de referências passa a incluir páginas de todos os jogos dos provedores, para cruzar os títulos descobertos pela Steam. Essas referências não viram jogos na interface por conta própria. O adaptador FitGirl remove apenas o sufixo que começa com separador e versão vN; edições e subtítulos são preservados. Correspondências ambíguas por provedor são rejeitadas.
+
+A integração ativa usa SteamRIP e [FitGirl](https://github.com/vladmandic/fitgirl), que informa páginas com opções torrent. O Fusion abre a página externa; não inicia torrent nem instala cliente uTorrent. O catálogo FitGirl examinado tem 3.082 registros e usa licença MIT. Não foi necessário instalar o Hydra ou um agregador externo; seus formatos públicos serviram para identificar uma fonte JSON compatível.
+
+O botão principal de download aparece junto à descrição. Referências do GitHub ficam apenas nos dados de procedência internos, sem link na interface. O usuário confirmou a abertura da página SteamRIP via Tor; não há uso de Tor pelo Fusion.
+
+SteamVerde permanece pendente de identificação do domínio exato. Os projetos SteamUnlocked examinados não apresentaram feed pronto; nenhum endereço desse provedor foi inventado ou ativado. A busca por projetos e formatos incluiu [GameHubApi](https://github.com/FxxMorgan/GameHubApi), [Steamunlocked](https://github.com/N-O-E-D/Steamunlocked) e [HydraLinks](https://github.com/ArnamentGames/HydraLinks).
+
+Esta seção substitui as limitações anteriores de busca restrita ao índice, favoritos visíveis restritos a dois jogos e referências GitHub na interface.

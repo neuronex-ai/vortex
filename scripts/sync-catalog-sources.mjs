@@ -1,6 +1,6 @@
 import { readFile, writeFile, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { matchSourceRecord, validateRecords, providerPage } from './source-adapters.mjs';
+import { validateRecords, providerPage, sourceTitle } from './source-adapters.mjs';
 
 const root = new URL('../', import.meta.url);
 const config = JSON.parse(await readFile(new URL('data/github-source-providers.json', root), 'utf8'));
@@ -8,7 +8,7 @@ const catalog = JSON.parse(await readFile(new URL('data/steam-catalog-index.json
 const sources = [];
 const reports = [];
 for (const provider of config.providers.filter(item => item.enabled)) {
-  if (provider.adapter !== 'steamrip-client-json' || !/^[\da-f]{40}$/.test(provider.commit)
+  if (!['steamrip-client-json', 'fitgirl-json'].includes(provider.adapter) || !/^[\da-f]{40}$/.test(provider.commit)
     || !/^[\w-]+\/[\w.-]+$/.test(provider.repository) || provider.path.includes('..')) {
     throw new Error('Configuração de fonte inválida.');
   }
@@ -19,24 +19,26 @@ for (const provider of config.providers.filter(item => item.enabled)) {
   if (Buffer.byteLength(text) > 20_000_000) throw new Error('Fonte excede o limite de tamanho.');
   const records = validateRecords(JSON.parse(text));
   let matched = 0;
-  for (const game of catalog.catalog.filter(game => game.familyFriendly === true)) {
-    const match = matchSourceRecord(game, records);
-    if (!match) continue;
-    const row = match.record;
+  for (const row of records) {
+    const title = sourceTitle(row.name, provider.adapter);
+    const externalUrl = providerPage(row.link, provider.allowedHosts ?? []);
+    if (!externalUrl) continue;
+    const game = catalog.catalog.find(game => game.title.toLowerCase() === title.toLowerCase());
     const literal = JSON.stringify(row.name);
     const positions = [...text.matchAll(new RegExp('"name"\\s*:\\s*' + literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))];
     if (positions.length !== 1) continue;
     const line = text.slice(0, positions[0].index).split('\n').length;
-    sources.push({ appId: game.appId, title: game.title, provider: provider.name,
+    sources.push({ appId: game?.appId ?? null, title, provider: provider.name,
       projectUrl: `https://github.com/${provider.repository}`,
       providerName: provider.providerName,
-      externalUrl: providerPage(row.link, provider.allowedHosts ?? []),
+      externalUrl,
+      downloadType: provider.adapter === "fitgirl-json" ? "Torrent na página externa" : "Página de download",
       referenceUrl: `https://github.com/${provider.repository}/blob/${provider.commit}/${provider.path}#L${line}`,
-      matchMethod: match.method, sourceTitle: row.name,
-      size: typeof row.game_size === 'string' ? row.game_size : null,
+      matchMethod: "exact-unique-title", sourceTitle: row.name,
+      size: row.game_size ?? row.packed ?? null,
       version: typeof row.version === 'string' ? row.version : null,
       sourceDate: row.upload_date ?? null, license: provider.license });
-    matched++;
+    if (game) matched++;
   }
   reports.push({ repository: provider.repository, commit: provider.commit, rawUrl,
     sha256: createHash('sha256').update(text).digest('hex'), records: records.length, matched });

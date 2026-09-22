@@ -2,6 +2,11 @@ export function normalizeTitle(value) {
   return String(value ?? '').normalize('NFKC').replace(/[™®]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+export function sourceTitle(value, adapter) {
+  // Only remove a version annotation, never editions or sequel subtitles.
+  return adapter === 'fitgirl-json' ? value.replace(/\s+[–—-]\s+v\d.*$/i, '').trim() : value;
+}
+
 // Never strip edition names, subtitles or numbers: Silksong is not Hollow Knight.
 export function matchSourceRecord(game, records) {
   const byId = records.filter(row => Number(row.appId ?? row.steam_app_id) === game.appId);

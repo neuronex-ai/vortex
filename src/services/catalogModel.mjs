@@ -6,13 +6,17 @@ export function safeExternalUrl(value) {
   } catch { return null; }
 }
 
-export function sourcesForGame(appId, localSources, references) {
-  const github = references.sources.filter(item => item.appId === appId).map((item, index) => ({
+const matchTitle = value => String(value ?? '').normalize('NFKC').replace(/[™®]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+export function sourcesForGame(appId, localSources, references, title = '') {
+  const candidates = references.sources.filter(item => item.appId === appId
+    || (item.appId == null && title && matchTitle(item.title) === matchTitle(title)));
+  const unique = candidates.filter(item => candidates.filter(other => other.providerName === item.providerName).length === 1);
+  const github = unique.map((item, index) => ({
     id: `github:${appId}:${index}`, providerName: item.providerName ?? item.provider,
     kind: safeExternalUrl(item.externalUrl) ? 'provider_page' : 'external_reference',
-    url: safeExternalUrl(item.externalUrl) ?? safeExternalUrl(item.referenceUrl),
+    url: safeExternalUrl(item.externalUrl),
     referenceUrl: safeExternalUrl(item.referenceUrl), projectUrl: safeExternalUrl(item.projectUrl),
-    size: item.size, version: item.version, status: 'Página externa · referência no GitHub',
+    size: item.size, version: item.version, status: item.downloadType ?? 'Página de download',
     lastCheckedAt: references.checkedAt,
   }));
   const local = (localSources.sources.find(item => item.appId === appId)?.sources ?? []).flatMap(source =>
@@ -24,6 +28,17 @@ export function sourcesForGame(appId, localSources, references) {
           : url ? 'Fonte externa' : 'Link indisponível' };
     }));
   return [...github, ...local];
+}
+
+export function steamEntry(row, known) {
+  const blocked = /violence|gore|nudity|sexual|strong language|adult only/i.test([...(row.tags ?? []), ...(row.genres ?? [])].join(' '));
+  const allowed = known ? known.familyFriendly === true : row.adult_content === false
+    && Number(row.required_age) === 0 && Array.isArray(row.content_descriptors?.ids)
+    && row.content_descriptors.ids.length === 0 && !blocked;
+  return { appId: Number(row.steam_app_id), title: row.title, slug: known?.slug ?? row.slug,
+    genres: row.genres ?? [], tags: row.tags ?? [], familyFriendly: allowed,
+    releaseYear: row.release_year, steamRating: known?.steamRating,
+    developer: row.developers?.[0], publisher: row.publishers?.[0] };
 }
 
 export function mergeCatalogGame(entry, steam, sources) {

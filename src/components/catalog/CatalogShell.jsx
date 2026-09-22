@@ -73,6 +73,7 @@ export function CatalogShell() {
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [draftQuery, setDraftQuery] = useState("");
   const [query, setQuery] = useState("");
+  const [searchAttempt, setSearchAttempt] = useState(0);
   const [sort, setSort] = useState("popular");
   const [games, setGames] = useState([]);
   const [coopGames, setCoopGames] = useState([]);
@@ -83,6 +84,7 @@ export function CatalogShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState("");
+  const [steamSearchUnavailable, setSteamSearchUnavailable] = useState(false);
   const [metadataUnavailable, setMetadataUnavailable] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
   const [hasMore, setHasMore] = useState(false);
@@ -111,6 +113,7 @@ export function CatalogShell() {
         setGames(result.games);
         setHasMore(result.hasMore);
         setMetadataUnavailable(result.metadataUnavailable ?? false);
+        setSteamSearchUnavailable(result.steamSearchUnavailable ?? false);
       } catch (error) {
         if (!active) return;
         setGames([]);
@@ -126,7 +129,7 @@ export function CatalogShell() {
     return () => {
       active = false;
     };
-  }, [activeFilter, currentCursor, page, query, sort]);
+  }, [activeFilter, currentCursor, page, query, sort, searchAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -259,6 +262,7 @@ export function CatalogShell() {
   function submitSearch(event) {
     event.preventDefault();
     setQuery(draftQuery.trim());
+    setSearchAttempt(value => value + 1);
     resetPagination();
     document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
@@ -427,6 +431,7 @@ export function CatalogShell() {
           <span className="catalog-search__icon">{searchIcon}</span>
           <input
             type="search"
+            maxLength={80}
             name="query"
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.target.value)}
@@ -448,6 +453,7 @@ export function CatalogShell() {
               : "Seleção family-friendly · Detalhes da Steam e referências externas."}
         </div>
 
+        {steamSearchUnavailable && <p role="status">A busca na Steam está indisponível agora. Tente pesquisar novamente em instantes.</p>}
         {metadataUnavailable && <p role="status">Alguns detalhes da Steam estão indisponíveis. Exibindo as informações salvas no catálogo.</p>}
         {favoriteError && <p role="alert">{favoriteError}</p>}
 

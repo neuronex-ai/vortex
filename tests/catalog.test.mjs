@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { safeExternalUrl, sourcesForGame, mergeCatalogGame, pageCatalog } from '../src/services/catalogModel.mjs';
-import { matchSourceRecord, validateRecords, providerPage } from '../scripts/source-adapters.mjs';
+import { safeExternalUrl, sourcesForGame, mergeCatalogGame, pageCatalog, steamEntry } from '../src/services/catalogModel.mjs';
+import { matchSourceRecord, validateRecords, providerPage, sourceTitle } from '../scripts/source-adapters.mjs';
 
 const json = async name => JSON.parse(await readFile(new URL(`../data/${name}`, import.meta.url), 'utf8'));
 const catalog = await json('steam-catalog-index.json');
@@ -82,13 +82,19 @@ test('Service integrates metadata, deep links, sources and account favorites usi
   const saved = new Set([18]);
   const calls = [];
   const rows = [{ id: 18, steam_app_id: 367520, title: 'Hollow Knight', short_description: 'Ancient caverns', header_image: 'cover.jpg', genres: ['Action'] },
-    { id: 9, steam_app_id: 413150, title: 'Stardew Valley', local_coop: true }];
+    { id: 9, steam_app_id: 413150, title: 'Stardew Valley', local_coop: true },
+    { id: 25, steam_app_id: 105600, title: 'Terraria', slug: 'terraria', required_age: 0, adult_content: false, content_descriptors: { ids: [] }, short_description: 'Dig, fight, explore' }];
   let offline = false;
   globalThis.__fusionTestSupabase = {
     auth: { getUser: async () => ({ data: { user: { id: 'test-user' } } }) },
+    rpc(name, params) {
+      calls.push({rpc: name, params});
+      return { abortSignal: async () => ({ data: params.p_query === 'terraria' ? [105600] : [367520], error: null }) };
+    },
     from(table) {
       const query = { table, filters: [] };
       const chain = {
+        maybeSingle() { query.single = true; return chain; },
         select() { return chain; }, in(key, ids) { query.ids = ids; return chain; },
         eq(key, value) { query.filters.push([key, value]); return chain; },
         order() { return chain; }, range(from, to) { query.range = [from, to]; return chain; },
@@ -96,11 +102,15 @@ test('Service integrates metadata, deep links, sources and account favorites usi
         insert(value) { query.insert = value; return chain; }, delete() { query.remove = true; return chain; },
         then(resolve, reject) {
           calls.push(query);
-          if (table === 'games') return Promise.resolve({ data: rows, error: offline ? new Error('offline') : null }).then(resolve, reject);
+          if (table === 'games') {
+            const selected = rows.filter(row => (!query.ids || query.ids.includes(row.steam_app_id)) && query.filters.every(([key,value]) => row[key] === value));
+            return Promise.resolve({ data: query.single ? selected[0] ?? null : selected, error: offline ? new Error('offline') : null }).then(resolve, reject);
+          }
+          if (offline) return Promise.resolve({error:new Error('offline')}).then(resolve,reject);
           assert.ok(query.insert?.user_id === 'test-user' || query.filters.some(([key, value]) => key === 'user_id' && value === 'test-user'));
           if (query.insert) saved.add(query.insert.game_id);
           if (query.remove) saved.delete(query.filters.find(([key]) => key === 'game_id')[1]);
-          const result = [...saved].filter(id => !query.ids || query.ids.includes(id)).map(game_id => ({ game_id }));
+          const result = [...saved].filter(id => !query.ids || query.ids.includes(id)).map(game_id => ({ game_id, games: rows.find(row => row.id === game_id) }));
           return Promise.resolve({ data: result, count: result.length, error: null }).then(resolve, reject);
         },
       };
@@ -124,7 +134,15 @@ test('Service integrates metadata, deep links, sources and account favorites usi
     assert.equal((await service.fetchFavoritePage()).count, 2);
     await service.removeFavorite(18);
     assert.equal((await service.fetchFavoritePage()).games[0].id, 9);
-    assert.equal(calls.filter(call => call.table === 'games').length, 1);
+    const newGame = (await service.fetchGamePage({query:'terraria'})).games[0];
+    assert.equal(newGame.title, 'Terraria');
+    assert.equal(newGame.id, 25);
+    assert.ok(newGame.sources.some(source => source.providerName === 'FitGirl' && source.url));
+    await service.addFavorite(25);
+    assert.ok((await service.fetchFavoritePage()).games.some(game => game.id === 25));
+    assert.equal((await service.fetchGameBySlug('terraria')).steamAppId, 105600);
+    await service.fetchGamePage({query:'terraria'});
+    assert.equal(calls.filter(call => call.rpc && call.params.p_query === 'terraria').length, 1);
     offline = true;
     const fallback = await import(url + '#offline');
     const page = await fallback.fetchGamePage();
@@ -133,4 +151,15 @@ test('Service integrates metadata, deep links, sources and account favorites usi
     await assert.rejects(() => fallback.addFavorite(page.games[0].id));
     await assert.rejects(() => fallback.fetchFavoritePage());
   } finally { delete globalThis.__fusionTestSupabase; }
+});
+
+test('Steam discovery filters mature and unknown classifications and respects curated exclusions', () => {
+  const base = {steam_app_id:105600,title:'Terraria',required_age:0,adult_content:false,content_descriptors:{ids:[]}};
+  assert.equal(steamEntry(base).familyFriendly,true);
+  assert.equal(steamEntry({...base,required_age:18}).familyFriendly,false);
+  assert.equal(steamEntry({...base,content_descriptors:{ids:[2]}}).familyFriendly,false);
+  assert.equal(steamEntry({...base,content_descriptors:null}).familyFriendly,false);
+  assert.equal(steamEntry(base,{familyFriendly:false}).familyFriendly,false);
+  assert.equal(sourceTitle('Hollow Knight – v1.5 + bonus','fitgirl-json'),'Hollow Knight');
+  assert.equal(sourceTitle('Hollow Knight: Silksong – v1.0','fitgirl-json'),'Hollow Knight: Silksong');
 });
