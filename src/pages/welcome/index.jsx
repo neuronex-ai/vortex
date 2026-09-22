@@ -4,6 +4,9 @@ import { supabase } from "../../lib/supabase.js";
 import { authHref, safeAppReturn } from "../../content/navigation.mjs";
 import "../../styles/auth.css";
 import "../../styles/welcome.css";
+import discoveryArt from "../../../assets/fusion/A.png";
+import favoritesArt from "../../../assets/fusion/C.png";
+import navigationArt from "../../../assets/fusion/G.png";
 
 const steps = [
   { label: "Seu ponto de partida", title: "Bem-vindo ao Fusion.", body: "Seu próximo jogo pode estar a uma descoberta daqui. Explore títulos de PC e combine os filtros do catálogo para encontrar o que combina com você.", image: "A" },
@@ -39,7 +42,7 @@ function WelcomeScreen() {
   if (status === "guest" || status === "error") return <main className="auth-page"><section className="auth-card"><h1>{status === "guest" ? "Seu espaço começa aqui." : "Não conseguimos verificar seu acesso."}</h1><p>{status === "guest" ? "Entre na sua conta para conhecer os primeiros passos." : "Confira sua conexão e tente novamente."}</p><a className="auth-primary" href={authHref("sign-in", next) + "&onboarding=1"}>Entrar no Fusion</a><a className="auth-back" href="/app/">Explorar catálogo</a></section></main>;
   const current = steps[step];
   return <main className="fusion-welcome"><section className="fusion-welcome-card" aria-labelledby="welcome-title">
-    <div className="fusion-welcome-art"><img src={`/assets/fusion/${current.image}.png`} alt="" width="1536" height="1024" /></div>
+    <div className="fusion-welcome-art"><img src={[discoveryArt, favoritesArt, navigationArt][step]} alt="" width="1536" height="1024" /></div>
     <div className="fusion-welcome-copy">
       <p className="auth-eyebrow">{current.label}</p><h1 id="welcome-title" tabIndex="-1" ref={heading}>{current.title}</h1><p>{current.body}</p>
       <ol className="fusion-welcome-progress" aria-label="Etapas das boas-vindas">{steps.map((item, i) => <li key={item.label} aria-current={i === step ? "step" : undefined}><span className="sr-only">Etapa {i + 1}: {item.label}</span></li>)}</ol>

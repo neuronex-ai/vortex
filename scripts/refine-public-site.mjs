@@ -17,14 +17,14 @@ for (const file of files) {
   const article = guides.find(g => file === `blog/${g.slug}.html`);
   const path = file === "index.html" ? "/" : `/${file.replace(/index\.html$/, "")}`;
   const text = (selector, value) => $(selector).text(value);
-  const replace = (from, to) => $("p,h1,h2,h3,h4,h5,h6,span").filter((_, e) => $(e).text().trim() === from && !$(e).find("p,h1,h2,h3,h4,h5,h6").length).text(to);
+  const replace = (from, to) => $("p,h1,h2,h3,h4,h5,h6,span").filter((_, e) => $(e).text().trim() === from && !$(e).children().length).text(to);
   $("html").attr("lang", "pt-BR");
   $("body").addClass(app ? "fusion-app" : "fusion-public").attr("data-fusion-page", article ? "guide" : file.replace(/\.html|\/index/g, ""));
   // Keep Framer's original section and card trees; replace only the shared navigation.
   $("[data-fusion-navigation], .fusion-skip").remove();
   $("nav[data-framer-name]").each((_, e) => $(e).parent().remove());
   $(".legal-header").remove();
-  $("body").prepend(renderNavigation({ app, path }));
+  $("body").prepend(renderNavigation({ app, path: article ? "/blog.html" : path }));
   $("#fusion-content").each((_, e) => {
     if ($(e).is("div") && $(e).children("#main, #fusion-app-root").length) $(e).replaceWith($(e).contents());
     else $(e).removeAttr("id");
@@ -87,6 +87,7 @@ for (const file of files) {
     "Sem anúncios invasivos. Sem conteúdo sexual explícito.": "Explore livremente. Crie uma conta para salvar favoritos.",
     "Our Novidades": "Guias do Fusion", "Our Featured Novidades": "Para começar", "All Novidades": "Continue explorando",
     "Back to blogs": "Voltar aos guias", "Similar Blogs": "Continue descobrindo", "View All Blogs": "Todos os guias", "Read Full Blog": "Ler guia", "Ler conteúdo": "Ler guia",
+    "Similar Guias": "Continue descobrindo",
     "Contato Us": "Estamos por aqui", "Help & support": "Precisa de ajuda?", "Contato support for any issues or assistance with using Fusion.": "Conte o que aconteceu e em qual página. Se for sobre um jogo, inclua o nome dele.", "Contato Support": "Falar com o suporte",
     "Oops page not found": "Página não encontrada", "76%": "PC", "12M+": "Coop", "600+": "Sua lista", "20+": "Fusion",
     "Catálogo vivo": "Explore o catálogo", "Conheça o Fusion": "Encontre seu caminho no Fusion", "Buscar novidades": "Explorar os guias",
@@ -106,6 +107,8 @@ for (const file of files) {
     if (!guide) return;
     card.attr("href", `/blog/${guide.slug}.html`);
     card.find("h3,h4,h5,h6").text(guide.title);
+    card.find("div[style*='-webkit-line-clamp']").text(guide.title).addClass("fusion-guide-card-title");
+    card.find("[data-framer-name=Label] p").text(guide.category);
     card.find("img").attr({ src: `/assets/fusion/${guide.cover}.png`, alt: guide.title, loading: "lazy" }).removeAttr("srcset").addClass("fusion-guide-cover");
     card.find("p").each((_, p) => { if ($(p).text().length > 80) $(p).text(guide.description); });
   });
@@ -130,6 +133,7 @@ for (const file of files) {
     $(".framer-w1o4ny").attr("aria-label", "Ilustrações da experiência Fusion");
   }
   if (file === "blog.html") {
+    $(".framer-1jiww74").remove();
     text("h1", "Boas descobertas\ncomeçam por aqui.");
     $("a").filter((_, e) => $(e).text().trim() === "Explorar os guias").attr("href", "#blog-1");
     $("#blog-1").find("p").filter((_, e) => $(e).text().startsWith("Comece por um título")).text("Ideias e primeiros passos para aproveitar melhor o seu tempo de jogo.");
@@ -138,14 +142,16 @@ for (const file of files) {
     text("h1", article.title);
     $("[data-framer-name='Blog Content']").addClass("fusion-article-body").html(`<p class="fusion-article-lead">${article.description}</p>${article.sections.map(([title, body], i) => `<section id="guia-${i + 1}"><h2>${title}</h2><p>${body}</p></section>`).join("")}<div class="fusion-article-end">${actions}</div>`);
     $("[data-framer-name='Author Details'], [data-framer-name='Author Profile']").each((_, e) => $(e).html('<span class="fusion-guide-byline">Equipe Fusion · 22 de setembro de 2026</span>'));
+    $("[data-framer-name='Author Name']").remove();
     $("[data-framer-name='Date'] p").text("22 de setembro de 2026");
     $("[data-framer-name='Side Nav']").addClass("fusion-guide-aside").html(`<span class="fusion-eyebrow">Neste guia</span><nav aria-label="Neste guia">${article.sections.map(([title], i) => `<a href="#guia-${i + 1}">${title}</a>`).join("")}</nav><a class="fusion-button" href="/app/">Abrir o Fusion</a>`);
     // The first large article image is the editorial cover; keep its original frame.
-    const cover = $("[data-framer-name='Blog'] img").first();
+    const cover = $("[data-framer-name='Blog'] img").filter((_, e) => !$(e).closest("a, [data-framer-name='Blog Content'], [data-framer-name='Side Nav']").length);
     cover.attr({ src: `/assets/fusion/${article.cover}.png`, alt: article.title, loading: "eager" }).removeAttr("srcset").addClass("fusion-guide-cover");
     $("p").filter((_, e) => /^(Efficiency|Productivity|Collaboration|Task Management|Time Management)$/.test($(e).text())).text(article.category);
   }
   if (file === "changelog.html") {
+    $(".framer-bgb9a3").remove();
     replace("Acompanhe as etapas que estão transformando o Fusion de uma base visual em um catálogo completo.", "O que já faz parte da sua experiência — e o que vem a seguir.");
     const changes = ["Pesquise jogos e combine filtros no catálogo.", "Abra os detalhes para ver descrição, imagens e requisitos disponíveis.", "Salve favoritos usando sua conta Fusion.", "Retome sua lista em outros dispositivos com a mesma conta.", "Encontre Catálogo, Favoritos e Minha conta no menu do aplicativo.", "Volte às páginas públicas pelo atalho Voltar ao site.", "Explore jogos em companhia pela área de coop local.", "Consulte os modos de jogo antes de organizar a partida.", "Encontre a página da Steam e fontes externas nos detalhes, quando disponíveis.", "Fusion AI está em desenvolvimento. Sua experiência ainda pode mudar.", "Envie dúvidas e sugestões pelo contato do Fusion."];
     let i = 0;
@@ -166,8 +172,8 @@ for (const file of files) {
       form.replaceWith(frame);
     } else {
       form.attr({ "data-fusion-contact": "", action: `mailto:${contactEmail}`, method: "post", enctype: "text/plain" }).removeAttr("data-local-form");
-      form.find("input[type=text]").attr({ name: "name", autocomplete: "name", maxlength: "120", required: "" });
-      form.find("input[type=email]").attr({ name: "email", autocomplete: "email", maxlength: "254", required: "" });
+      form.find("input[type=text]").attr({ name: "name", autocomplete: "name", maxlength: "120", required: "", placeholder: "Seu nome" });
+      form.find("input[type=email]").attr({ name: "email", autocomplete: "email", maxlength: "254", required: "", placeholder: "voce@exemplo.com" });
       form.find("textarea").attr({ name: "message", maxlength: "5000", required: "", placeholder: "Como podemos ajudar?" });
       form.find("button[type=submit]").attr("aria-label", "Preparar e-mail").find("p").text("Preparar e-mail");
       if (!form.next().hasClass("fusion-contact-note")) form.after(`<p class="fusion-contact-note">O botão prepara a mensagem no seu aplicativo de e-mail. Você revisa e envia por lá. Ou escreva para <a href="mailto:${contactEmail}">${contactEmail}</a>.</p>`);
