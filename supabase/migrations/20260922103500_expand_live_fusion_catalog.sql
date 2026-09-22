@@ -55,11 +55,11 @@ and (
     p.f = 'Com fontes'
     and exists (
       select 1
-      from public.game_source_cache c,
-           jsonb_array_elements(c.sources) s
+      from public.game_source_cache c
+      cross join lateral jsonb_array_elements(c.sources) as src(value)
       where c.steam_app_id = g.steam_app_id
-        and s ->> 'availability' is distinct from 'unavailable'
-        and nullif(s ->> 'url', '') is not null
+        and src.value ->> 'availability' is distinct from 'unavailable'
+        and nullif(src.value ->> 'url', '') is not null
     )
   )
   or exists (
