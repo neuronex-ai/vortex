@@ -86,7 +86,7 @@ Deno.serve(async (request) => {
   if (ifModifiedSince != null) input.if_modified_since = ifModifiedSince;
 
   const url = new URL(
-    "https://partner.steam-api.com/IStoreService/GetAppList/v1/",
+    "https://api.steampowered.com/IStoreService/GetAppList/v1/",
   );
   url.searchParams.set("key", steamKey);
   url.searchParams.set("input_json", JSON.stringify(input));

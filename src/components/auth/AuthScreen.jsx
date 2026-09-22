@@ -6,12 +6,22 @@ function safeReturnPath() {
   return next && next.startsWith("/app/") ? next : "/app/";
 }
 
+function withAuthSuccess(path) {
+  const url = new URL(path, window.location.origin);
+  url.searchParams.set("auth", "success");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 function displayName(user) {
   return user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "sua conta";
 }
 
 export function AuthScreen() {
   const returnPath = useMemo(safeReturnPath, []);
+  const callbackFlow = useMemo(
+    () => new URLSearchParams(window.location.search).get("auth_callback") === "1",
+    [],
+  );
   const [mode, setMode] = useState("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,12 +48,21 @@ export function AuthScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!user || !callbackFlow) return;
+    const timeout = window.setTimeout(() => {
+      window.location.replace(withAuthSuccess(returnPath));
+    }, 650);
+    return () => window.clearTimeout(timeout);
+  }, [user, callbackFlow, returnPath]);
+
   async function continueWithGoogle() {
     setPending(true);
     setError("");
 
     const callbackUrl = new URL("/app/auth.html", window.location.origin);
     callbackUrl.searchParams.set("next", returnPath);
+    callbackUrl.searchParams.set("auth_callback", "1");
 
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -63,10 +82,14 @@ export function AuthScreen() {
     setMessage("");
 
     const credentials = { email: email.trim(), password };
+    const callbackUrl = new URL("/app/auth.html", window.location.origin);
+    callbackUrl.searchParams.set("next", returnPath);
+    callbackUrl.searchParams.set("auth_callback", "1");
+
     const response = mode === "create"
       ? await supabase.auth.signUp({
           ...credentials,
-          options: { emailRedirectTo: new URL("/app/auth.html", window.location.origin).toString() },
+          options: { emailRedirectTo: callbackUrl.toString() },
         })
       : await supabase.auth.signInWithPassword(credentials);
 
@@ -75,7 +98,7 @@ export function AuthScreen() {
     } else if (mode === "create" && !response.data.session) {
       setMessage("Enviamos um e-mail de confirmação. Abra-o para ativar sua conta.");
     } else {
-      window.location.assign(returnPath);
+      window.location.assign(withAuthSuccess(returnPath));
     }
 
     setPending(false);
@@ -84,7 +107,7 @@ export function AuthScreen() {
   async function signOut() {
     setPending(true);
     await supabase.auth.signOut();
-    setPending(false);
+    window.location.assign("/app/?signed_out=1");
   }
 
   if (user) {
@@ -92,10 +115,14 @@ export function AuthScreen() {
       <main className="auth-page">
         <section className="auth-card auth-card--signed-in">
           <a className="auth-brand" href="/app/">Fusion</a>
-          <span className="auth-eyebrow">Conta conectada</span>
-          <h1>Você já entrou.</h1>
-          <p>Olá, {displayName(user)}. Seus favoritos poderão acompanhar você onde entrar.</p>
-          <a className="auth-primary" href={returnPath}>Abrir catálogo</a>
+          <span className="auth-eyebrow">{callbackFlow ? "Login concluído" : "Conta conectada"}</span>
+          <h1>{callbackFlow ? "Tudo certo." : "Você já entrou."}</h1>
+          <p>Olá, {displayName(user)}. Seus favoritos ficam sincronizados com esta conta.</p>
+          <a className="auth-primary" href={withAuthSuccess(returnPath)}>
+            {callbackFlow ? "Continuar para o Fusion" : "Abrir catálogo"}
+          </a>
+          <a className="auth-back" href="/app/favorites.html">Gerenciar favoritos</a>
+          <a className="auth-back" href="/app/account.html">Minha conta</a>
           <button className="auth-text-button" type="button" onClick={signOut} disabled={pending}>
             Sair desta conta
           </button>
