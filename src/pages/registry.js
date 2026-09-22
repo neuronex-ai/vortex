@@ -4,6 +4,8 @@ export const pages = [
   { id: "home", path: "/", source: "index.html" },
   { id: "catalog", path: "/app/", source: "app/index.html" },
   { id: "auth", path: "/app/auth.html", source: "app/auth.html" },
+  { id: "account", path: "/app/account.html", source: "app/account.html" },
+  { id: "favorites", path: "/app/favorites.html", source: "app/favorites.html" },
   { id: "blog", path: "/blog.html", source: "blog.html" },
   { id: "changelog", path: "/changelog.html", source: "changelog.html" },
   { id: "contact", path: "/contact.html", source: "contact.html" },
@@ -18,9 +20,7 @@ export function resolvePage(pathname) {
   const path = normalizePath(pathname);
   const exactPage = pages.find((page) => page.path === path);
 
-  if (exactPage) {
-    return exactPage;
-  }
+  if (exactPage) return exactPage;
 
   if (path.startsWith("/blog/") && path.endsWith(".html")) {
     return {
