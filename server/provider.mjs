@@ -29,7 +29,7 @@ async function requestSource(url) {
   const ip = await sourceIp();
   return new Promise((resolve,reject) => {
     const timer = setTimeout(() => request.destroy(new Error('Source timeout')), 12000);
-    const request = https.get(url, {headers:sourceHeaders, servername:'steamrip.com', lookup:(_host,_options,callback)=>callback(null,ip,4)}, response => {
+    const request = https.get(url, {headers:sourceHeaders, servername:'steamrip.com', lookup:(_host,options,callback)=>options.all ? callback(null,[{address:ip,family:4}]) : callback(null,ip,4)}, response => {
       const chunks=[]; response.on('data',chunk=>chunks.push(chunk)); response.on('end',()=>{clearTimeout(timer); if(response.statusCode<200||response.statusCode>299) return reject(new Error(`Source HTTP ${response.statusCode}`)); resolve(Buffer.concat(chunks).toString('utf8'));});
     });
     request.on('error',error=>{clearTimeout(timer);reject(error)});
