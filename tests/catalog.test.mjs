@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { safeExternalUrl, sourcesForGame, mergeCatalogGame, mergeSources, pageCatalog, steamEntry } from '../src/services/catalogModel.mjs';
 import { matchSourceRecord, validateRecords, providerPage, sourceTitle } from '../scripts/source-adapters.mjs';
+import { canonicalGameTitle, sameGameTitle } from '../src/services/titleMatch.mjs';
+import { steamVerdeMatches } from '../supabase/functions/resolve-game-sources/source-policy.mjs';
 
 const json = async name => JSON.parse(await readFile(new URL(`../data/${name}`, import.meta.url), 'utf8'));
 const catalog = await json('steam-catalog-index.json');
@@ -86,9 +88,39 @@ test('Matching never conflates sequels, editions, duplicates or contradictory ap
   assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight Deluxe Edition' }]), null);
   assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight' }, { name: 'Hollow Knight' }]), null);
   assert.equal(matchSourceRecord(game, [{ appId: 123, name: 'Hollow Knight' }]), null);
-  assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight' }]).method, 'exact-unique-title');
+  assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight' }]).method, 'normalized-unique-title');
   assert.equal(matchSourceRecord(game, [{ appId: 367520, name: 'Localized title' }]).method, 'steam-app-id');
   assert.throws(() => validateRecords({ games: [] }));
+});
+
+test('Title matching tolerates provider noise but preserves game identity', () => {
+  const steamTitle = 'The Elder Scrolls IV: Oblivion Game of the Year Edition';
+  const providerTitle = 'The Elder Scrolls IV: Oblivion Game of the Year Edition (2007-2009) v1.2.0416 torrent + Tradução PT-BR [GOG/DODI Repack]';
+
+  assert.equal(canonicalGameTitle(steamTitle), 'elder scrolls 4 oblivion goty');
+  assert.equal(canonicalGameTitle(providerTitle), 'elder scrolls 4 oblivion goty');
+  assert.equal(sameGameTitle(steamTitle, providerTitle), true);
+  assert.equal(sameGameTitle('Resident Evil IV', 'Resident Evil 4'), true);
+  assert.equal(sameGameTitle('Resident Evil 4', 'Resident Evil 5'), false);
+  assert.equal(sameGameTitle('Hollow Knight', 'Hollow Knight: Silksong'), false);
+  assert.equal(sameGameTitle('Hollow Knight', 'Hollow Knight Deluxe Edition'), false);
+});
+
+test('SteamVerde matcher accepts noisy release labels only for the same game', () => {
+  const title = 'The Elder Scrolls IV: Oblivion Game of the Year Edition';
+  const rows = [
+    {
+      id: 1,
+      title: 'The Elder Scrolls IV: Oblivion Game of the Year Edition (2007-2009) v1.2.0416 torrent + Tradução PT-BR [GOG/DODI Repack]',
+      url: 'https://steamverde.net/download/the-elder-scrolls-iv-oblivion/',
+    },
+    {
+      id: 2,
+      title: 'The Elder Scrolls V: Skyrim Special Edition torrent',
+      url: 'https://steamverde.net/download/the-elder-scrolls-v-skyrim/',
+    },
+  ];
+  assert.deepEqual(steamVerdeMatches(title, rows).map(row => row.id), [1]);
 });
 
 test('Service browses the live Supabase catalog and hydrates missing Steam searches', async () => {

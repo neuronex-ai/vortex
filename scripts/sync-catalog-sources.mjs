@@ -1,6 +1,6 @@
 import { readFile, writeFile, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { validateRecords, providerPage, sourceTitle } from './source-adapters.mjs';
+import { validateRecords, providerPage, sourceTitle, normalizeTitle } from './source-adapters.mjs';
 
 const root = new URL('../', import.meta.url);
 const config = JSON.parse(await readFile(new URL('data/github-source-providers.json', root), 'utf8'));
@@ -23,7 +23,8 @@ for (const provider of config.providers.filter(item => item.enabled)) {
     const title = sourceTitle(row.name, provider.adapter);
     const externalUrl = providerPage(row.link, provider.allowedHosts ?? []);
     if (!externalUrl) continue;
-    const game = catalog.catalog.find(game => game.title.toLowerCase() === title.toLowerCase());
+    const matchingGames = catalog.catalog.filter(game => normalizeTitle(game.title) === normalizeTitle(title));
+    const game = matchingGames.length === 1 ? matchingGames[0] : null;
     const literal = JSON.stringify(row.name);
     const positions = [...text.matchAll(new RegExp('"name"\\s*:\\s*' + literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))];
     if (positions.length !== 1) continue;
@@ -34,7 +35,7 @@ for (const provider of config.providers.filter(item => item.enabled)) {
       externalUrl,
       downloadType: provider.adapter === "fitgirl-json" ? "Torrent na página externa" : "Página de download",
       referenceUrl: `https://github.com/${provider.repository}/blob/${provider.commit}/${provider.path}#L${line}`,
-      matchMethod: "exact-unique-title", sourceTitle: row.name,
+      matchMethod: game ? "normalized-unique-title" : "provider-title", sourceTitle: row.name,
       size: row.game_size ?? row.packed ?? null,
       version: typeof row.version === 'string' ? row.version : null,
       sourceDate: row.upload_date ?? null, license: provider.license });

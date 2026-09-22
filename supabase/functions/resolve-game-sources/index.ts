@@ -30,9 +30,10 @@ async function resolveGame(game: {steam_app_id:number;title:string}) {
   if(claimError) throw claimError;
   if(!claim?.length) return {appId,sources:cached.sources,cache:'busy'};
   try {
-    let sources=cached.sources;
+    let sources=Array.isArray(cached.sources)?cached.sources:[];
     let discoveryError=null;
-    if(!cached.discovered_at) {
+    const needsDiscovery=!cached.discovered_at || sources.length===0;
+    if(needsDiscovery) {
       sources=snapshotSources(game.title);
       try {
         const response=await fetch(`https://steamverde.net/wp-json/wp/v2/search?search=${encodeURIComponent(game.title)}&per_page=50`,{signal:AbortSignal.timeout(8000),redirect:'error'});
@@ -46,11 +47,14 @@ async function resolveGame(game: {steam_app_id:number;title:string}) {
       sources=await Promise.all(sources.map((source:unknown)=>checkSource(source)));
     }
     const checked=new Date().toISOString();
-    const {error}=await admin.from('game_source_cache').update({sources,discovered_at:discoveryError?null:(cached.discovered_at??checked),
-      checked_at:cached.discovered_at?checked:null,next_check_at:new Date(Date.now()+60000).toISOString(),lease_until:null,
+    const hasSources=sources.length>0;
+    const nextDelay=!hasSources ? (discoveryError ? 300000 : 21600000) : 60000;
+    const discoveredAt=(!hasSources && discoveryError) ? null : (cached.discovered_at??checked);
+    const {error}=await admin.from('game_source_cache').update({sources,discovered_at:discoveredAt,
+      checked_at:checked,next_check_at:new Date(Date.now()+nextDelay).toISOString(),lease_until:null,
       discovery_error:discoveryError,updated_at:checked}).eq('steam_app_id',appId);
     if(error) throw error;
-    return {appId,sources,cache:cached.discovered_at?'revalidated':'discovered',discoveryError};
+    return {appId,sources,cache:needsDiscovery?'discovered':'revalidated',discoveryError};
   } catch(error) {
     await admin.from('game_source_cache').update({lease_until:null}).eq('steam_app_id',appId);
     throw error;
