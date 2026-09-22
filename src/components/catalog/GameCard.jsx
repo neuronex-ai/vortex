@@ -21,7 +21,7 @@ export function GameCard({ game, onOpen, compact = false }) {
         aria-label={`Abrir detalhes de ${game.title}`}
       >
         <div className={imageFailed ? "game-card__media is-image-missing" : "game-card__media"}>
-          {!imageFailed && (
+          {!imageFailed && game.image && (
             <img
               src={game.image}
               alt=""
@@ -29,7 +29,7 @@ export function GameCard({ game, onOpen, compact = false }) {
               onError={() => setImageFailed(true)}
             />
           )}
-          {imageFailed && (
+          {(imageFailed || !game.image) && (
             <div className="game-card__fallback" aria-hidden="true">
               <span>{game.title.slice(0, 1)}</span>
               <small>Fusion</small>
@@ -38,20 +38,20 @@ export function GameCard({ game, onOpen, compact = false }) {
           <div className="game-card__shade" />
           <div className="game-card__badges">
             {game.localCoop && <span>Coop local</span>}
-            <span>{game.year}</span>
+            <span>{game.year || "Steam"}</span>
           </div>
         </div>
 
         <div className="game-card__body">
           <div className="game-card__title-row">
             <h3>{game.title}</h3>
-            <span className="game-card__size">{game.size}</span>
+            <span className="game-card__size">{game.price}</span>
           </div>
 
           <p>{game.description}</p>
 
           <div className="game-card__meta">
-            <span>{game.genres[0]}</span>
+            <span>{game.genres[0] || "Jogo"}</span>
             <span>{game.players}</span>
           </div>
         </div>
