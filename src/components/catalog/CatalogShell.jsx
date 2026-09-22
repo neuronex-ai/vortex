@@ -130,7 +130,6 @@ export function CatalogShell() {
         <motion.form
           className="catalog-search"
           onSubmit={submitSearch}
-          whileFocusWithin={{ scale: 1.005 }}
         >
           <span className="catalog-search__icon">{searchIcon}</span>
           <input
