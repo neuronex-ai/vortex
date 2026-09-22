@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 
 export function GameCard({ game, onOpen, compact = false }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
   return (
     <motion.article
       className={compact ? "game-card game-card--compact" : "game-card"}
@@ -18,8 +20,21 @@ export function GameCard({ game, onOpen, compact = false }) {
         onClick={() => onOpen(game)}
         aria-label={`Abrir detalhes de ${game.title}`}
       >
-        <div className="game-card__media">
-          <img src={game.image} alt="" loading="lazy" />
+        <div className={imageFailed ? "game-card__media is-image-missing" : "game-card__media"}>
+          {!imageFailed && (
+            <img
+              src={game.image}
+              alt=""
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+            />
+          )}
+          {imageFailed && (
+            <div className="game-card__fallback" aria-hidden="true">
+              <span>{game.title.slice(0, 1)}</span>
+              <small>Fusion</small>
+            </div>
+          )}
           <div className="game-card__shade" />
           <div className="game-card__badges">
             {game.localCoop && <span>Coop local</span>}
