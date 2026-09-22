@@ -10,6 +10,7 @@ test("Fusion AI keeps NVIDIA credentials server-side and defaults to the fast to
 
   assert.match(edge, /Deno\.env\.get\("NVIDIA_API_KEY"\)/);
   assert.match(edge, /Deno\.env\.get\("NVIDIA_MODEL"\)/);
+  assert.match(edge, /nvidia\/nemotron-3\.5-lightning-30b-a3b/);
   assert.match(edge, /openai\/gpt-oss-20b/);
   assert.match(edge, /integrate\.api\.nvidia\.com\/v1\/chat\/completions/);
   assert.doesNotMatch(edge, /nvapi-[A-Za-z0-9_-]+/);
@@ -35,6 +36,7 @@ test("Fusion AI exposes catalog, provider and Nucleus tools to the agent", async
   assert.match(edge, /steam_more_like_this_ids/);
   assert.match(edge, /browse_fusion_catalog_v2/);
   assert.match(edge, /name: "open_game"/);
+  assert.match(edge, /Promise\.all\(toolCalls/);
 });
 
 test("Fusion AI shell mirrors the Synapse launcher pattern without AI branding icons", async () => {
