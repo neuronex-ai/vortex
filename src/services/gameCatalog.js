@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabase.js";
-import { getCatalog, getFamilyFriendlyCatalog } from "../../lib/steam-catalog-client.ts";
-import { mergeCatalogGame, mergeSources, pageCatalog, sourcesForGame, steamEntry } from "./catalogModel.mjs";
+import { mergeSources, sourcesForGame } from "./catalogModel.mjs";
 
 export const PAGE_SIZE = 20;
 
@@ -88,13 +87,9 @@ function formatPrice(row) {
 
 function playerLabel(row) {
   if (row.local_coop) return "Coop local";
-
   const categories = row.categories ?? [];
   if (categories.some((item) => /co-op/i.test(item))) return "Co-op online";
-  if (categories.some((item) => /multijogador|multi-player/i.test(item))) {
-    return "Multijogador";
-  }
-
+  if (categories.some((item) => /multijogador|multi-player/i.test(item))) return "Multijogador";
   return "Um jogador";
 }
 
@@ -116,7 +111,7 @@ export function mapGameRow(row) {
 
   return {
     id: row.id,
-    steamAppId: row.steam_app_id,
+    steamAppId: Number(row.steam_app_id),
     slug: row.slug,
     title: row.title,
     description: row.short_description || "Descrição não disponível.",
@@ -146,140 +141,167 @@ export function mapGameRow(row) {
     recommendations: row.recommendations_total ?? 0,
     price: formatPrice(row),
     players: playerLabel(row),
-    storeUrl: row.steam_store_url,
+    storeUrl: row.steam_store_url || `https://store.steampowered.com/app/${row.steam_app_id}/`,
     requirements: {
       minimum: textOnly(row.pc_requirements?.minimum || ""),
       recommended: textOnly(row.pc_requirements?.recommended || ""),
     },
-    cursor: {
-      score: row.cursor_score ?? row.popularity_score ?? null,
-      date: row.cursor_date ?? row.release_date ?? null,
-      title: row.cursor_title ?? row.title ?? null,
-      id: row.cursor_id ?? row.id,
-    },
-    hasMore: Boolean(row.has_more),
   };
 }
 
-let catalogCache;
-let cacheExpires = 0;
-async function loadPublicCatalog() {
-  if (catalogCache && Date.now() < cacheExpires) return catalogCache;
-  cacheExpires = Date.now() + 60_000;
-  catalogCache = (async () => {
-    const [entries, { default: localSources }, { default: references }] = await Promise.all([
-      getFamilyFriendlyCatalog(), import("../../data/steam-sources.json"), import("../../data/steam-external-references.json"),
-    ]);
-    const metadata = new Map();
-    const cachedSources = new Map();
-    let metadataUnavailable = false;
-    for (let start = 0; start < entries.length; start += 100) {
-      const appIds = entries.slice(start, start + 100).map(game => game.appId);
-      try {
-        const { data, error } = await supabase.from("games").select(gameFields)
-          .in("steam_app_id", appIds)
-          .abortSignal(AbortSignal.timeout(10000));
-        if (error) throw error;
-        for (const row of data ?? []) metadata.set(Number(row.steam_app_id), mapGameRow(row));
-      } catch { metadataUnavailable = true; }
+const knownGames = new Map();
 
-      try {
-        const { data, error } = await supabase.from("game_source_cache")
-          .select("steam_app_id,sources,checked_at,next_check_at")
-          .in("steam_app_id", appIds)
-          .abortSignal(AbortSignal.timeout(10000));
-        if (error) throw error;
-        for (const row of data ?? []) cachedSources.set(Number(row.steam_app_id), row);
-      } catch {
-        // Static provider references remain available if the cache cannot be read.
-      }
-    }
-    return {
-      games: entries.map((entry) => {
-        const staticSources = sourcesForGame(entry.appId, localSources, references, entry.title);
-        const cache = cachedSources.get(entry.appId);
-        const dynamicSources = (cache?.sources ?? []).map((source) => ({
-          ...source,
-          lastCheckedAt: source.lastCheckedAt ?? cache.checked_at ?? null,
-        }));
-        return mergeCatalogGame(
-          entry,
-          metadata.get(entry.appId),
-          mergeSources(staticSources, dynamicSources),
-        );
-      }),
-      metadataUnavailable,
-    };
-  })().catch(error => { catalogCache = null; cacheExpires = 0; throw error; });
-  return catalogCache;
-}
-
-const discovered = new Map();
-const searchCache = new Map();
-async function enrichRows(rows) {
-  const [{ catalog }, { default: local }, { default: references }] = await Promise.all([
-    getCatalog(), import("../../data/steam-sources.json"), import("../../data/steam-external-references.json"),
-  ]);
-  return rows.map(row => {
-    const entry = steamEntry(row, catalog.find(item => item.appId === Number(row.steam_app_id)));
-    if (!entry.familyFriendly) return null;
-    const game = mergeCatalogGame(entry, mapGameRow(row), sourcesForGame(entry.appId, local, references, entry.title));
-    discovered.set(game.steamAppId, game);
+function rememberRows(rows = []) {
+  return rows.map(mapGameRow).map((game) => {
+    knownGames.set(game.steamAppId, game);
     return game;
-  }).filter(Boolean);
+  });
 }
 
-async function searchSteam(query) {
+function safeOffset(cursor) {
+  return Math.max(0, Math.floor(Number(cursor?.offset) || 0));
+}
+
+async function browseCatalog(options = {}) {
+  const query = options.query?.trim() ?? "";
+  const filter = options.filter || "Todos";
+  const sort = options.sort || "popular";
+  const limit = Math.min(Math.max(Number(options.limit) || PAGE_SIZE, 1), PAGE_SIZE);
+  const offset = safeOffset(options.cursor);
+
+  const { data, error } = await supabase.rpc("browse_fusion_catalog", {
+    p_query: query,
+    p_filter: filter,
+    p_sort: sort,
+    p_offset: offset,
+    p_limit: Math.min(limit + 1, PAGE_SIZE + 1),
+  });
+
+  if (error) throw error;
+
+  const mapped = rememberRows(data ?? []);
+  const games = mapped.slice(0, limit).map((game, index) => ({
+    ...game,
+    cursor: { offset: offset + index + 1 },
+  }));
+
+  return {
+    games,
+    hasMore: mapped.length > limit,
+    nextCursor: games.at(-1)?.cursor ?? null,
+    metadataUnavailable: false,
+  };
+}
+
+const steamSearchCache = new Map();
+
+async function syncSteamSearch(query) {
   const key = query.toLowerCase().trim();
-  const cached = searchCache.get(key);
-  if (cached && Date.now() - cached.time < 60_000) return cached.value;
-  const value = (async () => {
-    const { data: ids, error } = await supabase.rpc("search_steam_fallback_ids", { p_query: query, p_limit: 8 })
-      .abortSignal(AbortSignal.timeout(45000));
-    if (error) throw error;
-    if (!ids?.length) return [];
-    const { data, error: rowError } = await supabase.from("games").select(gameFields).in("steam_app_id", ids)
-      .abortSignal(AbortSignal.timeout(10000));
-    if (rowError) throw rowError;
-    return enrichRows(data ?? []);
-  })().catch(error => { searchCache.delete(key); throw error; });
-  if (searchCache.size >= 30) searchCache.delete(searchCache.keys().next().value);
-  searchCache.set(key, { time: Date.now(), value });
-  return value;
+  const cached = steamSearchCache.get(key);
+  if (cached && Date.now() - cached.time < 60_000) return cached.ids;
+
+  const promise = supabase
+    .rpc("search_steam_fallback_ids", {
+      p_query: query,
+      p_limit: 8,
+    })
+    .then(({ data, error }) => {
+      if (error) throw error;
+      return Array.isArray(data) ? data.map(Number).filter(Number.isSafeInteger) : [];
+    });
+
+  steamSearchCache.set(key, { time: Date.now(), ids: promise });
+  if (steamSearchCache.size > 30) steamSearchCache.delete(steamSearchCache.keys().next().value);
+
+  try {
+    return await promise;
+  } catch (error) {
+    steamSearchCache.delete(key);
+    throw error;
+  }
 }
 
 export async function fetchGamePage(options = {}) {
-  const { games, metadataUnavailable } = await loadPublicCatalog();
   const query = options.query?.trim() ?? "";
   let steamSearchUnavailable = false;
-  let extra = [];
-  if (query.length >= 2 && query.length <= 80) {
-    try { extra = await searchSteam(query); } catch { steamSearchUnavailable = true; }
+  let page = await browseCatalog(options);
+
+  if (query.length >= 2 && query.length <= 80 && page.games.length < 5) {
+    try {
+      const syncedIds = await syncSteamSearch(query);
+      if (syncedIds.length) page = await browseCatalog(options);
+    } catch {
+      steamSearchUnavailable = true;
+    }
   }
-  const localMatches = pageCatalog(games, { query, limit: 20 }).games;
-  const combined = query ? [...new Map([...localMatches, ...extra].map(game => [game.steamAppId, game])).values()] : games;
-  return { ...pageCatalog(combined, { ...options, query: "" }), metadataUnavailable, steamSearchUnavailable };
+
+  return { ...page, steamSearchUnavailable };
 }
 
 export async function fetchGameBySlug(slug) {
-  const cached = (await loadPublicCatalog()).games.find(game => game.slug === slug)
-    ?? [...discovered.values()].find(game => game.slug === slug);
-  if (cached) return cached;
-  const { data, error } = await supabase.from("games").select(gameFields).eq("slug", slug).maybeSingle();
+  const { data, error } = await supabase
+    .from("fusion_public_games")
+    .select(gameFields)
+    .eq("slug", slug)
+    .maybeSingle();
+
   if (error) throw error;
-  return data ? (await enrichRows([data]))[0] ?? null : null;
+  if (!data) return null;
+  return rememberRows([data])[0] ?? null;
 }
 
 export async function hydrateGameDetails(game) {
-  return discovered.get(game.steamAppId) ?? (await loadPublicCatalog()).games.find(item => item.steamAppId === game.steamAppId) ?? game;
+  if (!game?.steamAppId) return game;
+
+  try {
+    const { error } = await supabase.rpc("ensure_steam_game", {
+      p_app_id: Number(game.steamAppId),
+    });
+    if (error) throw error;
+
+    const { data, error: readError } = await supabase
+      .from("fusion_public_games")
+      .select(gameFields)
+      .eq("steam_app_id", Number(game.steamAppId))
+      .maybeSingle();
+
+    if (readError || !data) return knownGames.get(Number(game.steamAppId)) ?? game;
+    return rememberRows([data])[0] ?? game;
+  } catch {
+    return knownGames.get(Number(game.steamAppId)) ?? game;
+  }
 }
 
 export async function fetchFeaturedCoop() {
-  return (await fetchGamePage({ filter: "Coop local", limit: 4 })).games;
+  return (await browseCatalog({ filter: "Coop local", sort: "popular", limit: 4 })).games;
+}
+
+let sourceInputsPromise;
+function loadSourceInputs() {
+  if (!sourceInputsPromise) {
+    sourceInputsPromise = Promise.all([
+      import("../../data/steam-sources.json"),
+      import("../../data/steam-external-references.json"),
+    ]).then(([local, references]) => ({
+      local: local.default,
+      references: references.default,
+    }));
+  }
+  return sourceInputsPromise;
+}
+
+async function staticSourcesFor(appId, title) {
+  try {
+    const { local, references } = await loadSourceInputs();
+    return sourcesForGame(appId, local, references, title);
+  } catch {
+    return [];
+  }
 }
 
 async function readSourceCache(appId) {
-  const { data, error } = await supabase.from("game_source_cache")
+  const { data, error } = await supabase
+    .from("game_source_cache")
     .select("steam_app_id,sources,checked_at,next_check_at")
     .eq("steam_app_id", appId)
     .maybeSingle();
@@ -301,15 +323,31 @@ export async function fetchDistributionSources(appId) {
   const numericAppId = Number(appId);
   if (!Number.isSafeInteger(numericAppId) || numericAppId <= 0) return [];
 
-  const knownGame = discovered.get(numericAppId)
-    ?? (await loadPublicCatalog()).games.find(game => game.steamAppId === numericAppId);
-  const staticSources = knownGame?.sources ?? [];
+  let game = knownGames.get(numericAppId);
+  if (!game) {
+    const { data } = await supabase
+      .from("fusion_public_games")
+      .select("id,steam_app_id,slug,title")
+      .eq("steam_app_id", numericAppId)
+      .maybeSingle();
+    if (data) {
+      game = {
+        id: data.id,
+        steamAppId: Number(data.steam_app_id),
+        slug: data.slug,
+        title: data.title,
+      };
+      knownGames.set(numericAppId, game);
+    }
+  }
+
+  const staticSources = await staticSourcesFor(numericAppId, game?.title ?? "");
 
   let cache = null;
   try {
     cache = await readSourceCache(numericAppId);
   } catch {
-    // Keep static provider matches available when the cache is temporarily unreachable.
+    // Existing static references remain usable if the source cache is temporarily unavailable.
   }
 
   const cachedSources = (cache?.sources ?? []).map((source) => ({
@@ -320,11 +358,12 @@ export async function fetchDistributionSources(appId) {
   const nextCheck = Date.parse(cache?.next_check_at ?? "");
   const stale = !cache || !Number.isFinite(nextCheck) || nextCheck <= Date.now();
   let resolvedSources = [];
+
   if (stale) {
     try {
       resolvedSources = await resolveSourceCache(numericAppId);
     } catch {
-      // Existing static/cache links are still returned if revalidation cannot run.
+      // Do not remove already-known links when source revalidation cannot run.
     }
   }
 
@@ -340,24 +379,49 @@ async function currentUser() {
 export async function fetchFavoritePage({ page = 1, limit = PAGE_SIZE } = {}) {
   const user = await currentUser();
   if (!user) return { games: [], count: 0, page: 1, pageSize: limit };
+
   const safeLimit = Math.min(Math.max(limit, 1), PAGE_SIZE);
   const safePage = Math.max(page, 1);
-  const { data, error } = await supabase.from("game_favorites")
-    .select(`game_id,created_at,games(${gameFields})`).eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  const games = await enrichRows((data ?? []).map(item => item.games).filter(Boolean));
   const from = (safePage - 1) * safeLimit;
-  return { games: games.slice(from, from + safeLimit), count: games.length, page: safePage, pageSize: safeLimit };
+  const to = from + safeLimit - 1;
+
+  const { data: favorites, error, count } = await supabase
+    .from("game_favorites")
+    .select("game_id,created_at", { count: "exact" })
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) throw error;
+
+  const ids = (favorites ?? []).map((item) => item.game_id);
+  if (!ids.length) {
+    return { games: [], count: count ?? 0, page: safePage, pageSize: safeLimit };
+  }
+
+  const { data: rows, error: rowsError } = await supabase
+    .from("fusion_public_games")
+    .select(gameFields)
+    .in("id", ids);
+
+  if (rowsError) throw rowsError;
+
+  const mapped = rememberRows(rows ?? []);
+  const byId = new Map(mapped.map((game) => [game.id, game]));
+
+  return {
+    games: ids.map((id) => byId.get(id)).filter(Boolean),
+    count: count ?? 0,
+    page: safePage,
+    pageSize: safeLimit,
+  };
 }
 
 export async function fetchFavoriteGames(limit = 8) {
-  const result = await fetchFavoritePage({ page: 1, limit });
-  return result.games;
+  return (await fetchFavoritePage({ page: 1, limit })).games;
 }
 
 export async function addFavorite(gameId) {
-  if (String(gameId).startsWith("steam:")) throw new Error("Os detalhes da Steam estão indisponíveis. Tente salvar novamente em instantes.");
   const user = await currentUser();
   if (!user) throw new Error("AUTH_REQUIRED");
 
