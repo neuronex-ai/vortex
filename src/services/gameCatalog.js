@@ -163,3 +163,28 @@ export async function fetchFeaturedCoop() {
 
   return result.games;
 }
+
+export async function fetchDistributionSources(gameId) {
+  const { data, error } = await supabase
+    .from("game_distribution_sources")
+    .select(
+      "id,provider_key,provider_name,source_kind,landing_url,download_url,platform,version_label,is_direct_download,last_checked_at",
+    )
+    .eq("game_id", gameId)
+    .order("provider_name", { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((source) => ({
+    id: source.id,
+    providerKey: source.provider_key,
+    providerName: source.provider_name,
+    kind: source.source_kind,
+    landingUrl: source.landing_url,
+    downloadUrl: source.download_url,
+    platforms: source.platform ?? [],
+    version: source.version_label,
+    direct: source.is_direct_download,
+    lastCheckedAt: source.last_checked_at,
+  }));
+}
