@@ -25,37 +25,98 @@ const json = (body: unknown, status = 200) =>
 const SYSTEM_PROMPT = `
 Você é Fusion AI, o assistente de descoberta de jogos integrado ao Fusion.
 
-CONTEXTO DO PRODUTO
-- Fusion é um catálogo de jogos para PC que usa a Steam como fonte oficial de metadados e loja.
-- O catálogo público do Fusion já filtra conteúdo adulto/sexual.
-- O Fusion pode ter referências externas de download já cadastradas e ativas. Você só pode citar provedores e URLs que as ferramentas retornarem; nunca invente disponibilidade nem links.
-- Fontes externas são referências de terceiros. O Fusion não hospeda nem baixa arquivos.
-- Para jogo local, diferencie:
-  1) "nativo": a Steam informa coop local ou tela dividida; Nucleus não é necessário;
-  2) "Nucleus": há handler encontrado no SplitScreen.Me Handlers Hub;
-  3) "não verificado": nenhuma das condições acima foi confirmada.
-- Quando houver handler do Nucleus, informe se ele está verificado.
-- Para recomendações como "jogos do tipo X", use o jogo de referência e dados reais do catálogo. Priorize semelhança de gêneros/categorias e popularidade, respeitando os filtros pedidos.
-- Se o usuário pedir N jogos e as ferramentas confirmarem menos, entregue apenas os confirmados e explique a limitação.
-- Para disponibilidade de download, mostre apenas Steam e os provedores externos retornados pelas ferramentas.
-- Responda em português do Brasil, salvo pedido explícito em outro idioma.
-- Seja direto, útil e natural. Não mencione nomes internos de funções, banco, RPC, tool calling, Supabase ou implementação.
+REGRAS DO FUSION
+- Use sempre dados reais retornados pelas ferramentas. Nunca invente jogo, recurso, compatibilidade ou link.
+- Steam é a fonte principal para metadados, gêneros, tags, modos e recomendações de jogos similares.
+- Fontes externas só podem ser citadas se a ferramenta retornar uma URL ativa. Fusion não hospeda nem baixa jogos.
+- Responda em português do Brasil com termos curtos e fáceis.
+
+NÃO MISTURE ESTES CONCEITOS
+- "Multiplayer": mais de um jogador, mas não significa coop e não significa local.
+- "Coop": jogo cooperativo, sem afirmar onde.
+- "Coop online": cooperativo pela internet.
+- "Coop local nativo": a Steam confirma modo cooperativo local/compartilhado; não precisa de Nucleus.
+- "Na mesma tela": a Steam confirma modo de tela compartilhada/dividida. Diga "na mesma tela" quando não souber se a tela é fisicamente dividida.
+- "Nucleus": compatibilidade separada, confirmada pelo Handlers Hub. Nucleus não transforma um jogo single-player puro em multiplayer. Não chame Nucleus de coop local nativo.
+- Se um jogo só puder ser jogado localmente via Nucleus, diga exatamente isso.
+- Tags comunitárias como "Cooperativo Local" ou "Tela Dividida" ajudam em descoberta/similaridade, mas não substituem a confirmação estrutural de modo nativo.
+
+FILTROS
+- Quando o usuário combinar condições, combine-as na mesma consulta. Exemplo: Terror + Na mesma tela + Fonte externa.
+- "Terror" deve ser tratado como tag/tema quando necessário, não apenas como gênero.
+- Use modos separados para um jogador, multiplayer, coop, coop online, coop local nativo, mesma tela, LAN, PvP, crossplay e Remote Play Together.
+- Para Nucleus, confirme via ferramenta específica; não deduza por multiplayer ou coop.
+- Se o usuário pedir fonte externa, confirme as fontes antes de afirmar que existe download externo.
+
+SIMILARIDADE
+- Para "parecido com", "similar a" ou "tipo X", use find_similar_games. A ferramenta parte das recomendações oficiais de similares da Steam e depois aplica os filtros do Fusion.
+- Não reduza similaridade a um único gênero.
+- Se o usuário pedir N resultados e menos forem confirmados, entregue apenas os confirmados.
+
+INTERFACE
+- Toda vez que recomendar ou listar jogos, use ferramentas para obter as referências reais; a interface colocará um botão de abrir ao lado de cada jogo.
+- Se o usuário disser "abre", "mostra", "quero ver", "aqui tem X?" ou claramente estiver pedindo para ver um jogo específico na tela, use open_game para abrir o modal do Fusion de forma proativa.
+- Não escreva URLs internas do Fusion na resposta.
+- Não mencione nomes internos de funções, RPC, Supabase, tool calling ou implementação.
 - Não exponha raciocínio interno.
 `.trim();
+
+const MODE_VALUES = [
+  "single_player",
+  "multiplayer",
+  "coop_any",
+  "online_coop",
+  "local_coop",
+  "same_screen",
+  "lan_coop",
+  "online_pvp",
+  "local_pvp",
+  "crossplay",
+  "remote_together",
+];
+
+const filterProperties = {
+  genres: {
+    type: "array",
+    items: { type: "string" },
+    description: "Gêneros oficiais em português, por exemplo Ação, Aventura, RPG.",
+  },
+  tags: {
+    type: "array",
+    items: { type: "string" },
+    description: "Tags/temas da Steam em português, por exemplo Terror, Terror de Sobrevivência, Zumbis.",
+  },
+  modes: {
+    type: "array",
+    items: { type: "string", enum: MODE_VALUES },
+    description: "Modos combináveis. local_coop é local nativo; same_screen é tela compartilhada/dividida; multiplayer não implica coop.",
+  },
+  has_external_source: {
+    type: "boolean",
+    description: "Exigir pelo menos uma fonte externa ativa já conhecida pelo Fusion.",
+  },
+  nucleus: {
+    type: "boolean",
+    description: "Exigir compatibilidade confirmada com Nucleus.",
+  },
+  controller: {
+    type: "string",
+    enum: ["any", "full"],
+    description: "any = algum suporte a controle; full = suporte completo.",
+  },
+};
 
 const tools = [
   {
     type: "function",
     function: {
       name: "search_catalog",
-      description: "Pesquisa o catálogo real do Fusion/Steam por título e filtros. Use para localizar jogos e verificar recursos.",
+      description: "Pesquisa o catálogo real do Fusion usando filtros combináveis de gênero, tema, modo de jogo, Nucleus, controle e fonte externa.",
       parameters: {
         type: "object",
         properties: {
-          query: { type: "string", description: "Nome ou termo do jogo." },
-          genres: { type: "array", items: { type: "string" }, description: "Gêneros desejados." },
-          local_coop: { type: "boolean", description: "Exigir coop local informado pela Steam." },
-          split_screen: { type: "boolean", description: "Exigir tela dividida informada pela Steam." },
+          query: { type: "string", description: "Nome ou texto de busca opcional." },
+          ...filterProperties,
           limit: { type: "integer", minimum: 1, maximum: 20 },
         },
         additionalProperties: false,
@@ -66,12 +127,10 @@ const tools = [
     type: "function",
     function: {
       name: "get_game_details",
-      description: "Obtém detalhes de um jogo, incluindo Steam, recursos locais e fontes externas já conhecidas.",
+      description: "Obtém detalhes reais de um jogo, seus modos, requisitos, Nucleus e fontes externas.",
       parameters: {
         type: "object",
-        properties: {
-          query: { type: "string", description: "Nome do jogo." },
-        },
+        properties: { query: { type: "string" } },
         required: ["query"],
         additionalProperties: false,
       },
@@ -81,16 +140,12 @@ const tools = [
     type: "function",
     function: {
       name: "find_similar_games",
-      description: "Recomenda jogos semelhantes a um título de referência, podendo exigir coop/tela dividida nativos ou compatibilidade Nucleus.",
+      description: "Busca jogos similares usando recomendações da Steam e refina com filtros combináveis do Fusion.",
       parameters: {
         type: "object",
         properties: {
-          reference_query: { type: "string", description: "Jogo usado como referência, por exemplo Resident Evil 5." },
-          local_mode: {
-            type: "string",
-            enum: ["any", "native", "nucleus_or_native"],
-            description: "any = qualquer modo; native = coop/tela dividida nativos; nucleus_or_native = nativo ou handler Nucleus confirmado.",
-          },
+          reference_query: { type: "string", description: "Jogo usado como referência." },
+          ...filterProperties,
           limit: { type: "integer", minimum: 1, maximum: 15 },
         },
         required: ["reference_query"],
@@ -102,7 +157,7 @@ const tools = [
     type: "function",
     function: {
       name: "get_external_sources",
-      description: "Retorna as fontes externas já cadastradas/ativas no Fusion para Steam App IDs específicos.",
+      description: "Confirma fontes externas ativas para Steam App IDs.",
       parameters: {
         type: "object",
         properties: {
@@ -122,18 +177,26 @@ const tools = [
     type: "function",
     function: {
       name: "check_nucleus_support",
-      description: "Consulta o Handlers Hub oficial do SplitScreen.Me para verificar suporte Nucleus Co-op de um ou mais jogos.",
+      description: "Confirma compatibilidade com Nucleus para jogos reais do catálogo.",
       parameters: {
         type: "object",
         properties: {
-          titles: {
-            type: "array",
-            items: { type: "string" },
-            minItems: 1,
-            maxItems: 15,
-          },
+          titles: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 15 },
         },
         required: ["titles"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "open_game",
+      description: "Abre um jogo específico no modal de detalhes do Fusion. Use quando o usuário pedir para ver/abrir um jogo ou fizer uma pergunta de interface sobre um título específico.",
+      parameters: {
+        type: "object",
+        properties: { query: { type: "string" } },
+        required: ["query"],
         additionalProperties: false,
       },
     },
@@ -142,8 +205,7 @@ const tools = [
 
 function clampLimit(value: unknown, fallback: number, max: number) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.min(max, Math.max(1, Math.floor(n)));
+  return Number.isFinite(n) ? Math.min(max, Math.max(1, Math.floor(n))) : fallback;
 }
 
 function normalizeTitle(value: unknown) {
@@ -156,8 +218,6 @@ function normalizeTitle(value: unknown) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[™®©]/g, "")
     .toLowerCase()
-    .replace(/\bgame\s+of\s+the\s+year(?:\s+edition)?\b/g, " goty ")
-    .replace(/\bg\.?\s*o\.?\s*t\.?\s*y\.?(?:\s+edition)?\b/g, " goty ")
     .replace(/[’']/g, "")
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
@@ -165,114 +225,125 @@ function normalizeTitle(value: unknown) {
     .map((token) => roman.get(token) ?? token)
     .filter((token) => token !== "the")
     .join(" ")
-    .replace(/\s+/g, " ")
     .trim();
 }
 
-function arraysOverlap(left: unknown, right: unknown) {
-  const a = new Set((Array.isArray(left) ? left : []).map((v) => String(v).toLowerCase()));
-  return (Array.isArray(right) ? right : []).some((v) => a.has(String(v).toLowerCase()));
+function capabilityFlags(row: any) {
+  const ids = new Set((row?.steam_category_ids ?? []).map(Number));
+  return {
+    singlePlayer: ids.has(2),
+    multiplayer: ids.has(1),
+    coop: ids.has(9),
+    onlineCoop: ids.has(38),
+    localCoopNative: ids.has(39),
+    sameScreen: ids.has(24) || ids.has(37) || ids.has(39),
+    lanCoop: ids.has(48),
+    onlinePvp: ids.has(36),
+    localPvp: ids.has(37),
+    crossplay: ids.has(27),
+    remoteTogether: ids.has(44),
+    fullController: ids.has(28),
+    controller: ids.has(18) || ids.has(28) || ids.has(60),
+  };
 }
 
-function similarityScore(reference: any, game: any) {
-  const refGenres = new Set((reference.genres ?? []).map((v: string) => v.toLowerCase()));
-  const refCategories = new Set((reference.categories ?? []).map((v: string) => v.toLowerCase()));
-  let score = 0;
-  for (const value of game.genres ?? []) if (refGenres.has(String(value).toLowerCase())) score += 5;
-  for (const value of game.categories ?? []) if (refCategories.has(String(value).toLowerCase())) score += 2;
-  if (reference.controller_support && game.controller_support) score += 1;
-  if (reference.local_coop && game.local_coop) score += 2;
-  if (reference.shared_split_screen && game.shared_split_screen) score += 2;
-  score += Math.min(3, Math.log10(1 + Number(game.recommendations_total ?? 0)));
-  return score;
+function playLabels(row: any) {
+  const flags = capabilityFlags(row);
+  const labels = [];
+  if (flags.localCoopNative) labels.push("Coop local nativo");
+  if (flags.sameScreen) labels.push("Na mesma tela");
+  if (flags.onlineCoop) labels.push("Coop online");
+  if (flags.lanCoop) labels.push("Coop em LAN");
+  if (!labels.length && flags.coop) labels.push("Coop");
+  if (!labels.length && flags.multiplayer) labels.push("Multiplayer");
+  if (!labels.length && flags.singlePlayer) labels.push("Um jogador");
+  return labels;
 }
 
 const publicFields = [
-  "id", "steam_app_id", "slug", "title", "short_description", "release_year",
-  "header_image", "genres", "categories", "developers", "publishers",
-  "local_coop", "shared_split_screen", "controller_support",
+  "id", "steam_app_id", "slug", "title", "short_description", "about_game",
+  "header_image", "release_year", "genres", "categories", "tags", "franchises",
+  "steam_category_ids", "controller_support", "pc_requirements",
   "metacritic_score", "recommendations_total", "popularity_score", "steam_store_url",
 ].join(",");
 
-async function searchCatalog(args: any) {
-  const query = String(args?.query ?? "").trim().slice(0, 80);
-  const limit = clampLimit(args?.limit, 10, 20);
-
-  const run = async () => {
-    let q = admin
-      .from("fusion_public_games")
-      .select(publicFields)
-      .order("popularity_score", { ascending: false, nullsFirst: false })
-      .limit(limit);
-
-    if (query) q = q.ilike("title", `%${query.replace(/[%_]/g, "")}%`);
-    if (args?.local_coop === true) q = q.eq("local_coop", true);
-    if (args?.split_screen === true) q = q.eq("shared_split_screen", true);
-    if (Array.isArray(args?.genres) && args.genres.length) q = q.overlaps("genres", args.genres.slice(0, 8));
-
-    const { data, error } = await q;
-    if (error) throw error;
-    return data ?? [];
-  };
-
-  let rows = await run();
-
-  if (query.length >= 2 && rows.length < Math.min(5, limit)) {
-    try {
-      await admin.rpc("search_steam_fallback_ids", { p_query: query, p_limit: 8 });
-      rows = await run();
-    } catch {
-      // Existing catalog results remain valid if Steam fallback is temporarily unavailable.
-    }
-  }
-
-  return rows.map((row: any) => ({
-    steamAppId: Number(row.steam_app_id),
+function gameRef(row: any, extras: any = {}) {
+  if (!row) return null;
+  return {
+    steamAppId: Number(row.steam_app_id ?? row.steamAppId),
+    slug: row.slug,
     title: row.title,
-    description: row.short_description,
-    year: row.release_year,
+    image: row.header_image ?? row.image ?? null,
+    year: row.release_year ?? row.year ?? null,
     genres: row.genres ?? [],
-    categories: row.categories ?? [],
-    localCoop: Boolean(row.local_coop),
-    splitScreen: Boolean(row.shared_split_screen),
-    controllerSupport: row.controller_support,
-    metacritic: row.metacritic_score,
-    recommendations: Number(row.recommendations_total ?? 0),
-    steamUrl: row.steam_store_url || `https://store.steampowered.com/app/${row.steam_app_id}/`,
-  }));
+    tags: row.tags ?? [],
+    playLabels: row.playLabels ?? playLabels(row),
+    ...extras,
+  };
 }
 
-async function findGame(query: string) {
-  const term = query.trim().slice(0, 80);
-  const { data, error } = await admin.rpc("browse_fusion_catalog", {
-    p_query: term,
-    p_filter: "Todos",
-    p_sort: "popular",
-    p_offset: 0,
-    p_limit: 8,
-  });
-  if (error) throw error;
+function filterPayload(args: any, includeNucleus = false) {
+  const filters: any = {
+    genres: Array.isArray(args?.genres) ? args.genres.slice(0, 8) : [],
+    tags: Array.isArray(args?.tags) ? args.tags.slice(0, 10) : [],
+    modes: Array.isArray(args?.modes) ? args.modes.filter((value: string) => MODE_VALUES.includes(value)).slice(0, 8) : [],
+    has_source: args?.has_external_source === true,
+    controller: ["any", "full"].includes(args?.controller) ? args.controller : "",
+  };
+  if (includeNucleus) filters.nucleus = args?.nucleus === true;
+  return filters;
+}
 
-  let rows = data ?? [];
-  if (!rows.length && term.length >= 2) {
-    try {
-      await admin.rpc("search_steam_fallback_ids", { p_query: term, p_limit: 8 });
-      const second = await admin.rpc("browse_fusion_catalog", {
-        p_query: term,
-        p_filter: "Todos",
-        p_sort: "popular",
-        p_offset: 0,
-        p_limit: 8,
-      });
-      if (!second.error) rows = second.data ?? [];
-    } catch {
-      // No-op.
-    }
+async function browseRows(query: string, args: any, target: number) {
+  const filters = filterPayload(args, false);
+  const rows: any[] = [];
+  const pageSize = 21;
+  const maxPages = args?.nucleus ? 4 : 1;
+
+  for (let page = 0; page < maxPages && rows.length < Math.max(target, pageSize); page += 1) {
+    const { data, error } = await admin.rpc("browse_fusion_catalog_v2", {
+      p_query: query,
+      p_filters: filters,
+      p_sort: "popular",
+      p_offset: page * pageSize,
+      p_limit: pageSize,
+    });
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if ((data ?? []).length < pageSize) break;
   }
+  return rows;
+}
 
-  if (!rows.length) return null;
-  const normalized = normalizeTitle(term);
-  return rows.find((row: any) => normalizeTitle(row.title) === normalized) ?? rows[0];
+async function resolveNucleus(games: any[]) {
+  const input = games
+    .filter(Boolean)
+    .map((game) => ({
+      steamAppId: Number(game.steam_app_id ?? game.steamAppId),
+      title: String(game.title ?? ""),
+    }))
+    .filter((game) => game.steamAppId > 0 && game.title)
+    .slice(0, 20);
+
+  if (!input.length) return [];
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/resolve-nucleus-support`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({ games: input }),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return Array.isArray(payload?.results) ? payload.results : [];
+  } catch {
+    return [];
+  }
 }
 
 async function resolveExternalSources(appIds: number[]) {
@@ -289,30 +360,26 @@ async function resolveExternalSources(appIds: number[]) {
         Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
       },
       body: JSON.stringify({ appIds: ids }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(20000),
     });
     if (response.ok) {
       const payload = await response.json();
       resolved = Array.isArray(payload?.results) ? payload.results : [];
     }
   } catch {
-    // Fall back to already persisted cache.
+    // persisted cache below remains usable
   }
 
-  const resolvedById = new Map(resolved.map((item: any) => [Number(item.appId), item.sources ?? []]));
-  const missing = ids.filter((id) => !resolvedById.has(id));
-
+  const map = new Map(resolved.map((item: any) => [Number(item.appId), item.sources ?? []]));
+  const missing = ids.filter((id) => !map.has(id));
   if (missing.length) {
-    const { data } = await admin
-      .from("game_source_cache")
-      .select("steam_app_id,sources")
-      .in("steam_app_id", missing);
-    for (const row of data ?? []) resolvedById.set(Number(row.steam_app_id), row.sources ?? []);
+    const { data } = await admin.from("game_source_cache").select("steam_app_id,sources").in("steam_app_id", missing);
+    for (const row of data ?? []) map.set(Number(row.steam_app_id), row.sources ?? []);
   }
 
   return ids.map((appId) => ({
     steamAppId: appId,
-    sources: (resolvedById.get(appId) ?? [])
+    sources: (map.get(appId) ?? [])
       .filter((source: any) => source?.url && source?.availability !== "unavailable")
       .map((source: any) => ({
         provider: source.providerName,
@@ -324,46 +391,186 @@ async function resolveExternalSources(appIds: number[]) {
   }));
 }
 
-async function nucleusForTitle(title: string) {
-  const clean = title.trim().slice(0, 120);
-  if (!clean) return { title, supported: false, handlers: [] };
+async function findGame(query: string) {
+  const term = String(query ?? "").trim().slice(0, 80);
+  if (!term) return null;
 
-  try {
-    const response = await fetch(
-      `https://hub.splitscreen.me/api/v1/handlers/${encodeURIComponent(clean)}`,
-      { signal: AbortSignal.timeout(6000), headers: { Accept: "application/json" } },
-    );
-    if (!response.ok) return { title, supported: false, handlers: [] };
+  const lookup = async () => {
+    const { data, error } = await admin.rpc("browse_fusion_catalog_v2", {
+      p_query: term,
+      p_filters: {},
+      p_sort: "popular",
+      p_offset: 0,
+      p_limit: 8,
+    });
+    if (error) throw error;
+    return data ?? [];
+  };
 
-    const payload = await response.json();
-    const items = Array.isArray(payload?.Handlers) ? payload.Handlers : [];
-    const target = normalizeTitle(clean);
-    const handlers = items
-      .filter((item: any) => {
-        const name = item?.gameName ?? item?.title ?? "";
-        return normalizeTitle(name) === target && item?.private !== true && item?.publicAuthorized !== false;
-      })
-      .slice(0, 4)
-      .map((item: any) => ({
-        id: item._id,
-        title: item.gameName ?? item.title,
-        verified: item.verified === true,
-        maxPlayers: Number(item.maxPlayers ?? 0) || null,
-        controllers: item.playableControllers !== false,
-        mouseKeyboard: item.playableMouseKeyboard === true,
-        description: item.description ?? null,
-        updatedAt: item.updatedAt ?? null,
-      }));
-
-    return {
-      title,
-      supported: handlers.length > 0,
-      verified: handlers.some((handler: any) => handler.verified),
-      handlers,
-    };
-  } catch {
-    return { title, supported: false, unavailable: true, handlers: [] };
+  let rows = await lookup();
+  if (!rows.length && term.length >= 2) {
+    try {
+      await admin.rpc("search_steam_fallback_ids", { p_query: term, p_limit: 8 });
+      rows = await lookup();
+    } catch {
+      // Keep empty result.
+    }
   }
+
+  const target = normalizeTitle(term);
+  return rows.find((row: any) => normalizeTitle(row.title) === target) ?? rows[0] ?? null;
+}
+
+async function searchCatalog(args: any) {
+  const query = String(args?.query ?? "").trim().slice(0, 80);
+  const limit = clampLimit(args?.limit, 10, 20);
+
+  let rows = await browseRows(query, args, limit);
+
+  if (query.length >= 2 && rows.length < Math.min(5, limit)) {
+    try {
+      await admin.rpc("search_steam_fallback_ids", { p_query: query, p_limit: 8 });
+      rows = await browseRows(query, args, limit);
+    } catch {
+      // Existing results remain valid.
+    }
+  }
+
+  let nucleusMap = new Map<number, any>();
+  if (args?.nucleus === true && rows.length) {
+    const checked = await resolveNucleus(rows.slice(0, 60));
+    nucleusMap = new Map(checked.map((item: any) => [Number(item.steamAppId), item]));
+    rows = rows.filter((row: any) => nucleusMap.get(Number(row.steam_app_id))?.supported);
+  }
+
+  const selected = rows.slice(0, limit);
+  const sourceRows = args?.has_external_source
+    ? await resolveExternalSources(selected.map((row: any) => Number(row.steam_app_id)))
+    : [];
+  const sourceMap = new Map(sourceRows.map((row: any) => [row.steamAppId, row.sources]));
+
+  return {
+    filters: filterPayload(args, true),
+    games: selected.map((row: any) => ({
+      ...gameRef(row),
+      description: row.short_description,
+      capabilities: capabilityFlags(row),
+      nucleus: nucleusMap.get(Number(row.steam_app_id)) ?? null,
+      externalSources: sourceMap.get(Number(row.steam_app_id)) ?? [],
+      steamUrl: row.steam_store_url || `https://store.steampowered.com/app/${row.steam_app_id}/`,
+    })),
+  };
+}
+
+async function getGameDetails(args: any) {
+  const row = await findGame(args?.query);
+  if (!row) return { found: false };
+
+  const [sources, nucleus] = await Promise.all([
+    resolveExternalSources([Number(row.steam_app_id)]),
+    resolveNucleus([row]),
+  ]);
+
+  return {
+    found: true,
+    game: {
+      ...gameRef(row),
+      description: row.short_description,
+      about: row.about_game,
+      capabilities: capabilityFlags(row),
+      controllerSupport: row.controller_support,
+      requirements: row.pc_requirements ?? {},
+      metacritic: row.metacritic_score,
+      recommendations: Number(row.recommendations_total ?? 0),
+      steamUrl: row.steam_store_url || `https://store.steampowered.com/app/${row.steam_app_id}/`,
+    },
+    externalSources: sources[0]?.sources ?? [],
+    nucleus: nucleus[0] ?? null,
+  };
+}
+
+function rowMatchesFilters(row: any, args: any) {
+  const flags = capabilityFlags(row);
+  const modes = Array.isArray(args?.modes) ? args.modes : [];
+  for (const mode of modes) {
+    if (mode === "single_player" && !flags.singlePlayer) return false;
+    if (mode === "multiplayer" && !flags.multiplayer) return false;
+    if (mode === "coop_any" && !flags.coop) return false;
+    if (mode === "online_coop" && !flags.onlineCoop) return false;
+    if (mode === "local_coop" && !flags.localCoopNative) return false;
+    if (mode === "same_screen" && !flags.sameScreen) return false;
+    if (mode === "lan_coop" && !flags.lanCoop) return false;
+    if (mode === "online_pvp" && !flags.onlinePvp) return false;
+    if (mode === "local_pvp" && !flags.localPvp) return false;
+    if (mode === "crossplay" && !flags.crossplay) return false;
+    if (mode === "remote_together" && !flags.remoteTogether) return false;
+  }
+
+  const lower = (values: any[]) => values.map((value) => String(value).toLowerCase());
+  const gameGenres = lower(row.genres ?? []);
+  const gameTags = lower([...(row.tags ?? []), ...(row.genres ?? []), ...(row.categories ?? [])]);
+  if (Array.isArray(args?.genres) && args.genres.some((value: string) => !gameGenres.includes(value.toLowerCase()))) return false;
+  if (Array.isArray(args?.tags) && args.tags.some((value: string) => !gameTags.includes(value.toLowerCase()))) return false;
+  if (args?.controller === "full" && !flags.fullController) return false;
+  if (args?.controller === "any" && !flags.controller) return false;
+  return true;
+}
+
+async function findSimilarGames(args: any) {
+  const reference = await findGame(args?.reference_query);
+  if (!reference) return { foundReference: false, games: [] };
+
+  const limit = clampLimit(args?.limit, 10, 15);
+  const { data: rawIds, error: idsError } = await admin.rpc("steam_more_like_this_ids", {
+    p_app_id: Number(reference.steam_app_id),
+    p_count: 30,
+  });
+  if (idsError) throw idsError;
+
+  const ids = (Array.isArray(rawIds) ? rawIds : []).map(Number).filter(Boolean);
+  if (!ids.length) return { foundReference: true, reference: gameRef(reference), games: [] };
+
+  const { data, error } = await admin
+    .from("fusion_public_games")
+    .select(publicFields)
+    .in("steam_app_id", ids);
+  if (error) throw error;
+
+  const byId = new Map((data ?? []).map((row: any) => [Number(row.steam_app_id), row]));
+  let rows = ids.map((id) => byId.get(id)).filter(Boolean).filter((row) => rowMatchesFilters(row, args));
+
+  let sourceMap = new Map<number, any[]>();
+  if (args?.has_external_source === true && rows.length) {
+    const sourceRows = await resolveExternalSources(rows.slice(0, 20).map((row: any) => Number(row.steam_app_id)));
+    sourceMap = new Map(sourceRows.map((item: any) => [item.steamAppId, item.sources]));
+    rows = rows.filter((row: any) => (sourceMap.get(Number(row.steam_app_id)) ?? []).length > 0);
+  }
+
+  let nucleusMap = new Map<number, any>();
+  if (args?.nucleus === true && rows.length) {
+    const checked = await resolveNucleus(rows.slice(0, 20));
+    nucleusMap = new Map(checked.map((item: any) => [Number(item.steamAppId), item]));
+    rows = rows.filter((row: any) => nucleusMap.get(Number(row.steam_app_id))?.supported);
+  }
+
+  const selected = rows.slice(0, limit);
+  if (args?.has_external_source !== true && selected.length) {
+    const sourceRows = await resolveExternalSources(selected.map((row: any) => Number(row.steam_app_id)));
+    sourceMap = new Map(sourceRows.map((item: any) => [item.steamAppId, item.sources]));
+  }
+
+  return {
+    foundReference: true,
+    reference: gameRef(reference),
+    games: selected.map((row: any) => ({
+      ...gameRef(row),
+      description: row.short_description,
+      capabilities: capabilityFlags(row),
+      nucleus: nucleusMap.get(Number(row.steam_app_id)) ?? null,
+      externalSources: sourceMap.get(Number(row.steam_app_id)) ?? [],
+      steamUrl: row.steam_store_url || `https://store.steampowered.com/app/${row.steam_app_id}/`,
+    })),
+  };
 }
 
 async function getExternalSources(args: any) {
@@ -371,145 +578,35 @@ async function getExternalSources(args: any) {
 }
 
 async function checkNucleusSupport(args: any) {
-  const titles = Array.isArray(args?.titles) ? args.titles.slice(0, 15).map(String) : [];
-  return Promise.all(titles.map((title: string) => nucleusForTitle(title)));
+  const titles = (Array.isArray(args?.titles) ? args.titles : []).slice(0, 15).map(String);
+  const games = [];
+  for (const title of titles) {
+    const row = await findGame(title);
+    if (row) games.push(row);
+  }
+  return resolveNucleus(games);
 }
 
-async function getGameDetails(args: any) {
-  const game = await findGame(String(args?.query ?? ""));
-  if (!game) return { found: false };
-
-  const [sources, nucleus] = await Promise.all([
-    resolveExternalSources([Number(game.steam_app_id)]),
-    nucleusForTitle(game.title),
-  ]);
-
+async function openGame(args: any) {
+  const row = await findGame(args?.query);
+  if (!row) return { found: false };
+  const game = gameRef(row);
   return {
     found: true,
-    game: {
-      steamAppId: Number(game.steam_app_id),
-      title: game.title,
-      description: game.short_description,
-      about: game.about_game,
-      year: game.release_year,
-      genres: game.genres ?? [],
-      categories: game.categories ?? [],
-      localCoop: Boolean(game.local_coop),
-      splitScreen: Boolean(game.shared_split_screen),
-      controllerSupport: game.controller_support,
-      metacritic: game.metacritic_score,
-      recommendations: Number(game.recommendations_total ?? 0),
-      developers: game.developers ?? [],
-      publishers: game.publishers ?? [],
-      steamUrl: game.steam_store_url || `https://store.steampowered.com/app/${game.steam_app_id}/`,
-    },
-    externalSources: sources[0]?.sources ?? [],
-    nucleus,
-  };
-}
-
-async function findSimilarGames(args: any) {
-  const reference = await findGame(String(args?.reference_query ?? ""));
-  if (!reference) return { foundReference: false, games: [] };
-
-  const mode = ["any", "native", "nucleus_or_native"].includes(args?.local_mode)
-    ? args.local_mode
-    : "any";
-  const limit = clampLimit(args?.limit, 10, 15);
-
-  let q = admin
-    .from("fusion_public_games")
-    .select(publicFields)
-    .neq("steam_app_id", reference.steam_app_id)
-    .order("popularity_score", { ascending: false, nullsFirst: false })
-    .limit(60);
-
-  if (Array.isArray(reference.genres) && reference.genres.length) {
-    q = q.overlaps("genres", reference.genres);
-  }
-
-  if (mode === "native") {
-    q = q.or("local_coop.eq.true,shared_split_screen.eq.true");
-  }
-
-  const { data, error } = await q;
-  if (error) throw error;
-
-  let candidates = (data ?? [])
-    .map((game: any) => ({
-      ...game,
-      score: similarityScore(reference, game),
-      nativeLocal: Boolean(game.local_coop || game.shared_split_screen),
-    }))
-    .sort((a: any, b: any) => b.score - a.score || Number(b.popularity_score ?? 0) - Number(a.popularity_score ?? 0));
-
-  const evaluated: any[] = [];
-  if (mode === "nucleus_or_native") {
-    const probe = candidates.slice(0, 30);
-    const nucleusResults = await Promise.all(
-      probe.map((game: any) => game.nativeLocal ? Promise.resolve(null) : nucleusForTitle(game.title)),
-    );
-
-    for (let i = 0; i < probe.length; i += 1) {
-      const game = probe[i];
-      const nucleus = nucleusResults[i];
-      if (game.nativeLocal || nucleus?.supported) {
-        evaluated.push({ ...game, nucleus });
-      }
-      if (evaluated.length >= limit) break;
-    }
-    candidates = evaluated;
-  } else {
-    candidates = candidates.slice(0, limit);
-  }
-
-  const selected = candidates.slice(0, limit);
-  const sourceRows = await resolveExternalSources(selected.map((game: any) => Number(game.steam_app_id)));
-  const sourceMap = new Map(sourceRows.map((row: any) => [row.steamAppId, row.sources]));
-
-  return {
-    foundReference: true,
-    reference: {
-      steamAppId: Number(reference.steam_app_id),
-      title: reference.title,
-      genres: reference.genres ?? [],
-      categories: reference.categories ?? [],
-    },
-    games: selected.map((game: any) => ({
-      steamAppId: Number(game.steam_app_id),
-      title: game.title,
-      description: game.short_description,
-      year: game.release_year,
-      genres: game.genres ?? [],
-      categories: game.categories ?? [],
-      similarityScore: Number(game.score.toFixed(2)),
-      localMode: game.nativeLocal ? "native" : game.nucleus?.supported ? "nucleus" : "not_verified",
-      nativeLocalCoop: Boolean(game.local_coop),
-      nativeSplitScreen: Boolean(game.shared_split_screen),
-      nucleus: game.nucleus ?? null,
-      controllerSupport: game.controller_support,
-      metacritic: game.metacritic_score,
-      recommendations: Number(game.recommendations_total ?? 0),
-      steamUrl: game.steam_store_url || `https://store.steampowered.com/app/${game.steam_app_id}/`,
-      externalSources: sourceMap.get(Number(game.steam_app_id)) ?? [],
-    })),
+    game,
+    action: { type: "open_game", game },
   };
 }
 
 async function executeTool(name: string, args: any) {
   switch (name) {
-    case "search_catalog":
-      return searchCatalog(args);
-    case "get_game_details":
-      return getGameDetails(args);
-    case "find_similar_games":
-      return findSimilarGames(args);
-    case "get_external_sources":
-      return getExternalSources(args);
-    case "check_nucleus_support":
-      return checkNucleusSupport(args);
-    default:
-      return { error: "Unknown tool" };
+    case "search_catalog": return searchCatalog(args);
+    case "get_game_details": return getGameDetails(args);
+    case "find_similar_games": return findSimilarGames(args);
+    case "get_external_sources": return getExternalSources(args);
+    case "check_nucleus_support": return checkNucleusSupport(args);
+    case "open_game": return openGame(args);
+    default: return { error: "Unknown tool" };
   }
 }
 
@@ -529,9 +626,9 @@ async function callNvidia(messages: any[], toolChoice: any = "auto", includeTool
   const body: any = {
     model: NVIDIA_MODEL,
     messages,
-    temperature: 0.2,
+    temperature: 0.15,
     top_p: 0.9,
-    max_tokens: 1400,
+    max_tokens: 1600,
     stream: false,
   };
   if (includeTools) {
@@ -547,21 +644,51 @@ async function callNvidia(messages: any[], toolChoice: any = "auto", includeTool
       Accept: "application/json",
     },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(50000),
   });
 
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 800);
     throw new Error(`NVIDIA ${response.status}: ${detail}`);
   }
-
   return response.json();
+}
+
+function collectGameReferences(value: any, games: Map<number, any>, actions: any[]) {
+  if (!value) return;
+  if (Array.isArray(value)) {
+    for (const item of value) collectGameReferences(item, games, actions);
+    return;
+  }
+  if (typeof value !== "object") return;
+
+  if (value.action?.type === "open_game" && value.action?.game?.slug) {
+    actions.push(value.action);
+  }
+
+  const appId = Number(value.steamAppId ?? value.steam_app_id);
+  if (appId > 0 && value.title && value.slug) {
+    games.set(appId, {
+      steamAppId: appId,
+      slug: value.slug,
+      title: value.title,
+      image: value.image ?? value.header_image ?? null,
+      year: value.year ?? value.release_year ?? null,
+      playLabels: value.playLabels ?? [],
+    });
+  }
+
+  for (const child of Object.values(value)) {
+    if (child !== value) collectGameReferences(child, games, actions);
+  }
 }
 
 async function runAgent(history: any[]) {
   const messages: any[] = [{ role: "system", content: SYSTEM_PROMPT }, ...history];
+  const games = new Map<number, any>();
+  const actions: any[] = [];
 
-  for (let round = 0; round < 5; round += 1) {
+  for (let round = 0; round < 6; round += 1) {
     const response = await callNvidia(messages);
     const message = response?.choices?.[0]?.message;
     if (!message) throw new Error("NVIDIA returned no assistant message");
@@ -572,51 +699,45 @@ async function runAgent(history: any[]) {
         content: String(message.content ?? "").trim(),
         model: response.model ?? NVIDIA_MODEL,
         usage: response.usage ?? null,
+        games: [...games.values()].slice(0, 20),
+        actions: actions.slice(0, 4),
       };
     }
 
-    messages.push({
-      role: "assistant",
-      content: message.content ?? null,
-      tool_calls: toolCalls,
-    });
+    messages.push({ role: "assistant", content: message.content ?? null, tool_calls: toolCalls });
 
-    for (const call of toolCalls.slice(0, 4)) {
+    for (const call of toolCalls.slice(0, 5)) {
       let args = {};
-      try {
-        args = JSON.parse(call?.function?.arguments ?? "{}");
-      } catch {
-        args = {};
-      }
+      try { args = JSON.parse(call?.function?.arguments ?? "{}"); } catch { args = {}; }
 
-      let result: unknown;
+      let result: any;
       try {
         result = await executeTool(call?.function?.name ?? "", args);
       } catch (error) {
         result = { error: error instanceof Error ? error.message : "Tool failed" };
       }
 
+      collectGameReferences(result, games, actions);
       messages.push({
         role: "tool",
         tool_call_id: call.id,
         name: call?.function?.name,
-        content: JSON.stringify(result).slice(0, 30000),
+        content: JSON.stringify(result).slice(0, 36000),
       });
     }
   }
 
   const final = await callNvidia([
     ...messages,
-    {
-      role: "system",
-      content: "Agora responda ao usuário com os dados já obtidos. Não faça novas chamadas de ferramenta.",
-    },
+    { role: "system", content: "Responda agora usando somente os dados já obtidos. Não faça novas chamadas." },
   ], "none", false);
 
   return {
     content: String(final?.choices?.[0]?.message?.content ?? "").trim(),
     model: final?.model ?? NVIDIA_MODEL,
     usage: final?.usage ?? null,
+    games: [...games.values()].slice(0, 20),
+    actions: actions.slice(0, 4),
   };
 }
 
@@ -625,10 +746,7 @@ Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   if (!NVIDIA_API_KEY) {
-    return json({
-      error: "Fusion AI ainda não está configurado.",
-      code: "nvidia_not_configured",
-    }, 503);
+    return json({ error: "Fusion AI ainda não está configurado.", code: "nvidia_not_configured" }, 503);
   }
 
   const authHeader = request.headers.get("authorization") ?? "";
@@ -644,20 +762,19 @@ Deno.serve(async (request) => {
     const raw = await request.text();
     if (raw.length > 120000) return json({ error: "Conversation too large" }, 413);
     const body = JSON.parse(raw);
-    const messages = sanitizeMessages(body?.messages);
-    if (!messages.length || messages.at(-1)?.role !== "user") {
-      return json({ error: "Invalid conversation" }, 400);
-    }
+    const history = sanitizeMessages(body?.messages);
+    if (!history.length || history.at(-1)?.role !== "user") return json({ error: "Invalid conversation" }, 400);
 
     const startedAt = performance.now();
-    const result = await runAgent(messages);
-    const latencyMs = Math.round(performance.now() - startedAt);
+    const result = await runAgent(history);
 
     return json({
       reply: result.content || "Não consegui formular uma resposta agora.",
       model: result.model,
       usage: result.usage,
-      latencyMs,
+      latencyMs: Math.round(performance.now() - startedAt),
+      games: result.games,
+      actions: result.actions,
     });
   } catch (error) {
     console.error("fusion-ai error", error);
