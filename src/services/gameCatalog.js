@@ -624,13 +624,15 @@ function matchesClientFilters(game, filters = {}) {
 
 export async function fetchSimilarGames(game, filters = {}, limit = 12) {
   const count = Math.min(Math.max(Number(limit) || 12, 1), 20);
-  const { data: ids, error: idError } = await supabase.rpc("steam_more_like_this_ids", {
-    p_app_id: Number(game.steamAppId),
-    p_count: Math.min(30, Math.max(count * 2, 16)),
+  const { data: similarPayload, error: similarError } = await supabase.functions.invoke("similar-games", {
+    body: {
+      steamAppId: Number(game.steamAppId),
+      count: Math.min(30, Math.max(count * 2, 16)),
+    },
   });
-  if (idError) throw idError;
+  if (similarError) throw similarError;
 
-  const appIds = (Array.isArray(ids) ? ids : []).map(Number).filter(Boolean);
+  const appIds = (Array.isArray(similarPayload?.ids) ? similarPayload.ids : []).map(Number).filter(Boolean);
   if (!appIds.length) return [];
 
   const { data, error } = await supabase
