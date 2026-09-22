@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { categories, gameMatchesQuery, games } from "../../data/games.js";
 import { GameCard } from "./GameCard.jsx";
 import { GameDetail } from "./GameDetail.jsx";
+import "../../styles/catalog-enhancements.css";
 
 const searchIcon = (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -25,6 +26,18 @@ const gridIcon = (
   </svg>
 );
 
+const menuIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 7h14M5 12h14M5 17h14" />
+  </svg>
+);
+
+const closeIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+);
+
 const navItems = [
   { label: "Início", href: "#inicio" },
   { label: "Explorar", href: "#explorar" },
@@ -41,6 +54,7 @@ export function CatalogShell() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("popular");
   const [selectedGame, setSelectedGame] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const openFromUrl = () => {
@@ -99,6 +113,11 @@ export function CatalogShell() {
     document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function selectNav(item) {
+    setActiveNav(item.label);
+    setMobileOpen(false);
+  }
+
   return (
     <div className="catalog-page" id="inicio">
       <div className="catalog-ambient catalog-ambient--one" />
@@ -117,6 +136,10 @@ export function CatalogShell() {
           aria-label="Ir para o início do Fusion"
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.97 }}
+          onClick={() => {
+            setActiveNav("Início");
+            setMobileOpen(false);
+          }}
         >
           <img src="/assets/5d0cbaa2b34ad9.png" alt="" />
           <span>Fusion</span>
@@ -129,7 +152,7 @@ export function CatalogShell() {
               href={item.href}
               className={activeNav === item.label ? "is-active" : undefined}
               aria-current={activeNav === item.label ? "page" : undefined}
-              onClick={() => setActiveNav(item.label)}
+              onClick={() => selectNav(item)}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -147,7 +170,55 @@ export function CatalogShell() {
           <span>Voltar ao site</span>
           {arrowIcon}
         </motion.a>
+
+        <motion.button
+          className="catalog-mobile-toggle"
+          type="button"
+          aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen((value) => !value)}
+          whileTap={{ scale: 0.94 }}
+        >
+          {mobileOpen ? closeIcon : menuIcon}
+        </motion.button>
       </motion.header>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.button
+              className="catalog-mobile-backdrop"
+              type="button"
+              aria-label="Fechar menu"
+              onClick={() => setMobileOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+            <motion.nav
+              className="catalog-mobile-nav"
+              aria-label="Navegação mobile do Fusion"
+              initial={{ opacity: 0, y: -12, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.99 }}
+              transition={{ duration: 0.2, ease }}
+            >
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className={activeNav === item.label ? "is-active" : undefined}
+                  onClick={() => selectNav(item)}
+                >
+                  <span>{item.label}</span>
+                  {arrowIcon}
+                </a>
+              ))}
+              <a href="/">Voltar ao site</a>
+            </motion.nav>
+          </>
+        )}
+      </AnimatePresence>
 
       <motion.section
         className="catalog-hero"
@@ -184,7 +255,7 @@ export function CatalogShell() {
           </motion.button>
         </motion.form>
 
-        <div className="catalog-search-note">
+        <div className="catalog-search-note" aria-live="polite">
           {query
             ? `${filteredGames.length} resultado(s) para “${query}”.`
             : "Busca por título, gênero, tags e descrição — usando dados locais temporários."}
