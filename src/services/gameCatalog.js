@@ -204,32 +204,116 @@ function safeOffset(cursor) {
   return Math.max(0, Math.floor(Number(cursor?.offset) || 0));
 }
 
+async function resolveSourceAvailability(games = []) {
+  const ids = games.map((game) => Number(game.steamAppId)).filter(Number.isSafeInteger).slice(0, 20);
+  if (!ids.length) return games;
+
+  try {
+    const { data, error } = await supabase.functions.invoke("resolve-game-sources", {
+      body: { appIds: ids },
+    });
+    if (error) throw error;
+
+    const sourceMap = new Map(
+      (data?.results ?? []).map((item) => [
+        Number(item.appId),
+        (item.sources ?? []).filter((source) =>
+          source?.url
+          && source?.availability !== "unavailable"
+        ),
+      ]),
+    );
+
+    return games.map((game) => ({
+      ...game,
+      hasSource: (sourceMap.get(game.steamAppId) ?? []).length > 0,
+      sourceProviders: [...new Set((sourceMap.get(game.steamAppId) ?? []).map((source) => source.providerName).filter(Boolean))],
+    }));
+  } catch {
+    return games;
+  }
+}
+
 async function browseCatalog(options = {}) {
   const query = options.query?.trim() ?? "";
   const filters = options.filters ?? {};
   const sort = options.sort || "popular";
   const limit = Math.min(Math.max(Number(options.limit) || PAGE_SIZE, 1), PAGE_SIZE);
   const offset = safeOffset(options.cursor);
+  const dynamicSources = filters.has_source === true;
+  const dynamicNucleus = filters.nucleus === true;
+  const requiresDynamicCheck = dynamicSources || dynamicNucleus;
+  const databaseFilters = requiresDynamicCheck
+    ? { ...filters, has_source: false, nucleus: false }
+    : filters;
 
-  const { data, error } = await supabase.rpc("browse_fusion_catalog_v2", {
-    p_query: query,
-    p_filters: filters,
-    p_sort: sort,
-    p_offset: offset,
-    p_limit: Math.min(limit + 1, PAGE_SIZE + 1),
-  });
+  if (!requiresDynamicCheck) {
+    const { data, error } = await supabase.rpc("browse_fusion_catalog_v2", {
+      p_query: query,
+      p_filters: databaseFilters,
+      p_sort: sort,
+      p_offset: offset,
+      p_limit: Math.min(limit + 1, PAGE_SIZE + 1),
+    });
+    if (error) throw error;
 
-  if (error) throw error;
+    const mapped = rememberRows(data ?? []);
+    const games = mapped.slice(0, limit).map((game, index) => ({
+      ...game,
+      cursor: { offset: offset + index + 1 },
+    }));
 
-  const mapped = rememberRows(data ?? []);
-  const games = mapped.slice(0, limit).map((game, index) => ({
-    ...game,
-    cursor: { offset: offset + index + 1 },
-  }));
+    return {
+      games,
+      hasMore: mapped.length > limit,
+      nextCursor: games.at(-1)?.cursor ?? null,
+      metadataUnavailable: false,
+    };
+  }
 
+  const matches = [];
+  let sourceOffset = offset;
+  let underlyingHasMore = true;
+
+  for (let batchIndex = 0; batchIndex < 5 && matches.length <= limit && underlyingHasMore; batchIndex += 1) {
+    const { data, error } = await supabase.rpc("browse_fusion_catalog_v2", {
+      p_query: query,
+      p_filters: databaseFilters,
+      p_sort: sort,
+      p_offset: sourceOffset,
+      p_limit: PAGE_SIZE,
+    });
+    if (error) throw error;
+
+    const raw = data ?? [];
+    underlyingHasMore = raw.length === PAGE_SIZE;
+    let batch = rememberRows(raw).map((game, index) => ({
+      ...game,
+      cursor: { offset: sourceOffset + index + 1 },
+    }));
+
+    if (dynamicSources && batch.length) {
+      batch = await resolveSourceAvailability(batch);
+      batch = batch.filter((game) => game.hasSource === true);
+    }
+
+    if (dynamicNucleus && batch.length) {
+      const support = await fetchNucleusSupport(batch);
+      const supportMap = new Map(support.map((item) => [Number(item.steamAppId), item]));
+      batch = batch
+        .filter((game) => supportMap.get(game.steamAppId)?.supported)
+        .map((game) => ({ ...game, nucleus: supportMap.get(game.steamAppId) }));
+    }
+
+    matches.push(...batch);
+    sourceOffset += raw.length;
+    if (!raw.length) break;
+  }
+
+  const games = matches.slice(0, limit);
   return {
     games,
-    hasMore: mapped.length > limit,
+    hasMore: matches.length > limit || underlyingHasMore,
     nextCursor: games.at(-1)?.cursor ?? null,
     metadataUnavailable: false,
   };
@@ -315,7 +399,11 @@ export async function hydrateGameDetails(game) {
 }
 
 export async function fetchFeaturedCoop() {
-  return (await browseCatalog({ filter: "Coop local", sort: "popular", limit: 4 })).games;
+  return (await browseCatalog({
+    filters: { modes: ["local_coop"] },
+    sort: "popular",
+    limit: 4,
+  })).games;
 }
 
 let sourceInputsPromise;
