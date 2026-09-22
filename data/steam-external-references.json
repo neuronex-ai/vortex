@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "checkedAt": "2026-09-22T09:08:33.062Z",
+  "providers": [
+    {
+      "repository": "AveryChangedMan/SteamRipClient",
+      "commit": "a13f49bf299b1646299e10dde1e67f91825f44dc",
+      "rawUrl": "https://raw.githubusercontent.com/AveryChangedMan/SteamRipClient/a13f49bf299b1646299e10dde1e67f91825f44dc/Redist/Deps/steamrip_full_games_may_2026_BASE.json",
+      "sha256": "96187ebd20aef36634f9e7c90f6180911696539b429d410058da0beb86f927fc",
+      "records": 3995,
+      "matched": 2
+    }
+  ],
+  "sources": [
+    {
+      "appId": 367520,
+      "title": "Hollow Knight",
+      "provider": "SteamRipClient",
+      "projectUrl": "https://github.com/AveryChangedMan/SteamRipClient",
+      "referenceUrl": "https://github.com/AveryChangedMan/SteamRipClient/blob/a13f49bf299b1646299e10dde1e67f91825f44dc/Redist/Deps/steamrip_full_games_may_2026_BASE.json#L125086",
+      "matchMethod": "exact-unique-title",
+      "sourceTitle": "Hollow Knight",
+      "size": "1.1 GB",
+      "version": "v1.5.12459",
+      "sourceDate": "2021-06-29T12:53:27+00:00",
+      "license": "AGPL-3.0"
+    },
+    {
+      "appId": 413150,
+      "title": "Stardew Valley",
+      "provider": "SteamRipClient",
+      "projectUrl": "https://github.com/AveryChangedMan/SteamRipClient",
+      "referenceUrl": "https://github.com/AveryChangedMan/SteamRipClient/blob/a13f49bf299b1646299e10dde1e67f91825f44dc/Redist/Deps/steamrip_full_games_may_2026_BASE.json#L128599",
+      "matchMethod": "exact-unique-title",
+      "sourceTitle": "Stardew Valley",
+      "size": "514 MB",
+      "version": "v1.6.15",
+      "sourceDate": "2021-05-27T23:16:29+00:00",
+      "license": "AGPL-3.0"
+    }
+  ]
+}
