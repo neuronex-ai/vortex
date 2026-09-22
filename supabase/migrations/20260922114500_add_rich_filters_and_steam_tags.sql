@@ -4,6 +4,20 @@ alter table public.games
   add column if not exists steam_tag_ids integer[] not null default '{}',
   add column if not exists franchises text[] not null default '{}';
 
+create or replace view public.fusion_public_games
+with (security_invoker = true)
+as
+select g.*
+from public.games g
+left join public.catalog_content_overrides o
+  on o.steam_app_id = g.steam_app_id
+where g.is_visible = true
+  and g.adult_content = false
+  and coalesce(o.approved, true) = true;
+
+grant select on public.fusion_public_games
+to anon, authenticated, service_role;
+
 create table if not exists public.steam_tag_dictionary (
   tag_id integer primary key,
   name text not null,
