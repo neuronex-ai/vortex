@@ -122,6 +122,28 @@ function toggleListValue(list, value) {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
+let pageScrollLockCount = 0;
+let previousBodyOverflow = "";
+let previousHtmlOverflow = "";
+
+function lockPageScroll() {
+  if (pageScrollLockCount === 0) {
+    previousBodyOverflow = document.body.style.overflow;
+    previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+  }
+  pageScrollLockCount += 1;
+}
+
+function unlockPageScroll() {
+  pageScrollLockCount = Math.max(0, pageScrollLockCount - 1);
+  if (pageScrollLockCount === 0) {
+    document.body.style.overflow = previousBodyOverflow;
+    document.documentElement.style.overflow = previousHtmlOverflow;
+  }
+}
+
 function SteamTrailer({ movie, storeUrl }) {
   const [failed, setFailed] = useState(false);
   const mp4 = movie?.mp4?.max || movie?.mp4?.["480"] || movie?.webm?.max || null;
@@ -171,6 +193,7 @@ export function GameDetail({
 }) {
   const closeRef = useRef(null);
   const similarRef = useRef(null);
+  const onCloseRef = useRef(onClose);
   const [detailGame, setDetailGame] = useState(game);
   const [sources, setSources] = useState([]);
   const [sourcesError, setSourcesError] = useState("");
@@ -190,20 +213,23 @@ export function GameDetail({
   });
 
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    lockPageScroll();
     closeRef.current?.focus();
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current?.();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = previous;
+      unlockPageScroll();
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -316,6 +342,31 @@ export function GameDetail({
   }, [detailGame.id]);
 
   const currentMedia = mediaItems[activeImage] || { type: "image", image: detailGame.image };
+
+  function stepMedia(direction) {
+    const total = mediaItems.length;
+    if (total < 2) return;
+    setActiveImage((current) => (current + direction + total) % total);
+  }
+
+  useEffect(() => {
+    const handleMediaKey = (event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("input, textarea, select, video, [contenteditable='true']")) {
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        stepMedia(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        stepMedia(1);
+      }
+    };
+
+    window.addEventListener("keydown", handleMediaKey);
+    return () => window.removeEventListener("keydown", handleMediaKey);
+  }, [mediaItems.length]);
   const canOpenSource = (source) => Boolean(
     source?.url
     && source.kind !== "external_reference"
@@ -377,7 +428,7 @@ export function GameDetail({
         </button>
 
         <section className="game-detail-v2__media-hero">
-          <div className="game-detail-v2__stage">
+          <div className={currentMedia?.type === "video" ? "game-detail-v2__stage is-video" : "game-detail-v2__stage"}>
             <AnimatePresence mode="wait">
               {currentMedia?.type === "video" ? (
                 <motion.div
@@ -405,25 +456,53 @@ export function GameDetail({
               )}
             </AnimatePresence>
             {currentMedia?.type !== "video" && <div className="game-detail-v2__stage-shade" />}
+
+            {mediaItems.length > 1 && (
+              <>
+                <motion.button
+                  className="game-detail-v2__media-arrow is-previous"
+                  type="button"
+                  onClick={() => stepMedia(-1)}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Mídia anterior"
+                >
+                  ‹
+                </motion.button>
+                <motion.button
+                  className="game-detail-v2__media-arrow is-next"
+                  type="button"
+                  onClick={() => stepMedia(1)}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Próxima mídia"
+                >
+                  ›
+                </motion.button>
+
+                <motion.div
+                  className="game-detail-v2__thumbs game-detail-v2__thumbs--inside"
+                  aria-label="Mídia do jogo"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {mediaItems.map((item, index) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={index === activeImage ? "is-active" : undefined}
+                      onClick={() => setActiveImage(index)}
+                      aria-label={item.type === "video" ? "Ver trailer" : `Ver imagem ${index + 1}`}
+                    >
+                      {item.thumbnail && <img src={item.thumbnail} alt="" loading="lazy" />}
+                      {item.type === "video" && <span className="game-detail-v2__thumb-play">▶</span>}
+                    </button>
+                  ))}
+                </motion.div>
+              </>
+            )}
+
             {hydrating && <span className="game-detail-v2__syncing">Carregando detalhes…</span>}
           </div>
-
-          {mediaItems.length > 1 && (
-            <div className="game-detail-v2__thumbs" aria-label="Mídia do jogo">
-              {mediaItems.map((item, index) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={index === activeImage ? "is-active" : undefined}
-                  onClick={() => setActiveImage(index)}
-                  aria-label={item.type === "video" ? "Ver trailer" : `Ver imagem ${index + 1}`}
-                >
-                  {item.thumbnail && <img src={item.thumbnail} alt="" loading="lazy" />}
-                  {item.type === "video" && <span className="game-detail-v2__thumb-play">▶</span>}
-                </button>
-              ))}
-            </div>
-          )}
         </section>
 
         <div className="game-detail-v2__content-shell">
