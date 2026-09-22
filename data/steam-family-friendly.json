@@ -1,0 +1,67 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-09-22T00:00:00Z",
+  "totalGames": 2,
+  "filterCriteria": {
+    "familyFriendly": true,
+    "excludedTags": [
+      "Violence",
+      "Sexual Content",
+      "Strong Language",
+      "Gore",
+      "Nudity"
+    ]
+  },
+  "games": [
+    {
+      "appId": 367520,
+      "title": "Hollow Knight",
+      "slug": "hollow-knight",
+      "releaseYear": 2017,
+      "genres": [
+        "Action",
+        "Platformer",
+        "Indie"
+      ],
+      "developer": "Team Cherry",
+      "publisher": "Team Cherry",
+      "steamRating": 97,
+      "metacriticScore": 90,
+      "tags": [
+        "Metroidvania",
+        "Indie",
+        "Great Soundtrack",
+        "Atmospheric"
+      ],
+      "contentWarnings": [],
+      "familyFriendly": true,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    },
+    {
+      "appId": 413150,
+      "title": "Stardew Valley",
+      "slug": "stardew-valley",
+      "releaseYear": 2016,
+      "genres": [
+        "Simulation",
+        "RPG",
+        "Indie"
+      ],
+      "developer": "ConcernedApe",
+      "publisher": "ConcernedApe",
+      "steamRating": 98,
+      "metacriticScore": 89,
+      "tags": [
+        "Farming Sim",
+        "Pixel Graphics",
+        "Relaxing",
+        "Multiplayer"
+      ],
+      "contentWarnings": [],
+      "familyFriendly": true,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    }
+  ]
+}

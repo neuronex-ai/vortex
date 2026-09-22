@@ -1,0 +1,181 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-09-22T00:00:00Z",
+  "metadata": {
+    "totalGames": 5,
+    "familyFriendlyGames": 2,
+    "gamesWithSources": 4,
+    "familyFriendlyWithSources": 2
+  },
+  "catalog": [
+    {
+      "appId": 1091500,
+      "title": "Cyberpunk 2077",
+      "slug": "cyberpunk-2077",
+      "releaseYear": 2020,
+      "genres": [
+        "RPG",
+        "Action",
+        "Sci-Fi"
+      ],
+      "developer": "CD Projekt Red",
+      "publisher": "CD Projekt",
+      "steamRating": 86,
+      "metacriticScore": 86,
+      "familyFriendly": false,
+      "contentWarnings": [
+        "Violence",
+        "Strong Language",
+        "Sexual Content"
+      ],
+      "hasSource": true,
+      "sourceInfo": {
+        "sourceName": "SteamRIP",
+        "crackGroup": "RUNE",
+        "emulator": "Goldberg",
+        "verified": true,
+        "working": true,
+        "lastUpdated": "2026-09-15T00:00:00Z",
+        "totalUrls": 2
+      },
+      "tags": [
+        "Open World",
+        "Futuristic",
+        "Story Rich",
+        "Mature"
+      ]
+    },
+    {
+      "appId": 1245620,
+      "title": "Elden Ring",
+      "slug": "elden-ring",
+      "releaseYear": 2022,
+      "genres": [
+        "RPG",
+        "Action",
+        "Fantasy"
+      ],
+      "developer": "FromSoftware",
+      "publisher": "Bandai Namco",
+      "steamRating": 91,
+      "metacriticScore": 96,
+      "familyFriendly": false,
+      "contentWarnings": [
+        "Violence",
+        "Blood"
+      ],
+      "hasSource": true,
+      "sourceInfo": {
+        "sourceName": "SteamRIP",
+        "crackGroup": "TENOKE",
+        "emulator": "Goldberg",
+        "verified": true,
+        "working": true,
+        "lastUpdated": "2026-09-18T00:00:00Z",
+        "totalUrls": 2
+      },
+      "tags": [
+        "Souls-like",
+        "Dark Fantasy",
+        "Open World",
+        "Difficult"
+      ]
+    },
+    {
+      "appId": 367520,
+      "title": "Hollow Knight",
+      "slug": "hollow-knight",
+      "releaseYear": 2017,
+      "genres": [
+        "Action",
+        "Platformer",
+        "Indie"
+      ],
+      "developer": "Team Cherry",
+      "publisher": "Team Cherry",
+      "steamRating": 97,
+      "metacriticScore": 90,
+      "familyFriendly": true,
+      "contentWarnings": [],
+      "hasSource": true,
+      "sourceInfo": {
+        "sourceName": "SteamRIP",
+        "crackGroup": "GOG",
+        "emulator": "None (DRM-Free)",
+        "verified": true,
+        "working": true,
+        "lastUpdated": "2026-09-10T00:00:00Z",
+        "totalUrls": 1
+      },
+      "tags": [
+        "Metroidvania",
+        "Indie",
+        "Great Soundtrack",
+        "Atmospheric"
+      ]
+    },
+    {
+      "appId": 1174180,
+      "title": "Red Dead Redemption 2",
+      "slug": "red-dead-redemption-2",
+      "releaseYear": 2019,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Western"
+      ],
+      "developer": "Rockstar Games",
+      "publisher": "Rockstar Games",
+      "steamRating": 89,
+      "metacriticScore": 93,
+      "familyFriendly": false,
+      "contentWarnings": [
+        "Violence",
+        "Blood",
+        "Strong Language",
+        "Gambling"
+      ],
+      "hasSource": false,
+      "sourceInfo": null,
+      "tags": [
+        "Open World",
+        "Story Rich",
+        "Western",
+        "Realistic"
+      ]
+    },
+    {
+      "appId": 413150,
+      "title": "Stardew Valley",
+      "slug": "stardew-valley",
+      "releaseYear": 2016,
+      "genres": [
+        "Simulation",
+        "RPG",
+        "Indie"
+      ],
+      "developer": "ConcernedApe",
+      "publisher": "ConcernedApe",
+      "steamRating": 98,
+      "metacriticScore": 89,
+      "familyFriendly": true,
+      "contentWarnings": [],
+      "hasSource": true,
+      "sourceInfo": {
+        "sourceName": "SteamRIP",
+        "crackGroup": "GOG",
+        "emulator": "None (DRM-Free)",
+        "verified": true,
+        "working": true,
+        "lastUpdated": "2026-09-12T00:00:00Z",
+        "totalUrls": 1
+      },
+      "tags": [
+        "Farming Sim",
+        "Pixel Graphics",
+        "Relaxing",
+        "Multiplayer"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-09-22T00:00:00Z",
+  "totalGames": 5,
+  "games": [
+    {
+      "appId": 1091500,
+      "title": "Cyberpunk 2077",
+      "slug": "cyberpunk-2077",
+      "releaseYear": 2020,
+      "genres": [
+        "RPG",
+        "Action",
+        "Sci-Fi"
+      ],
+      "developer": "CD Projekt Red",
+      "publisher": "CD Projekt",
+      "steamRating": 86,
+      "metacriticScore": 86,
+      "tags": [
+        "Open World",
+        "Futuristic",
+        "Story Rich",
+        "Mature"
+      ],
+      "contentWarnings": [
+        "Violence",
+        "Strong Language",
+        "Sexual Content"
+      ],
+      "familyFriendly": false,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    },
+    {
+      "appId": 1245620,
+      "title": "Elden Ring",
+      "slug": "elden-ring",
+      "releaseYear": 2022,
+      "genres": [
+        "RPG",
+        "Action",
+        "Fantasy"
+      ],
+      "developer": "FromSoftware",
+      "publisher": "Bandai Namco",
+      "steamRating": 91,
+      "metacriticScore": 96,
+      "tags": [
+        "Souls-like",
+        "Dark Fantasy",
+        "Open World",
+        "Difficult"
+      ],
+      "contentWarnings": [
+        "Violence",
+        "Blood"
+      ],
+      "familyFriendly": false,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    },
+    {
+      "appId": 367520,
+      "title": "Hollow Knight",
+      "slug": "hollow-knight",
+      "releaseYear": 2017,
+      "genres": [
+        "Action",
+        "Platformer",
+        "Indie"
+      ],
+      "developer": "Team Cherry",
+      "publisher": "Team Cherry",
+      "steamRating": 97,
+      "metacriticScore": 90,
+      "tags": [
+        "Metroidvania",
+        "Indie",
+        "Great Soundtrack",
+        "Atmospheric"
+      ],
+      "contentWarnings": [],
+      "familyFriendly": true,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    },
+    {
+      "appId": 1174180,
+      "title": "Red Dead Redemption 2",
+      "slug": "red-dead-redemption-2",
+      "releaseYear": 2019,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Western"
+      ],
+      "developer": "Rockstar Games",
+      "publisher": "Rockstar Games",
+      "steamRating": 89,
+      "metacriticScore": 93,
+      "tags": [
+        "Open World",
+        "Story Rich",
+        "Western",
+        "Realistic"
+      ],
+      "contentWarnings": [
+        "Violence",
+        "Blood",
+        "Strong Language",
+        "Gambling"
+      ],
+      "familyFriendly": false,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    },
+    {
+      "appId": 413150,
+      "title": "Stardew Valley",
+      "slug": "stardew-valley",
+      "releaseYear": 2016,
+      "genres": [
+        "Simulation",
+        "RPG",
+        "Indie"
+      ],
+      "developer": "ConcernedApe",
+      "publisher": "ConcernedApe",
+      "steamRating": 98,
+      "metacriticScore": 89,
+      "tags": [
+        "Farming Sim",
+        "Pixel Graphics",
+        "Relaxing",
+        "Multiplayer"
+      ],
+      "contentWarnings": [],
+      "familyFriendly": true,
+      "createdAt": "2026-09-22T00:00:00Z",
+      "updatedAt": "2026-09-22T00:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-09-22T00:00:00Z",
+  "totalGames": 4,
+  "disclaimer": "Este arquivo contém links para fontes externas públicas. O Fusion não hospeda, distribui ou endossa nenhum conteúdo. Todos os links são de responsabilidade de terceiros.",
+  "sources": [
+    {
+      "appId": 1091500,
+      "title": "Cyberpunk 2077",
+      "sources": [
+        {
+          "sourceId": "steamrip-001",
+          "sourceName": "SteamRIP",
+          "sourceType": "direct_download",
+          "urls": [
+            {
+              "host": "Pixeldrain",
+              "url": "https://pixeldrain.com/u/EXAMPLE1",
+              "size": "58.2 GB",
+              "parts": 1
+            },
+            {
+              "host": "Gofile",
+              "url": "https://gofile.io/d/EXAMPLE2",
+              "size": "58.2 GB",
+              "parts": 1
+            }
+          ],
+          "crackGroup": "RUNE",
+          "emulator": "Goldberg",
+          "languages": [
+            "English",
+            "Portuguese-Brazil",
+            "Spanish"
+          ],
+          "lastUpdated": "2026-09-15T00:00:00Z",
+          "verified": true,
+          "working": true
+        }
+      ]
+    },
+    {
+      "appId": 1245620,
+      "title": "Elden Ring",
+      "sources": [
+        {
+          "sourceId": "steamrip-002",
+          "sourceName": "SteamRIP",
+          "sourceType": "direct_download",
+          "urls": [
+            {
+              "host": "Pixeldrain",
+              "url": "https://pixeldrain.com/u/EXAMPLE3",
+              "size": "45.8 GB",
+              "parts": 1
+            },
+            {
+              "host": "Buzzheavier",
+              "url": "https://buzzheavier.com/d/EXAMPLE4",
+              "size": "45.8 GB",
+              "parts": 1
+            }
+          ],
+          "crackGroup": "TENOKE",
+          "emulator": "Goldberg",
+          "languages": [
+            "English",
+            "Portuguese-Brazil",
+            "Spanish",
+            "French"
+          ],
+          "lastUpdated": "2026-09-18T00:00:00Z",
+          "verified": true,
+          "working": true
+        }
+      ]
+    },
+    {
+      "appId": 367520,
+      "title": "Hollow Knight",
+      "sources": [
+        {
+          "sourceId": "steamrip-003",
+          "sourceName": "SteamRIP",
+          "sourceType": "direct_download",
+          "urls": [
+            {
+              "host": "Pixeldrain",
+              "url": "https://pixeldrain.com/u/EXAMPLE5",
+              "size": "4.2 GB",
+              "parts": 1
+            }
+          ],
+          "crackGroup": "GOG",
+          "emulator": "None (DRM-Free)",
+          "languages": [
+            "English",
+            "Portuguese-Brazil",
+            "Spanish",
+            "French",
+            "German"
+          ],
+          "lastUpdated": "2026-09-10T00:00:00Z",
+          "verified": true,
+          "working": true
+        }
+      ]
+    },
+    {
+      "appId": 413150,
+      "title": "Stardew Valley",
+      "sources": [
+        {
+          "sourceId": "steamrip-004",
+          "sourceName": "SteamRIP",
+          "sourceType": "direct_download",
+          "urls": [
+            {
+              "host": "Gofile",
+              "url": "https://gofile.io/d/EXAMPLE6",
+              "size": "1.5 GB",
+              "parts": 1
+            }
+          ],
+          "crackGroup": "GOG",
+          "emulator": "None (DRM-Free)",
+          "languages": [
+            "English",
+            "Portuguese-Brazil",
+            "Spanish",
+            "French",
+            "German",
+            "Japanese"
+          ],
+          "lastUpdated": "2026-09-12T00:00:00Z",
+          "verified": true,
+          "working": true
+        }
+      ]
+    }
+  ]
+}
