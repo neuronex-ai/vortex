@@ -88,3 +88,14 @@ Além das Edge Functions, existe o RPC server-side:
 `public.discover_steam_catalog_page(last_appid, max_results, if_modified_since)`
 
 Ele usa a chave do Vault e alimenta `steam_catalog_apps`. O limite interno usado pelo Fusion é 5.000 App IDs por chamada, mesmo que a API oficial aceite lotes maiores, para manter as execuções previsíveis.
+
+
+## Agendamento automático
+
+O Supabase Cron mantém o catálogo em movimento sem depender do navegador:
+
+- `fusion-steam-discovery`: a cada 10 minutos, descobre até 5.000 App IDs durante a primeira varredura.
+- `fusion-steam-details`: a cada 5 minutos, sincroniza até 20 jogos pendentes.
+- `fusion-cron-history-cleanup`: remove histórico de Cron com mais de 7 dias.
+
+Depois que a primeira varredura completa termina, a descoberta passa a usar `if_modified_since` em atualização incremental diária. Registros cujo `last_modified` ou `price_change_number` mudou voltam automaticamente para a fila de detalhes.
