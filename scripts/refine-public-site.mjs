@@ -202,6 +202,7 @@ for (const file of files) {
     img.attr("decoding", "async");
   });
   $(".fusion-section > .fusion-section-inner, .fusion-article-body > section").attr("data-fusion-reveal", "");
+  $(".fusion-section").filter((_, e) => !$(e).find("[data-fusion-reveal]").length).attr("data-fusion-reveal", "");
   let output = $.html();
   // Keep the exported markup's body separators stable between authoring runs.
   output = output.replace(/<\/header>\n(?:  \n)+  (<!-- Start of bodyStart -->|<div id="fusion-content")/g, '</header>\n  \n  $1');
