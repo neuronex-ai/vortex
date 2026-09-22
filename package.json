@@ -1,10 +1,6 @@
 {
-  "scripts": {
-    "dev": "node server/dev.mjs",
-    "seed": "node scripts/seed.mjs",
-    "check": "node --check server/dev.mjs && node --check server/provider.mjs && node --check js/vortex.js"
-  },
   "dependencies": {
-    "cheerio": "^1.2.0"
+    "cheerio": "^1.2.0",
+    "request": "^2.88.2"
   }
 }
