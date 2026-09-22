@@ -1,0 +1,89 @@
+/* Editorial layer. The original Framer component styles remain the visual base. */
+.fusion-public { --fusion-reading: #aaaab1; background:#09090b; color:#f4f4f6; color-scheme:dark; }
+.fusion-public *, .fusion-public *::before, .fusion-public *::after { box-sizing:border-box; }
+.fusion-public #main > div:first-child { padding-top:0!important; overflow:clip; }
+.fusion-public #fusion-content { outline:none; }
+.fusion-public :where(h1,h2,h3,p) { text-wrap:pretty; }
+.fusion-public h1 { font-family:"Instrument Sans",sans-serif!important; font-size:clamp(44px,5.4vw,80px)!important; line-height:1.04!important; letter-spacing:-.055em!important; font-weight:600!important; text-wrap:balance; white-space:pre-line; }
+.fusion-public h2 { font-family:"Instrument Sans",sans-serif!important; font-size:clamp(32px,4vw,56px)!important; line-height:1.1!important; letter-spacing:-.045em!important; font-weight:500!important; text-wrap:balance; }
+.fusion-public h3 { text-wrap:balance; letter-spacing:-.025em!important; }
+.fusion-public .fusion-heading-wrap { width:100%!important; max-width:920px; height:auto!important; }
+.fusion-public p { line-height:1.65; }
+.fusion-public :where(a,button,input,textarea,summary):focus-visible { outline:2px solid #c6bcff!important; outline-offset:5px; }
+.fusion-public :where(section,[id]) { scroll-margin-top:112px; }
+.fusion-public .fusion-public-hero { padding:100px 24px 64px!important; gap:56px!important; min-height:0!important; height:auto!important; }
+.fusion-public .fusion-section { padding:100px 32px!important; height:auto!important; min-height:0; }
+.fusion-public .fusion-section-inner { width:100%!important; max-width:1120px!important; margin-inline:auto; gap:56px!important; }
+.fusion-public .fusion-public-hero > [data-framer-name='Main Container'] { width:100%!important; max-width:900px!important; gap:32px!important; }
+.fusion-public .fusion-public-hero [data-framer-name='Text Container'] { width:100%!important; height:auto!important; }
+.fusion-public .fusion-public-hero p { max-width:620px; margin-inline:auto; font-size:18px!important; line-height:1.65!important; }
+.fusion-public[data-fusion-page=index] .fusion-public-hero { isolation:isolate; padding-top:92px!important; padding-bottom:24px!important; }
+.fusion-public .fusion-hero-copy { position:relative; z-index:2; }
+.fusion-public .framer-1q53wn7 { opacity:.42; }
+.fusion-public .framer-73rfm2 { right:-330px!important; top:80px!important; transform:rotate(-5deg) scale(.8)!important; }
+.fusion-public .framer-ks6t6s { left:-235px!important; top:40px!important; transform:rotate(7deg) scale(.8)!important; }
+.fusion-public .framer-7hgh73 { left:52px!important; top:125px!important; width:230px!important; height:315px!important; }
+.fusion-public .fusion-product-stage { position:relative; z-index:1; width:min(100%,1000px); margin:-8px auto 0; text-align:center; }
+.fusion-product-stage img { display:block; width:100%; height:auto; max-height:620px; object-fit:contain; filter:drop-shadow(0 28px 72px #0008); }
+.fusion-product-stage figcaption { color:#909098; font:13px/1.5 Inter,sans-serif; letter-spacing:.015em; margin-top:-12px; }
+.fusion-public .fusion-ui-illustration { object-fit:contain!important; object-position:center!important; }
+.fusion-public .fusion-guide-cover { object-fit:cover!important; object-position:center!important; }
+.fusion-public .fusion-access-grid { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch!important; gap:24px!important; width:100%!important; }
+.fusion-access-card { padding:48px; border:1px solid #ffffff16; border-radius:28px; background:radial-gradient(ellipse at 90% 0,#a89cff12,transparent 60%),linear-gradient(145deg,#202024,#101013 75%); box-shadow:inset 0 1px #ffffff0c,0 24px 70px #0003; display:flex; flex-direction:column; align-items:flex-start; gap:24px; }
+.fusion-public .fusion-access-card h3 { font:500 clamp(30px,3.2vw,44px)/1.1 "Instrument Sans",sans-serif; margin:0; color:#f5f5f7; }
+.fusion-access-card p { color:var(--fusion-reading); font:16px/1.65 Inter,sans-serif; margin:0 0 16px; max-width:360px; }
+.fusion-access-card .fusion-button { margin-top:auto; }
+.fusion-eyebrow { color:#bcb3dc; font:500 11px/1.5 Inter,sans-serif; text-transform:uppercase; letter-spacing:.16em; }
+.fusion-editorial-actions { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+.fusion-public .fusion-button { display:inline-flex; align-items:center; justify-content:center; gap:20px; min-height:48px; padding:13px 22px; border:1px solid #ffffff18; border-radius:14px; background:#f2f1f5; box-shadow:inset 0 1px #fff; color:#17171c; text-decoration:none; font:500 14px/1.4 "Instrument Sans",sans-serif; transition:background .2s,transform .2s,box-shadow .2s; }
+.fusion-public .fusion-button-secondary { background:#ffffff06; color:#eeeef2; box-shadow:inset 0 1px #ffffff08; }
+.fusion-button:hover { transform:translateY(-2px); box-shadow:0 6px 24px #0003; }
+.fusion-public .fusion-form-actions { width:100%!important; height:auto!important; display:block!important; }
+.fusion-public .fusion-public-footer { padding-top:64px!important; padding-bottom:32px!important; height:auto!important; }
+.fusion-footer-legal { display:flex; flex-wrap:wrap; gap:24px; justify-content:center; padding:20px; font:13px/1.5 Inter,sans-serif; color:#9a9aa5; }
+.fusion-footer-legal a { color:inherit; text-decoration:none; }
+.fusion-public-footer a { overflow-wrap:anywhere; }
+.fusion-contact-note { max-width:540px; font:13px/1.6 Inter,sans-serif!important; color:#a5a5b1!important; padding:12px 0; margin:0; }
+.fusion-contact-note a { color:#ddd5ff; }
+.fusion-public input,.fusion-public textarea { font-size:16px!important; }
+.fusion-public textarea { min-height:150px; resize:vertical; }
+.fusion-public form[data-fusion-contact] { height:auto!important; }
+.fusion-public .local-faq { scroll-margin-top:110px; }
+.fusion-public .local-faq summary { min-height:56px; cursor:pointer; }
+.fusion-public .local-faq[open] { background:#ffffff04; }
+.fusion-public .fusion-article-body { max-width:720px!important; gap:0!important; }
+.fusion-public .fusion-article-body section { padding:28px 0; width:100%; }
+.fusion-public .fusion-article-body h2 { font-size:clamp(25px,2.8vw,34px)!important; margin:0 0 20px; color:#efeff3; }
+.fusion-public .fusion-article-body p { font:400 17px/1.85 "Instrument Sans",sans-serif!important; color:#b6b6be; margin:0; }
+.fusion-public .fusion-article-body .fusion-article-lead { font-size:21px!important; line-height:1.6!important; color:#e0e0e7; padding-bottom:24px; border-bottom:1px solid #ffffff16; }
+.fusion-article-end { margin-top:40px; padding-top:32px; border-top:1px solid #ffffff16; }
+.fusion-guide-byline { color:#9e9ea8; font:13px/1.6 Inter,sans-serif; }
+.fusion-public .fusion-guide-aside { display:flex!important; flex-direction:column; height:auto!important; gap:28px!important; padding:28px!important; border-radius:22px; border:1px solid #ffffff12; background:linear-gradient(150deg,#1c1c21,#111114); }
+.fusion-guide-aside nav { display:grid; gap:18px; }
+.fusion-guide-aside nav a { color:#b7b7c0; font:14px/1.5 "Instrument Sans",sans-serif; text-decoration:none; }
+.fusion-guide-aside nav a:hover { color:white; }
+.fusion-public .legal-page { padding-top:60px; }
+.fusion-public .legal-page h1 { font-size:clamp(38px,5vw,64px)!important; }
+.fusion-public .legal-page h2 { font-size:26px!important; }
+.fusion-public [data-fusion-reveal] { transition:opacity .65s ease,translate .65s cubic-bezier(.2,.7,.2,1); }
+.fusion-public [data-fusion-reveal].fusion-awaiting { opacity:0; translate:0 22px; }
+@media(min-width:1100px) { .fusion-public[data-fusion-page=guide] .fusion-public-hero { padding-top:100px!important; } }
+@media(max-width:1099px) { .fusion-public .framer-73rfm2,.fusion-public .framer-ks6t6s { opacity:.45; } }
+@media(max-width:767px) {
+  .fusion-public .fusion-public-hero { padding:64px 22px 40px!important; gap:36px!important; }
+  .fusion-public[data-fusion-page=index] .fusion-public-hero { padding-top:64px!important; }
+  .fusion-public .fusion-section { padding:64px 22px!important; }
+  .fusion-public .fusion-section-inner { gap:36px!important; }
+  .fusion-public .fusion-public-hero p { font-size:16px!important; }
+  .fusion-public .fusion-access-grid { grid-template-columns:1fr; }
+  .fusion-access-card { padding:32px; border-radius:22px; }
+  .fusion-public .framer-73rfm2,.fusion-public .framer-ks6t6s { display:none!important; }
+  .fusion-public .fusion-product-stage { margin:0; }
+  .fusion-product-stage figcaption { margin-top:4px; font-size:11px; }
+  .fusion-public .fusion-article-body p { font-size:16px!important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .fusion-public *, .fusion-public *::before, .fusion-public *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+  .fusion-public [data-fusion-reveal].fusion-awaiting { opacity:1; translate:none; }
+  .fusion-button:hover { transform:none; }
+}
