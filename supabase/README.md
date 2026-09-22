@@ -2,38 +2,66 @@
 
 Projeto Cloud: `Fusion - Game App Search`
 
-## Estado atual
+## Catálogo
 
-O catálogo público usa a tabela `public.games` e o RPC `public.search_games`.
+O catálogo público usa `public.games` e o RPC `public.search_games`.
 
 - RLS habilitado.
 - Cliente web possui somente leitura do catálogo seguro.
-- Jogos marcados como `adult_content = true` não são retornados ao navegador.
-- Paginação server-side limitada a no máximo 20 jogos por chamada.
-- Sincronização Steam ocorre somente do lado do servidor.
-- `game_sync_runs` registra execuções de sincronização e não é exposto ao cliente.
+- Jogos com `adult_content = true` não são retornados.
+- Paginação server-side limitada a 20 jogos por chamada.
+- Metadados detalhados são sincronizados da Steam no servidor.
 
-## Migrações aplicadas no Cloud
+## Descoberta Steam
 
-1. `20260922064729_create_fusion_game_catalog`
-2. `20260922064904_add_steam_store_sync`
-3. `20260922065035_fix_steam_sync_metadata`
-4. `20260922065224_upgrade_catalog_search_pagination`
-5. `add_secure_steam_batch_sync`
-6. `lock_down_sync_runs`
+A descoberta em escala usa o método oficial `IStoreService/GetAppList`.
 
-## Fluxo de dados
+Fluxo:
 
 ```text
-Steam Store metadata
-        ↓
-sync_steam_app / sync_steam_apps
-        ↓
-Supabase Postgres
-        ↓
+Steam GetAppList
+      ↓
+discover-steam-catalog
+      ↓
+steam_catalog_apps (fila)
+      ↓
+sync-steam-details
+      ↓
+sync_steam_apps / sync_steam_app
+      ↓
+games
+      ↓
 RLS + search_games
-        ↓
-Fusion React (/app/)
+      ↓
+Fusion React
 ```
 
-A descoberta em escala do catálogo Steam será adicionada em uma fase posterior usando uma Steam Web API key no servidor. Nenhuma chave privilegiada deve ir para o React.
+A chave Steam deve existir no Supabase Vault com o nome:
+
+```text
+steam_web_api_key
+```
+
+Ela nunca deve ser adicionada ao Git ou ao Vite.
+
+## Fontes de distribuição
+
+`public.game_distribution_sources` separa metadados de catálogo das fontes onde um jogo pode ser obtido.
+
+Tipos aceitos:
+
+- `official_store`
+- `official_demo`
+- `freeware`
+- `open_source_release`
+- `authorized_download`
+- `publisher_download`
+
+O cliente só consegue ler fontes com `is_authorized = true`, `is_visible = true` e cujo jogo também esteja liberado pela política do catálogo.
+
+## Edge Functions
+
+- `discover-steam-catalog` — descobre App IDs oficiais em lotes.
+- `sync-steam-details` — sincroniza até 50 jogos pendentes por chamada.
+
+As duas exigem JWT com role `service_role` e não são chamadas pelo navegador.
