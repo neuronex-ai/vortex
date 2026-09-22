@@ -55,6 +55,7 @@ for (const file of files) {
 
   $("header[data-framer-name=Hero]").addClass("fusion-public-hero");
   $("section[data-framer-name]").filter((_, e) => !$(e).parents("section[data-framer-name]").length).addClass("fusion-section");
+  $("section[data-framer-name='FAQ']").attr("id", "faq");
   $("h1,h2").parent('[data-framer-component-type="RichTextContainer"]').addClass("fusion-heading-wrap");
   $("section[data-framer-name] > [data-framer-name='Main Container']").addClass("fusion-section-inner");
   $("[data-framer-name='Authors']").remove();
@@ -188,7 +189,11 @@ for (const file of files) {
     img.attr("decoding", "async");
   });
   $(".fusion-section > .fusion-section-inner, .fusion-article-body > section").attr("data-fusion-reveal", "");
-  writeFileSync(resolve(root, file), $.html());
+  let output = $.html();
+  // Keep the exported markup's body separators stable between authoring runs.
+  output = output.replace('</header>\n  \n  <!-- Start of bodyStart -->', '</header>\n  \n\n    <!-- Start of bodyStart -->');
+  output = output.replace('</header>\n  <div id="fusion-content"', '</header>\n  \n  <div id="fusion-content"');
+  writeFileSync(resolve(root, file), output);
 }
 
 // Keep the old exported policy address valid with one authoritative document.
