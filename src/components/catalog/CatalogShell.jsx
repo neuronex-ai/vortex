@@ -423,8 +423,8 @@ export function CatalogShell() {
 
         <h1>Encontre seu próximo jogo.</h1>
         <p>
-          Explore a seleção family-friendly do Fusion, com detalhes da Steam
-          e referências externas para consultar mais informações sobre cada jogo.
+          Explore o catálogo do Fusion com detalhes sincronizados da Steam
+          e referências externas disponíveis para cada jogo.
         </p>
 
         <motion.form className="catalog-search" onSubmit={submitSearch}>
@@ -450,7 +450,7 @@ export function CatalogShell() {
             ? "Consultando o catálogo..."
             : query
               ? `Exibindo ${games.length} jogo(s) nesta página para “${query}”.`
-              : "Seleção family-friendly · Detalhes da Steam e referências externas."}
+              : "Catálogo sincronizado com a Steam · Conteúdo adulto/sexual filtrado."}
         </div>
 
         {steamSearchUnavailable && <p role="status">A busca na Steam está indisponível agora. Tente pesquisar novamente em instantes.</p>}
