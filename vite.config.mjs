@@ -19,10 +19,10 @@ function toInputName(path) {
 }
 
 const rootPages = collectHtmlFiles(projectRoot);
-const blogDirectory = resolve(projectRoot, "blog");
-const blogPages = statSync(blogDirectory).isDirectory() ? collectHtmlFiles(blogDirectory) : [];
+const blogPages = collectHtmlFiles(resolve(projectRoot, "blog"));
+const appPages = collectHtmlFiles(resolve(projectRoot, "app"));
 const htmlInputs = Object.fromEntries(
-  [...rootPages, ...blogPages].map((path) => [toInputName(path), path]),
+  [...rootPages, ...blogPages, ...appPages].map((path) => [toInputName(path), path]),
 );
 
 export default defineConfig({

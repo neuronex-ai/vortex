@@ -5,5 +5,9 @@ export function normalizePath(pathname = "/") {
     return "/";
   }
 
+  if (cleanPath === "/app" || cleanPath === "/app/index.html") {
+    return "/app/";
+  }
+
   return cleanPath;
 }

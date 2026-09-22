@@ -2,6 +2,7 @@ import { normalizePath } from "../lib/path.js";
 
 export const pages = [
   { id: "home", path: "/", source: "index.html" },
+  { id: "catalog", path: "/app/", source: "app/index.html" },
   { id: "blog", path: "/blog.html", source: "blog.html" },
   { id: "changelog", path: "/changelog.html", source: "changelog.html" },
   { id: "contact", path: "/contact.html", source: "contact.html" },

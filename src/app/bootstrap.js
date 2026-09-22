@@ -11,5 +11,11 @@ export function bootApplication() {
     document.documentElement.dataset.vortexPage = page.id;
   }
 
+  if (page?.id === "catalog") {
+    import("../pages/catalog/index.js").then(({ mountCatalogPage }) => {
+      mountCatalogPage();
+    });
+  }
+
   return { appRoot, page };
 }
