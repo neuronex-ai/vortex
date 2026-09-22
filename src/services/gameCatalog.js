@@ -10,6 +10,12 @@ const gameFields = [
   "short_description",
   "about_game",
   "header_image",
+  "capsule_image",
+  "background_image",
+  "screenshots",
+  "movies",
+  "website",
+  "support_info",
   "release_date",
   "release_year",
   "is_free",
@@ -37,15 +43,29 @@ const gameFields = [
 function textOnly(value = "") {
   return String(value)
     .replace(/<br\s*\/?\s*>/gi, "\n")
-    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<li[^>]*>/gi, "\n• ")
+    .replace(/<\/li>/gi, "")
+    .replace(/<h[1-6][^>]*>/gi, "\n")
+    .replace(/<\/h[1-6]>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/[ \t]+/g, " ")
-    .replace(/\n\s+/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function uniqueImages(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    if (!value || seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
 }
 
 function formatPrice(row) {
@@ -75,6 +95,21 @@ function playerLabel(row) {
 }
 
 export function mapGameRow(row) {
+  const screenshots = Array.isArray(row.screenshots)
+    ? row.screenshots
+        .map((shot) => ({
+          full: shot?.path_full || shot?.full || null,
+          thumbnail: shot?.path_thumbnail || shot?.thumbnail || shot?.path_full || null,
+        }))
+        .filter((shot) => shot.full)
+    : [];
+
+  const gallery = uniqueImages([
+    row.header_image,
+    row.background_image,
+    ...screenshots.map((shot) => shot.full),
+  ]);
+
   return {
     id: row.id,
     steamAppId: row.steam_app_id,
@@ -83,6 +118,13 @@ export function mapGameRow(row) {
     description: row.short_description || "Descrição não disponível.",
     about: textOnly(row.about_game || row.short_description || ""),
     image: row.header_image,
+    capsuleImage: row.capsule_image,
+    backgroundImage: row.background_image,
+    screenshots,
+    gallery,
+    movies: Array.isArray(row.movies) ? row.movies : [],
+    website: row.website,
+    support: row.support_info ?? {},
     year: row.release_year,
     releaseDate: row.release_date,
     isFree: row.is_free,
@@ -92,7 +134,7 @@ export function mapGameRow(row) {
     controllerSupport: row.controller_support,
     genres: row.genres ?? [],
     categories: row.categories ?? [],
-    tags: (row.tags?.length ? row.tags : row.categories ?? []).slice(0, 8),
+    tags: (row.tags?.length ? row.tags : row.categories ?? []).slice(0, 12),
     developers: row.developers ?? [],
     publishers: row.publishers ?? [],
     platforms: row.platforms ?? {},
@@ -115,6 +157,31 @@ export function mapGameRow(row) {
   };
 }
 
+async function fetchSteamFallbackGames(query, limit = 8) {
+  const { data: appIds, error: fallbackError } = await supabase.rpc(
+    "search_steam_fallback_ids",
+    {
+      p_query: query,
+      p_limit: Math.min(Math.max(limit, 1), 8),
+    },
+  );
+
+  if (fallbackError || !Array.isArray(appIds) || !appIds.length) return [];
+
+  const { data, error } = await supabase
+    .from("games")
+    .select(gameFields)
+    .in("steam_app_id", appIds);
+
+  if (error) throw error;
+
+  const byAppId = new Map((data ?? []).map((row) => [Number(row.steam_app_id), row]));
+  return appIds
+    .map((appId) => byAppId.get(Number(appId)))
+    .filter(Boolean)
+    .map(mapGameRow);
+}
+
 export async function fetchGamePage({
   query = "",
   filter = "Todos",
@@ -135,11 +202,24 @@ export async function fetchGamePage({
 
   if (error) throw error;
 
-  const games = (data ?? []).map(mapGameRow);
+  const localGames = (data ?? []).map(mapGameRow);
+  let games = localGames;
+  let steamFallbackCount = 0;
+
+  if (!cursor && query.trim().length >= 2 && localGames.length < 5) {
+    const fallback = await fetchSteamFallbackGames(query, 8);
+    const knownIds = new Set(localGames.map((game) => game.steamAppId));
+    const additions = fallback.filter((game) => !knownIds.has(game.steamAppId));
+
+    steamFallbackCount = additions.length;
+    games = [...localGames, ...additions].slice(0, PAGE_SIZE);
+  }
+
   return {
     games,
-    hasMore: games[0]?.hasMore ?? false,
-    nextCursor: games.at(-1)?.cursor ?? null,
+    hasMore: localGames[0]?.hasMore ?? false,
+    nextCursor: localGames.at(-1)?.cursor ?? null,
+    steamFallbackCount,
   };
 }
 
@@ -152,6 +232,26 @@ export async function fetchGameBySlug(slug) {
 
   if (error) throw error;
   return data ? mapGameRow(data) : null;
+}
+
+export async function hydrateGameDetails(game) {
+  if (!game?.steamAppId) return game;
+
+  const { data: gameId, error: ensureError } = await supabase.rpc(
+    "ensure_steam_game",
+    { p_app_id: game.steamAppId },
+  );
+
+  if (ensureError || !gameId) return game;
+
+  const { data, error } = await supabase
+    .from("games")
+    .select(gameFields)
+    .eq("id", gameId)
+    .maybeSingle();
+
+  if (error || !data) return game;
+  return mapGameRow(data);
 }
 
 export async function fetchFeaturedCoop() {
@@ -189,26 +289,69 @@ export async function fetchDistributionSources(gameId) {
   }));
 }
 
-export async function fetchFavoriteGames() {
-  const { data, error } = await supabase
+async function currentUser() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  return data.user ?? null;
+}
+
+export async function fetchFavoritePage({ page = 1, limit = PAGE_SIZE } = {}) {
+  const user = await currentUser();
+  if (!user) return { games: [], count: 0, page: 1, pageSize: limit };
+
+  const safeLimit = Math.min(Math.max(limit, 1), PAGE_SIZE);
+  const safePage = Math.max(page, 1);
+  const from = (safePage - 1) * safeLimit;
+  const to = from + safeLimit - 1;
+
+  const { data, error, count } = await supabase
     .from("game_favorites")
-    .select(`game_id, games(${gameFields})`)
-    .order("created_at", { ascending: false });
+    .select(`game_id,created_at,games(${gameFields})`, { count: "exact" })
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
 
-  return (data ?? [])
-    .map((favorite) => favorite.games)
-    .filter(Boolean)
-    .map(mapGameRow);
+  return {
+    games: (data ?? [])
+      .map((favorite) => favorite.games)
+      .filter(Boolean)
+      .map(mapGameRow),
+    count: count ?? 0,
+    page: safePage,
+    pageSize: safeLimit,
+  };
+}
+
+export async function fetchFavoriteGames(limit = 8) {
+  const result = await fetchFavoritePage({ page: 1, limit });
+  return result.games;
 }
 
 export async function addFavorite(gameId) {
-  const { error } = await supabase.from("game_favorites").insert({ game_id: gameId });
+  const user = await currentUser();
+  if (!user) throw new Error("AUTH_REQUIRED");
+
+  const { error } = await supabase
+    .from("game_favorites")
+    .upsert(
+      { user_id: user.id, game_id: gameId },
+      { onConflict: "user_id,game_id" },
+    );
+
   if (error) throw error;
 }
 
 export async function removeFavorite(gameId) {
-  const { error } = await supabase.from("game_favorites").delete().eq("game_id", gameId);
+  const user = await currentUser();
+  if (!user) throw new Error("AUTH_REQUIRED");
+
+  const { error } = await supabase
+    .from("game_favorites")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("game_id", gameId);
+
   if (error) throw error;
 }
