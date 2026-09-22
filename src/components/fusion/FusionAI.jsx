@@ -77,6 +77,17 @@ function speechText(value) {
     .slice(0, 2800);
 }
 
+function openGameInFusion(game) {
+  if (!game?.slug) return;
+
+  if (document.documentElement.dataset.vortexPage === "catalog") {
+    window.dispatchEvent(new CustomEvent("fusion:open-game", { detail: game }));
+    return;
+  }
+
+  window.location.assign("/app/?game=" + encodeURIComponent(game.slug));
+}
+
 export function FusionAI() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -180,9 +191,17 @@ export function FusionAI() {
             model: result.model,
             usage: result.usage,
             latencyMs: result.latencyMs,
+            games: result.games,
+            actions: result.actions,
           },
         };
         setMessages((current) => [...current, assistantMessage].slice(-40));
+
+        const openAction = result.actions.find((action) => action?.type === "open_game" && action?.game?.slug);
+        if (openAction) {
+          window.setTimeout(() => openGameInFusion(openAction.game), 120);
+        }
+
         if (speakReply || voiceMode) speak(result.reply);
       } catch (requestError) {
         const code = requestError?.message;
@@ -408,7 +427,28 @@ export function FusionAI() {
                     >
                       <div>
                         {message.role === "assistant" ? (
-                          <LinkifiedText text={message.content} />
+                          <>
+                            <LinkifiedText text={message.content} />
+                            {message.meta?.games?.length ? (
+                              <div className="fusion-ai__game-links" aria-label="Jogos citados">
+                                {message.meta.games.map((game) => (
+                                  <button
+                                    key={game.steamAppId || game.slug}
+                                    type="button"
+                                    onClick={() => openGameInFusion(game)}
+                                    title={"Abrir " + game.title}
+                                  >
+                                    {game.image ? <img src={game.image} alt="" loading="lazy" /> : null}
+                                    <span>
+                                      <strong>{game.title}</strong>
+                                      <small>{[game.year, ...(game.playLabels ?? []).slice(0, 1)].filter(Boolean).join(" · ") || "Ver detalhes"}</small>
+                                    </span>
+                                    <b aria-hidden="true">↗</b>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </>
                         ) : (
                           message.content
                         )}
