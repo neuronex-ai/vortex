@@ -141,7 +141,12 @@ export function GameDetail({
   }, [detailGame.id]);
 
   const currentImage = gallery[activeImage] || detailGame.image;
-  const downloads = sources.filter(source => source.url && source.kind !== "external_reference");
+  const canOpenSource = (source) => Boolean(
+    source?.url
+    && source.kind !== "external_reference"
+    && source.availability !== "unavailable"
+  );
+  const downloads = sources.filter(canOpenSource);
   const developer = detailGame.developers?.join(", ");
   const publisher = detailGame.publishers?.join(", ");
 
@@ -337,16 +342,20 @@ export function GameDetail({
               ) : sources.length ? (
                 <div className="game-detail-v2__sources">
                   {sources.map((source) => {
+                    const openable = canOpenSource(source);
+                    const status = source.availability === "unavailable"
+                      ? "Indisponível na última verificação"
+                      : source.status;
                     const content = <>
                       <span>
                         <strong>{source.providerName}{source.host ? ' · ' + source.host : ''}</strong>
-                        <small>{source.status}</small>
-                        {source.url && source.size && <small>Tamanho informado: {source.size}</small>}
+                        <small>{status}</small>
+                        {openable && source.size && <small>Tamanho informado: {source.size}</small>}
                         {source.version && <small>{source.version}</small>}
                       </span>
-                      {source.url && <b>{sourceActionLabel(source)} ↗</b>}
+                      {openable && <b>{sourceActionLabel(source)} ↗</b>}
                     </>;
-                    return source.url ? (
+                    return openable ? (
                       <div key={source.id}>
                         <a href={source.url} target="_blank" rel="noopener noreferrer">{content}</a>
                       </div>
