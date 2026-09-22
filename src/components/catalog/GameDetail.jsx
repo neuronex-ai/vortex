@@ -28,6 +28,10 @@ export function GameDetail({ game, onClose }) {
     };
   }, [onClose]);
 
+  const platforms = Object.entries(game.platforms ?? {})
+    .filter(([, enabled]) => enabled)
+    .map(([name]) => name === "windows" ? "Windows" : name === "mac" ? "macOS" : "Linux");
+
   return (
     <motion.div
       className="game-detail-backdrop"
@@ -59,10 +63,10 @@ export function GameDetail({ game, onClose }) {
         </button>
 
         <div className={imageFailed ? "game-detail__hero is-image-missing" : "game-detail__hero"}>
-          {!imageFailed && (
+          {!imageFailed && game.image && (
             <img src={game.image} alt="" onError={() => setImageFailed(true)} />
           )}
-          {imageFailed && (
+          {(imageFailed || !game.image) && (
             <div className="game-detail__fallback" aria-hidden="true">
               <span>{game.title.slice(0, 1)}</span>
               <small>Fusion</small>
@@ -72,8 +76,9 @@ export function GameDetail({ game, onClose }) {
           <div className="game-detail__hero-copy">
             <div className="game-detail__chips">
               {game.localCoop && <span>Coop local</span>}
-              <span>{game.year}</span>
-              <span>{game.genres[0]}</span>
+              {game.year && <span>{game.year}</span>}
+              {game.requiredAge > 0 && <span>{game.requiredAge}+</span>}
+              {game.genres[0] && <span>{game.genres[0]}</span>}
             </div>
             <h2 id="game-detail-title">{game.title}</h2>
             <p>{game.description}</p>
@@ -83,53 +88,70 @@ export function GameDetail({ game, onClose }) {
         <div className="game-detail__content">
           <div className="game-detail__facts">
             <div>
-              <span>Jogadores</span>
+              <span>Modo</span>
               <strong>{game.players}</strong>
             </div>
             <div>
-              <span>Tamanho</span>
-              <strong>{game.size}</strong>
+              <span>Preço</span>
+              <strong>{game.price}</strong>
             </div>
             <div>
-              <span>Gêneros</span>
-              <strong>{game.genres.join(" · ")}</strong>
+              <span>Metacritic</span>
+              <strong>{game.metacritic ?? "Não informado"}</strong>
             </div>
           </div>
 
           <div className="game-detail__section">
-            <span className="catalog-eyebrow">Tags</span>
+            <span className="catalog-eyebrow">Informações</span>
             <div className="game-detail__tags">
-              {game.tags.map((tag) => <span key={tag}>{tag}</span>)}
+              {[...game.genres, ...game.tags, ...platforms].slice(0, 12).map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
             </div>
           </div>
+
+          {game.about && (
+            <div className="game-detail__section">
+              <span className="catalog-eyebrow">Sobre o jogo</span>
+              <p className="game-detail__about">{game.about}</p>
+            </div>
+          )}
 
           <div className="game-detail__section">
             <span className="catalog-eyebrow">Requisitos do sistema</span>
-            <div className="game-detail__requirements">
+            <div className="game-detail__requirements game-detail__requirements--real">
               <div>
-                <span>Sistema</span>
-                <strong>Windows 10/11 64-bit</strong>
+                <span>Mínimos</span>
+                <strong>{game.requirements.minimum || "Não informado pela Steam."}</strong>
               </div>
               <div>
-                <span>Memória</span>
-                <strong>Dados oficiais entram depois</strong>
-              </div>
-              <div>
-                <span>GPU / CPU</span>
-                <strong>Importados da fonte oficial</strong>
+                <span>Recomendados</span>
+                <strong>{game.requirements.recommended || "Não informado pela Steam."}</strong>
               </div>
             </div>
           </div>
 
           <div className="game-detail__notice">
-            Estes dados são temporários e servem apenas para validar a interface.
-            Tamanho, requisitos e demais informações serão substituídos pelos dados oficiais
-            quando conectarmos a camada Steam.
+            Metadados importados da Steam. O Fusion mantém conteúdo sexual explícito fora
+            do catálogo público sem confundir esse filtro com classificação etária por
+            violência, terror ou outros temas.
           </div>
 
-          <button className="game-detail__download" type="button" disabled>
-            Download será conectado em uma etapa posterior
-          </button>
+          <div className="game-detail__actions">
+            {game.storeUrl && (
+              <a
+                className="game-detail__steam"
+                href={game.storeUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ver página oficial na Steam
+              </a>
+            )}
+            <button className="game-detail__download" type="button" disabled>
+              Downloads serão configurados em etapa posterior
+            </button>
+          </div>
         </div>
       </motion.article>
     </motion.div>
