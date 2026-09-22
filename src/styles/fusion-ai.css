@@ -1,4 +1,4 @@
-.fusio-ai {
+.fusion-ai {
   position: fixed;
   z-index: 95;
   right: max(16px, env(safe-area-inset-right));
@@ -7,13 +7,13 @@
   font-family: "Inter Tight", "Instrument Sans", Inter, system-ui, sans-serif;
 }
 
-.fusio-ai button,
-.fusio-ai a,
-.fusio-ai textarea {
+.fusion-ai button,
+.fusion-ai a,
+.fusion-ai textarea {
   font: inherit;
 }
 
-.fusio-ai svg {
+.fusion-ai svg {
   width: 18px;
   height: 18px;
   fill: none;
@@ -23,12 +23,12 @@
   stroke-linejoin: round;
 }
 
-.fusio-ai__icon-dot {
+.fusion-ai__icon-dot {
   fill: #f4f4f5;
   stroke: none;
 }
 
-.fusio-ai__launcher {
+.fusion-ai__launcher {
   pointer-events: auto;
   display: flex;
   width: 112px;
@@ -46,7 +46,7 @@
   backdrop-filter: blur(24px) saturate(125%);
 }
 
-.fusio-ai__launcher > button {
+.fusion-ai__launcher > button {
   display: grid;
   width: 50%;
   height: 44px;
@@ -58,27 +58,27 @@
   cursor: pointer;
 }
 
-.fusio-ai__launcher > button:first-child {
+.fusion-ai__launcher > button:first-child {
   border-radius: 999px 16px 16px 999px;
 }
 
-.fusio-ai__launcher > button:last-child {
+.fusion-ai__launcher > button:last-child {
   border-radius: 16px 999px 999px 16px;
 }
 
-.fusio-ai__launcher > button:hover {
+.fusion-ai__launcher > button:hover {
   background: rgba(255, 255, 255, 0.06);
   color: white;
 }
 
-.fusio-ai__launcher > span {
+.fusion-ai__launcher > span {
   width: 1px;
   height: 28px;
   flex: none;
   background: rgba(255, 255, 255, 0.075);
 }
 
-.fusio-ai__panel {
+.fusion-ai__panel {
   pointer-events: auto;
   display: flex;
   width: min(420px, calc(100vw - 24px));
@@ -98,7 +98,7 @@
   backdrop-filter: blur(30px) saturate(125%);
 }
 
-.fusio-ai__header {
+.fusion-ai__header {
   position: relative;
   z-index: 2;
   display: flex;
@@ -111,7 +111,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.055);
 }
 
-.fusio-ai__identity {
+.fusion-ai__identity {
   min-width: 0;
   padding: 8px 4px;
   border: 0;
@@ -121,14 +121,14 @@
   cursor: text;
 }
 
-.fusio-ai__wordmark {
+.fusion-ai__wordmark {
   display: block;
   font-size: 12px;
   font-weight: 730;
   letter-spacing: -0.015em;
 }
 
-.fusio-ai__identity small {
+.fusion-ai__identity small {
   display: block;
   margin-top: 3px;
   overflow: hidden;
@@ -139,13 +139,13 @@
   white-space: nowrap;
 }
 
-.fusio-ai__header-actions {
+.fusion-ai__header-actions {
   display: flex;
   flex: none;
   gap: 2px;
 }
 
-.fusio-ai__header-actions button {
+.fusion-ai__header-actions button {
   display: grid;
   width: 40px;
   height: 40px;
@@ -158,17 +158,17 @@
   cursor: pointer;
 }
 
-.fusio-ai__header-actions button:hover {
+.fusion-ai__header-actions button:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #f4f4f5;
 }
 
-.fusio-ai__header-actions svg {
+.fusion-ai__header-actions svg {
   width: 16px;
   height: 16px;
 }
 
-.fusio-ai__viewport {
+.fusion-ai__viewport {
   min-height: 0;
   flex: 1;
   overflow-x: hidden;
@@ -178,7 +178,7 @@
   scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
 }
 
-.fusio-ai__empty {
+.fusion-ai__empty {
   display: flex;
   min-height: 100%;
   flex-direction: column;
@@ -186,7 +186,7 @@
   padding: 12px 2px 20px;
 }
 
-.fusio-ai__empty h2 {
+.fusion-ai__empty h2 {
   margin: 0;
   color: #f3f3f5;
   font-size: 17px;
@@ -194,7 +194,7 @@
   letter-spacing: -0.025em;
 }
 
-.fusio-ai__empty p {
+.fusion-ai__empty p {
   max-width: 330px;
   margin: 7px 0 0;
   color: #858890;
@@ -202,13 +202,13 @@
   line-height: 1.65;
 }
 
-.fusio-ai__suggestions {
+.fusion-ai__suggestions {
   display: grid;
   gap: 6px;
   margin-top: 22px;
 }
 
-.fusio-ai__suggestions button {
+.fusion-ai__suggestions button {
   display: flex;
   min-height: 48px;
   align-items: center;
@@ -227,47 +227,47 @@
   transition: 150ms ease;
 }
 
-.fusio-ai__suggestions button:hover:not(:disabled) {
+.fusion-ai__suggestions button:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: rgba(255, 255, 255, 0.105);
   background: rgba(255, 255, 255, 0.04);
   color: #eeeeef;
 }
 
-.fusio-ai__suggestions button:disabled {
+.fusion-ai__suggestions button:disabled {
   cursor: default;
   opacity: 0.42;
 }
 
-.fusio-ai__suggestions button span {
+.fusion-ai__suggestions button span {
   flex: none;
   color: #5f6269;
   font-size: 15px;
 }
 
-.fusio-ai__messages {
+.fusion-ai__messages {
   display: flex;
   flex-direction: column;
   gap: 17px;
   padding-bottom: 12px;
 }
 
-.fusio-ai__messages article {
+.fusion-ai__messages article {
   display: flex;
   min-width: 0;
 }
 
-.fusio-ai__messages article.is-user {
+.fusion-ai__messages article.is-user {
   justify-content: flex-end;
 }
 
-.fusio-ai__messages article > div {
+.fusion-ai__messages article > div {
   min-width: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.fusio-ai__messages .is-user > div {
+.fusion-ai__messages .is-user > div {
   max-width: 84%;
   padding: 10px 13px;
   border: 1px solid rgba(255, 255, 255, 0.075);
@@ -278,7 +278,7 @@
   line-height: 1.55;
 }
 
-.fusio-ai__messages .is-assistant > div {
+.fusion-ai__messages .is-assistant > div {
   width: 100%;
   padding: 4px 4px 4px 1px;
   color: #d3d4d7;
@@ -286,14 +286,14 @@
   line-height: 1.68;
 }
 
-.fusio-ai__messages a {
+.fusion-ai__messages a {
   color: #fff;
   text-decoration: underline;
   text-decoration-color: rgba(255, 255, 255, 0.28);
   text-underline-offset: 3px;
 }
 
-.fusio-ai__thinking {
+.fusion-ai__thinking {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -303,16 +303,16 @@
   font-weight: 600;
 }
 
-.fusio-ai__thinking > span:first-child {
+.fusion-ai__thinking > span:first-child {
   width: 7px;
   height: 7px;
   flex: none;
   border-radius: 999px;
   background: #d5d6d9;
-  animation: fusio-pulse 1.15s ease-in-out infinite;
+  animation: fusion-pulse 1.15s ease-in-out infinite;
 }
 
-.fusio-ai__error {
+.fusion-ai__error {
   margin: 10px 0;
   padding: 10px 12px;
   border: 1px solid rgba(255, 122, 122, 0.16);
@@ -323,7 +323,7 @@
   line-height: 1.5;
 }
 
-.fusio-ai__signin {
+.fusion-ai__signin {
   display: flex;
   flex: none;
   align-items: center;
@@ -336,27 +336,27 @@
   background: rgba(255, 255, 255, 0.025);
 }
 
-.fusio-ai__signin div {
+.fusion-ai__signin div {
   min-width: 0;
 }
 
-.fusio-ai__signin strong,
-.fusio-ai__signin span {
+.fusion-ai__signin strong,
+.fusion-ai__signin span {
   display: block;
 }
 
-.fusio-ai__signin strong {
+.fusion-ai__signin strong {
   font-size: 11px;
   color: #e8e8ea;
 }
 
-.fusio-ai__signin span {
+.fusion-ai__signin span {
   margin-top: 3px;
   color: #74777e;
   font-size: 9px;
 }
 
-.fusio-ai__signin a {
+.fusion-ai__signin a {
   flex: none;
   padding: 9px 13px;
   border-radius: 11px;
@@ -367,13 +367,13 @@
   text-decoration: none;
 }
 
-.fusio-ai__composer-wrap {
+.fusion-ai__composer-wrap {
   flex: none;
   padding: 6px 14px 14px;
   background: linear-gradient(180deg, transparent, rgba(14, 14, 16, 0.98) 22%);
 }
 
-.fusio-ai__context-line {
+.fusion-ai__context-line {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -381,13 +381,13 @@
   color: #62656c;
 }
 
-.fusio-ai__context-line > span {
+.fusion-ai__context-line > span {
   width: 20px;
   height: 1px;
   background: #767980;
 }
 
-.fusio-ai__context-line small {
+.fusion-ai__context-line small {
   overflow: hidden;
   font-size: 9px;
   font-weight: 630;
@@ -395,7 +395,7 @@
   white-space: nowrap;
 }
 
-.fusio-ai__composer {
+.fusion-ai__composer {
   display: flex;
   min-height: 60px;
   align-items: flex-end;
@@ -407,7 +407,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-.fusio-ai__composer textarea {
+.fusion-ai__composer textarea {
   min-height: 44px;
   max-height: 112px;
   flex: 1;
@@ -423,17 +423,17 @@
   line-height: 20px;
 }
 
-.fusio-ai__composer textarea::placeholder {
+.fusion-ai__composer textarea::placeholder {
   color: #656870;
 }
 
-.fusio-ai__composer-actions {
+.fusion-ai__composer-actions {
   display: flex;
   flex: none;
   gap: 3px;
 }
 
-.fusio-ai__composer-actions button {
+.fusion-ai__composer-actions button {
   display: grid;
   width: 44px;
   height: 44px;
@@ -446,41 +446,41 @@
   cursor: pointer;
 }
 
-.fusio-ai__composer-actions button:hover:not(:disabled),
-.fusio-ai__composer-actions button.is-active {
+.fusion-ai__composer-actions button:hover:not(:disabled),
+.fusion-ai__composer-actions button.is-active {
   background: rgba(255, 255, 255, 0.06);
   color: #ededee;
 }
 
-.fusio-ai__composer-actions button.is-send {
+.fusion-ai__composer-actions button.is-send {
   background: #ededee;
   color: #111113;
 }
 
-.fusio-ai__composer-actions button:disabled {
+.fusion-ai__composer-actions button:disabled {
   cursor: default;
   opacity: 0.38;
 }
 
-.fusio-ai button:focus-visible,
-.fusio-ai a:focus-visible,
-.fusio-ai textarea:focus-visible {
+.fusion-ai button:focus-visible,
+.fusion-ai a:focus-visible,
+.fusion-ai textarea:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.72);
   outline-offset: 2px;
 }
 
-@keyframes fusio-pulse {
+@keyframes fusion-pulse {
   0%, 100% { opacity: 0.32; transform: scale(0.78); }
   50% { opacity: 1; transform: scale(1); }
 }
 
 @media (max-width: 560px) {
-  .fusio-ai {
+  .fusion-ai {
     right: 12px;
     bottom: 12px;
   }
 
-  .fusio-ai__panel {
+  .fusion-ai__panel {
     width: calc(100vw - 24px);
     height: min(690px, calc(100dvh - 24px));
     border-radius: 24px;
@@ -488,9 +488,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fusio-ai *,
-  .fusio-ai *::before,
-  .fusio-ai *::after {
+  .fusion-ai *,
+  .fusion-ai *::before,
+  .fusion-ai *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

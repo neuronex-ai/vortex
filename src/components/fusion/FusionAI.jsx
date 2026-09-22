@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  getFusioAIUser,
-  onFusioAIAuthChange,
-  sendFusioAIMessage,
-} from "../../services/fusioAI.js";
-import "../../styles/fusio-ai.css";
+  getFusionAIUser,
+  onFusionAIAuthChange,
+  sendFusionAIMessage,
+} from "../../services/fusionAI.js";
+import "../../styles/fusion-ai.css";
 
 const MicIcon = ({ active = false }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <rect x="9" y="3" width="6" height="12" rx="3" />
     <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6" />
-    {active ? <circle cx="19" cy="5" r="2" className="fusio-ai__icon-dot" /> : null}
+    {active ? <circle cx="19" cy="5" r="2" className="fusion-ai__icon-dot" /> : null}
   </svg>
 );
 
@@ -77,7 +77,7 @@ function speechText(value) {
     .slice(0, 2800);
 }
 
-export function FusioAI() {
+export function FusionAI() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
@@ -101,10 +101,10 @@ export function FusioAI() {
 
   useEffect(() => {
     let active = true;
-    getFusioAIUser().then((next) => {
+    getFusionAIUser().then((next) => {
       if (active) setUser(next);
     });
-    const unsubscribe = onFusioAIAuthChange((next) => {
+    const unsubscribe = onFusionAIAuthChange((next) => {
       setUser(next);
       if (!next) setMessages([]);
     });
@@ -171,11 +171,16 @@ export function FusioAI() {
       setActivity("Consultando o catálogo…");
 
       try {
-        const result = await sendFusioAIMessage(history);
+        const result = await sendFusionAIMessage(history);
         const assistantMessage = {
           id: "assistant-" + Date.now(),
           role: "assistant",
           content: result.reply,
+          meta: {
+            model: result.model,
+            usage: result.usage,
+            latencyMs: result.latencyMs,
+          },
         };
         setMessages((current) => [...current, assistantMessage].slice(-40));
         if (speakReply || voiceMode) speak(result.reply);
@@ -183,11 +188,11 @@ export function FusioAI() {
         const code = requestError?.message;
         if (code === "AUTH_REQUIRED") {
           setUser(null);
-          setError("Entre na sua conta Fusion para usar o Fusio AI.");
-        } else if (code === "FUSIO_NOT_CONFIGURED") {
-          setError("O Fusio AI ainda está aguardando a chave NVIDIA no servidor.");
+          setError("Entre na sua conta Fusion para usar o Fusion AI.");
+        } else if (code === "FUSION_NOT_CONFIGURED") {
+          setError("O Fusion AI ainda está aguardando a chave NVIDIA no servidor.");
         } else {
-          setError("Não foi possível consultar o Fusio AI agora. Tente novamente.");
+          setError("Não foi possível consultar o Fusion AI agora. Tente novamente.");
         }
       } finally {
         setSending(false);
@@ -293,25 +298,25 @@ export function FusioAI() {
   };
 
   return (
-    <div className="fusio-ai" data-open={open ? "true" : "false"}>
+    <div className="fusion-ai" data-open={open ? "true" : "false"}>
       <AnimatePresence initial={false} mode="wait">
         {!open ? (
           <motion.div
             key="launcher"
-            className="fusio-ai__launcher"
+            className="fusion-ai__launcher"
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 390, damping: 36, mass: 0.74 }}
             role="toolbar"
-            aria-label="Conversar com o Fusio AI"
+            aria-label="Conversar com o Fusion AI"
           >
             <motion.button
               type="button"
               onClick={() => startListening(true)}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
-              aria-label="Conversar por voz com o Fusio AI"
+              aria-label="Conversar por voz com o Fusion AI"
               title="Voz · Ctrl/⌘ + Shift + Espaço"
             >
               <MicIcon active={listening} />
@@ -322,7 +327,7 @@ export function FusioAI() {
               onClick={() => setOpen(true)}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
-              aria-label="Abrir Fusio AI"
+              aria-label="Abrir Fusion AI"
               title="Texto · Ctrl/⌘ + K"
             >
               <ChatIcon />
@@ -331,24 +336,24 @@ export function FusioAI() {
         ) : (
           <motion.aside
             key="panel"
-            className="fusio-ai__panel"
+            className="fusion-ai__panel"
             initial={{ opacity: 0, x: 12, y: 8, scale: 0.985 }}
             animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
             exit={{ opacity: 0, x: 8, y: 5, scale: 0.99 }}
             transition={{ type: "spring", stiffness: 410, damping: 40, mass: 0.78 }}
-            aria-label="Fusio AI"
+            aria-label="Fusion AI"
           >
-            <header className="fusio-ai__header">
+            <header className="fusion-ai__header">
               <button
                 type="button"
-                className="fusio-ai__identity"
+                className="fusion-ai__identity"
                 onClick={() => inputRef.current?.focus()}
               >
-                <span className="fusio-ai__wordmark">Fusio AI</span>
+                <span className="fusion-ai__wordmark">Fusion AI</span>
                 <small>Fusion · Steam · jogo local</small>
               </button>
 
-              <div className="fusio-ai__header-actions">
+              <div className="fusion-ai__header-actions">
                 <button type="button" onClick={clearConversation} aria-label="Nova conversa" title="Nova conversa">
                   <PlusIcon />
                 </button>
@@ -358,7 +363,7 @@ export function FusioAI() {
                     stopAudio();
                     setOpen(false);
                   }}
-                  aria-label="Recolher Fusio AI"
+                  aria-label="Recolher Fusion AI"
                   title="Recolher"
                 >
                   <CloseIcon />
@@ -366,9 +371,9 @@ export function FusioAI() {
               </div>
             </header>
 
-            <div ref={viewportRef} className="fusio-ai__viewport">
+            <div ref={viewportRef} className="fusion-ai__viewport">
               {!messages.length ? (
-                <div className="fusio-ai__empty">
+                <div className="fusion-ai__empty">
                   <div>
                     <h2>Como posso ajudar?</h2>
                     <p>
@@ -377,7 +382,7 @@ export function FusioAI() {
                     </p>
                   </div>
 
-                  <div className="fusio-ai__suggestions">
+                  <div className="fusion-ai__suggestions">
                     {suggestions.map((suggestion) => (
                       <button
                         key={suggestion}
@@ -395,7 +400,7 @@ export function FusioAI() {
                   </div>
                 </div>
               ) : (
-                <div className="fusio-ai__messages" role="log" aria-live="polite">
+                <div className="fusion-ai__messages" role="log" aria-live="polite">
                   {messages.map((message) => (
                     <article
                       key={message.id}
@@ -414,17 +419,17 @@ export function FusioAI() {
               )}
 
               {(sending || activity) ? (
-                <div className="fusio-ai__thinking" role="status">
+                <div className="fusion-ai__thinking" role="status">
                   <span />
                   <span>{activity || "Pensando…"}</span>
                 </div>
               ) : null}
 
-              {error ? <p className="fusio-ai__error" role="alert">{error}</p> : null}
+              {error ? <p className="fusion-ai__error" role="alert">{error}</p> : null}
             </div>
 
             {user === null ? (
-              <div className="fusio-ai__signin">
+              <div className="fusion-ai__signin">
                 <div>
                   <strong>Entre para conversar</strong>
                   <span>A conexão com a NVIDIA fica protegida no servidor.</span>
@@ -432,15 +437,15 @@ export function FusioAI() {
                 <a href="/app/auth.html?next=/app/">Entrar</a>
               </div>
             ) : (
-              <form className="fusio-ai__composer-wrap" onSubmit={submit}>
-                <div className="fusio-ai__context-line">
+              <form className="fusion-ai__composer-wrap" onSubmit={submit}>
+                <div className="fusion-ai__context-line">
                   <span />
                   <small>
                     {listening ? "Ouvindo você…" : voiceMode ? "Modo voz" : "Contexto do catálogo Fusion"}
                   </small>
                 </div>
 
-                <div className="fusio-ai__composer">
+                <div className="fusion-ai__composer">
                   <textarea
                     ref={inputRef}
                     value={draft}
@@ -451,14 +456,14 @@ export function FusioAI() {
                         submit(event);
                       }
                     }}
-                    placeholder="Pergunte ao Fusio AI..."
+                    placeholder="Pergunte ao Fusion AI..."
                     rows={1}
                     maxLength={6000}
                     disabled={!user || sending}
-                    aria-label="Mensagem para o Fusio AI"
+                    aria-label="Mensagem para o Fusion AI"
                   />
 
-                  <div className="fusio-ai__composer-actions">
+                  <div className="fusion-ai__composer-actions">
                     <motion.button
                       type="button"
                       onClick={() => listening ? stopListening() : startListening(false)}

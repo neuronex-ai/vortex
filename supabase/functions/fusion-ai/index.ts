@@ -23,7 +23,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 const SYSTEM_PROMPT = `
-Você é Fusio AI, o assistente de descoberta de jogos integrado ao Fusion.
+Você é Fusion AI, o assistente de descoberta de jogos integrado ao Fusion.
 
 CONTEXTO DO PRODUTO
 - Fusion é um catálogo de jogos para PC que usa a Steam como fonte oficial de metadados e loja.
@@ -626,18 +626,18 @@ Deno.serve(async (request) => {
 
   if (!NVIDIA_API_KEY) {
     return json({
-      error: "Fusio AI ainda não está configurado.",
+      error: "Fusion AI ainda não está configurado.",
       code: "nvidia_not_configured",
     }, 503);
   }
 
   const authHeader = request.headers.get("authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-  if (!token) return json({ error: "Faça login para usar o Fusio AI.", code: "auth_required" }, 401);
+  if (!token) return json({ error: "Faça login para usar o Fusion AI.", code: "auth_required" }, 401);
 
   const { data: authData, error: authError } = await admin.auth.getUser(token);
   if (authError || !authData.user) {
-    return json({ error: "Faça login para usar o Fusio AI.", code: "auth_required" }, 401);
+    return json({ error: "Faça login para usar o Fusion AI.", code: "auth_required" }, 401);
   }
 
   try {
@@ -649,17 +649,21 @@ Deno.serve(async (request) => {
       return json({ error: "Invalid conversation" }, 400);
     }
 
+    const startedAt = performance.now();
     const result = await runAgent(messages);
+    const latencyMs = Math.round(performance.now() - startedAt);
+
     return json({
       reply: result.content || "Não consegui formular uma resposta agora.",
       model: result.model,
       usage: result.usage,
+      latencyMs,
     });
   } catch (error) {
-    console.error("fusio-ai error", error);
+    console.error("fusion-ai error", error);
     return json({
-      error: "Não foi possível consultar o Fusio AI agora. Tente novamente em instantes.",
-      code: "fusio_ai_failed",
+      error: "Não foi possível consultar o Fusion AI agora. Tente novamente em instantes.",
+      code: "fusion_ai_failed",
     }, 502);
   }
 });
