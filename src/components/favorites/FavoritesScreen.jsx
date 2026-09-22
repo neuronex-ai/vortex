@@ -13,8 +13,6 @@ import "../../styles/app-pages.css";
 
 export function FavoritesScreen() {
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState("");
   const [games, setGames] = useState([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -39,15 +37,13 @@ export function FavoritesScreen() {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getUser().then(({ data, error: sessionError }) => {
+    supabase.auth.getUser().then(({ data }) => {
       if (!active) return;
-      setAuthLoading(false);
-      if (sessionError && sessionError.name !== "AuthSessionMissingError") setAuthError("Não foi possível verificar sua conta. Tente novamente.");
       setUser(data.user ?? null);
-    }).catch(() => { if (active) { setAuthLoading(false); setAuthError("Não foi possível verificar sua conta. Tente novamente."); } });
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) { setUser(session?.user ?? null); setAuthLoading(false); setAuthError(""); }
+      if (active) setUser(session?.user ?? null);
     });
 
     return () => {
@@ -83,11 +79,13 @@ export function FavoritesScreen() {
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
-  if (authLoading) return <main className="fusion-page-shell"><p className="fusion-route-loading" role="status">Verificando seu acesso…</p></main>;
-  if (authError) return <main className="fusion-page-shell"><section className="fusion-account-empty"><h1>Vamos tentar de novo?</h1><p role="alert">{authError}</p><button className="fusion-page-primary" onClick={() => window.location.reload()}>Tentar novamente</button><a className="auth-back" href="/app/">Explorar catálogo</a></section></main>;
   if (!user) {
     return (
       <main className="fusion-page-shell">
+        <header className="fusion-page-header">
+          <a href="/app/" className="fusion-page-brand">Fusion</a>
+          <a href="/" className="fusion-page-ghost">Voltar ao site</a>
+        </header>
         <section className="fusion-account-empty">
           <span className="fusion-page-eyebrow">Favoritos</span>
           <h1>Sua lista acompanha sua conta.</h1>
@@ -100,6 +98,14 @@ export function FavoritesScreen() {
 
   return (
     <main className="fusion-page-shell">
+      <header className="fusion-page-header">
+        <a href="/app/" className="fusion-page-brand">Fusion</a>
+        <nav>
+          <a href="/app/">Catálogo</a>
+          <a className="is-active" href="/app/favorites.html">Favoritos</a>
+          <a href="/app/account.html">Conta</a>
+        </nav>
+      </header>
 
       <section className="fusion-page-hero fusion-page-hero--compact">
         <span className="fusion-page-eyebrow">Sua biblioteca</span>

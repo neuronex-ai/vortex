@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
-import { safeAppReturn, signedInDestination } from "../../content/navigation.mjs";
 
 function safeReturnPath() {
   const next = new URLSearchParams(window.location.search).get("next");
-  return safeAppReturn(next || "/app/");
+  return next && next.startsWith("/app/") ? next : "/app/";
 }
 
 function withAuthSuccess(path) {
@@ -23,11 +22,10 @@ export function AuthScreen() {
     () => new URLSearchParams(window.location.search).get("auth_callback") === "1",
     [],
   );
-  const [mode, setMode] = useState(() => new URLSearchParams(window.location.search).get("mode") === "create" ? "create" : "sign-in");
+  const [mode, setMode] = useState("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -36,13 +34,12 @@ export function AuthScreen() {
     let mounted = true;
 
     supabase.auth.getUser().then(({ data, error: sessionError }) => {
-      if (!mounted) return;
+      if (!mounted || sessionError) return;
       setUser(data.user ?? null);
-      setCheckingSession(false);
-    }).catch(() => { if (mounted) { setCheckingSession(false); setError("Não foi possível verificar sua sessão. Tente entrar novamente."); } });
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) { setUser(session?.user ?? null); setCheckingSession(false); }
+      if (mounted) setUser(session?.user ?? null);
     });
 
     return () => {
@@ -52,12 +49,12 @@ export function AuthScreen() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !callbackFlow) return;
     const timeout = window.setTimeout(() => {
-      window.location.replace(signedInDestination(user, { next: returnPath, onboarding: mode === "create" || new URLSearchParams(window.location.search).get("onboarding") === "1" }));
-    }, 150);
+      window.location.replace(withAuthSuccess(returnPath));
+    }, 650);
     return () => window.clearTimeout(timeout);
-  }, [user, mode, returnPath]);
+  }, [user, callbackFlow, returnPath]);
 
   async function continueWithGoogle() {
     setPending(true);
@@ -66,9 +63,8 @@ export function AuthScreen() {
     const callbackUrl = new URL("/app/auth.html", window.location.origin);
     callbackUrl.searchParams.set("next", returnPath);
     callbackUrl.searchParams.set("auth_callback", "1");
-    callbackUrl.searchParams.set("onboarding", "1");
 
-    try { const { error: authError } = await supabase.auth.signInWithOAuth({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callbackUrl.toString() },
     });
@@ -77,7 +73,6 @@ export function AuthScreen() {
       setError(authError.message);
       setPending(false);
     }
-    } catch { setError("Não foi possível abrir o login com Google. Tente novamente."); setPending(false); }
   }
 
   async function submitCredentials(event) {
@@ -90,9 +85,8 @@ export function AuthScreen() {
     const callbackUrl = new URL("/app/auth.html", window.location.origin);
     callbackUrl.searchParams.set("next", returnPath);
     callbackUrl.searchParams.set("auth_callback", "1");
-    if (mode === "create") callbackUrl.searchParams.set("onboarding", "1");
 
-    try { const response = mode === "create"
+    const response = mode === "create"
       ? await supabase.auth.signUp({
           ...credentials,
           options: { emailRedirectTo: callbackUrl.toString() },
@@ -104,22 +98,17 @@ export function AuthScreen() {
     } else if (mode === "create" && !response.data.session) {
       setMessage("Enviamos um e-mail de confirmação. Abra-o para ativar sua conta.");
     } else {
-      window.location.assign(signedInDestination(response.data.user, { next: returnPath, onboarding: mode === "create" }));
+      window.location.assign(withAuthSuccess(returnPath));
     }
-    } catch { setError("Não foi possível conectar. Confira sua conexão e tente novamente."); }
-    finally { setPending(false); }
+
+    setPending(false);
   }
 
   async function signOut() {
     setPending(true);
-    try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
-      window.location.assign("/app/?signed_out=1");
-    } catch { setError("Não foi possível sair. Tente novamente."); setPending(false); }
+    await supabase.auth.signOut();
+    window.location.assign("/app/?signed_out=1");
   }
-
-  if (checkingSession) return <main className="auth-page"><p role="status">Verificando seu acesso…</p></main>;
 
   if (user) {
     return (
@@ -129,7 +118,7 @@ export function AuthScreen() {
           <span className="auth-eyebrow">{callbackFlow ? "Login concluído" : "Conta conectada"}</span>
           <h1>{callbackFlow ? "Tudo certo." : "Você já entrou."}</h1>
           <p>Olá, {displayName(user)}. Seus favoritos ficam sincronizados com esta conta.</p>
-          <a className="auth-primary" href={signedInDestination(user, { next: returnPath, onboarding: mode === "create" || new URLSearchParams(window.location.search).get("onboarding") === "1" })}>
+          <a className="auth-primary" href={withAuthSuccess(returnPath)}>
             {callbackFlow ? "Continuar para o Fusion" : "Abrir catálogo"}
           </a>
           <a className="auth-back" href="/app/favorites.html">Gerenciar favoritos</a>
@@ -167,8 +156,7 @@ export function AuthScreen() {
           <button className="auth-primary" type="submit" disabled={pending}>{pending ? "Aguarde..." : creating ? "Criar conta" : "Entrar"}</button>
         </form>
 
-        <p className="auth-switch">{creating ? "Já tem uma conta?" : "Ainda não tem conta?"} <button type="button" disabled={pending} onClick={() => { setMode(creating ? "sign-in" : "create"); setError(""); setMessage(""); }}>{creating ? "Entrar" : "Criar conta"}</button></p>
-        {creating && <p className="auth-legal">Ao criar sua conta, consulte os <a href="/termos-de-uso/">Termos de uso</a> e a <a href="/politica-de-privacidade/">Política de Privacidade</a>.</p>}
+        <p className="auth-switch">{creating ? "Já tem uma conta?" : "Ainda não tem conta?"} <button type="button" onClick={() => { setMode(creating ? "sign-in" : "create"); setError(""); setMessage(""); }}>{creating ? "Entrar" : "Criar conta"}</button></p>
         <a className="auth-back" href="/app/">← Voltar ao catálogo</a>
       </section>
     </main>
