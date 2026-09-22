@@ -1,6 +1,7 @@
 import { load } from 'cheerio';
 import { readFile, writeFile } from 'node:fs/promises';
-import https from 'node:https';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 const ORIGIN = 'https://steamrip.com';
 const CACHE = new URL('../data/catalog.json', import.meta.url);
 // The catalog excludes games whose purpose is erotic or pornographic. Mature
@@ -27,13 +28,8 @@ async function sourceIp() {
 }
 async function requestSource(url) {
   const ip = await sourceIp();
-  return new Promise((resolve,reject) => {
-    const timer = setTimeout(() => request.destroy(new Error('Source timeout')), 12000);
-    const request = https.get(url, {headers:sourceHeaders, servername:'steamrip.com', lookup:(_host,options,callback)=>options.all ? callback(null,[{address:ip,family:4}]) : callback(null,ip,4)}, response => {
-      const chunks=[]; response.on('data',chunk=>chunks.push(chunk)); response.on('end',()=>{clearTimeout(timer); if(response.statusCode<200||response.statusCode>299) return reject(new Error(`Source HTTP ${response.statusCode}`)); resolve(Buffer.concat(chunks).toString('utf8'));});
-    });
-    request.on('error',error=>{clearTimeout(timer);reject(error)});
-  });
+  const { stdout } = await promisify(execFile)('curl.exe', ['-sS','--fail','--max-time','12','--max-redirs','0','--resolve',`steamrip.com:443:${ip}`,'-A',sourceHeaders['User-Agent'],'-H',`Accept: ${sourceHeaders.Accept}`,'-H',`Accept-Language: ${sourceHeaders['Accept-Language']}`,'-H',`Referer: ${sourceHeaders.Referer}`,url], { maxBuffer: 15 * 1024 * 1024 });
+  return stdout;
 }
 export async function remote(url, json = false) {
   if (!json && new URL(url).hostname === 'steamrip.com') return requestSource(url);
