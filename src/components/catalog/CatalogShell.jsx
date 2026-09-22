@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { categories, gameMatchesQuery, games } from "../../data/games.js";
+import { GameCard } from "./GameCard.jsx";
+import { GameDetail } from "./GameDetail.jsx";
 
 const searchIcon = (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -35,28 +38,65 @@ const ease = [0.22, 1, 0.36, 1];
 export function CatalogShell() {
   const [activeNav, setActiveNav] = useState("Explorar");
   const [activeFilter, setActiveFilter] = useState("Todos");
-  const [note, setNote] = useState(
-    "A busca visual já está pronta. Os dados serão conectados em uma etapa posterior.",
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("popular");
+  const [selectedGame, setSelectedGame] = useState(null);
+
+  useEffect(() => {
+    const openFromUrl = () => {
+      const slug = new URLSearchParams(window.location.search).get("game");
+      setSelectedGame(games.find((game) => game.slug === slug) ?? null);
+    };
+
+    openFromUrl();
+    window.addEventListener("popstate", openFromUrl);
+    return () => window.removeEventListener("popstate", openFromUrl);
+  }, []);
+
+  const filteredGames = useMemo(() => {
+    let list = games.filter((game) => {
+      if (!gameMatchesQuery(game, query)) return false;
+      if (activeFilter === "Todos") return true;
+      if (activeFilter === "Coop local") return game.localCoop;
+      return [...game.genres, ...game.tags].includes(activeFilter);
+    });
+
+    list = [...list].sort((a, b) => {
+      if (sort === "recentes") return b.year - a.year;
+      if (sort === "nome") return a.title.localeCompare(b.title, "pt-BR");
+      return b.popularity - a.popularity;
+    });
+
+    return list;
+  }, [activeFilter, query, sort]);
+
+  const coopGames = useMemo(
+    () => games.filter((game) => game.localCoop).sort((a, b) => b.popularity - a.popularity).slice(0, 4),
+    [],
   );
+
+  function openGame(game) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("game", game.slug);
+    window.history.pushState({}, "", url);
+    setSelectedGame(game);
+  }
+
+  function closeGame() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("game");
+    window.history.pushState({}, "", url);
+    setSelectedGame(null);
+  }
 
   function submitSearch(event) {
     event.preventDefault();
-    const query = new FormData(event.currentTarget).get("query")?.toString().trim();
-
-    setNote(
-      query
-        ? `A busca por “${query}” será ativada quando conectarmos os dados do catálogo.`
-        : "Digite um nome ou gênero. A busca real será conectada em uma etapa posterior.",
-    );
+    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function selectFilter(filter) {
     setActiveFilter(filter);
-    setNote(
-      filter === "Todos"
-        ? "Mostrando a estrutura geral do catálogo."
-        : `O filtro “${filter}” já responde ao clique. Os jogos entram na próxima camada de dados.`,
-    );
+    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -127,40 +167,28 @@ export function CatalogShell() {
           para descobrir desde coop local até terror, ação e aventura.
         </p>
 
-        <motion.form
-          className="catalog-search"
-          onSubmit={submitSearch}
-        >
+        <motion.form className="catalog-search" onSubmit={submitSearch}>
           <span className="catalog-search__icon">{searchIcon}</span>
           <input
             type="search"
             name="query"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
             autoComplete="off"
             placeholder="Pesquise por nome, gênero ou descrição..."
             aria-label="Pesquisar jogos"
           />
-          <motion.button
-            type="submit"
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.96 }}
-          >
+          <motion.button type="submit" whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}>
             <span>Pesquisar</span>
             {arrowIcon}
           </motion.button>
         </motion.form>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={note}
-            className="catalog-search-note"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
-          >
-            {note}
-          </motion.div>
-        </AnimatePresence>
+        <div className="catalog-search-note">
+          {query
+            ? `${filteredGames.length} resultado(s) para “${query}”.`
+            : "Busca por título, gênero, tags e descrição — usando dados locais temporários."}
+        </div>
 
         <div className="catalog-filter-row" aria-label="Filtros de visualização">
           {filters.map((filter) => (
@@ -185,29 +213,48 @@ export function CatalogShell() {
         aria-labelledby="catalog-heading"
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.18 }}
+        viewport={{ once: true, amount: 0.12 }}
         transition={{ duration: 0.5, ease }}
       >
         <div className="catalog-content__heading">
           <div>
             <span className="catalog-eyebrow">Biblioteca</span>
-            <h2 id="catalog-heading">Jogos em destaque</h2>
+            <h2 id="catalog-heading">{activeFilter === "Todos" ? "Jogos em destaque" : activeFilter}</h2>
           </div>
-          <span className="catalog-status">Base visual</span>
+
+          <div className="catalog-toolbar">
+            <span className="catalog-status">{filteredGames.length} jogos</span>
+            <label className="catalog-sort">
+              <span>Ordenar</span>
+              <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                <option value="popular">Populares</option>
+                <option value="recentes">Mais recentes</option>
+                <option value="nome">Nome A–Z</option>
+              </select>
+            </label>
+          </div>
         </div>
 
-        <motion.div
-          className="catalog-empty"
-          whileHover={{ borderColor: "rgba(255,255,255,.13)" }}
-        >
-          <div className="catalog-empty__icon">{gridIcon}</div>
-          <h3>O catálogo começa aqui.</h3>
-          <p>
-            A estrutura está pronta para receber os cards dos jogos. Antes de conectar
-            qualquer fonte externa, vamos definir como a biblioteca deve se comportar
-            e quais informações cada card precisa mostrar.
-          </p>
-        </motion.div>
+        <AnimatePresence mode="popLayout">
+          {filteredGames.length ? (
+            <motion.div className="game-grid" layout>
+              {filteredGames.map((game) => (
+                <GameCard key={game.slug} game={game} onOpen={openGame} />
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              className="catalog-empty"
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="catalog-empty__icon">{gridIcon}</div>
+              <h3>Nenhum jogo encontrado.</h3>
+              <p>Tente outro termo ou volte para “Todos”.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.section>
 
       <motion.section
@@ -216,15 +263,23 @@ export function CatalogShell() {
         aria-labelledby="coop-heading"
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.22 }}
+        viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.45, ease }}
       >
-        <span className="catalog-eyebrow">Jogar juntos</span>
-        <h2 id="coop-heading">Coop local</h2>
-        <p>
-          Esta área será dedicada a títulos para jogar no mesmo PC, incluindo jogos de
-          tela dividida quando esse recurso estiver disponível.
-        </p>
+        <div className="catalog-section-heading">
+          <div>
+            <span className="catalog-eyebrow">Jogar juntos</span>
+            <h2 id="coop-heading">Coop local</h2>
+            <p>Uma seleção rápida para jogar no mesmo PC, lado a lado.</p>
+          </div>
+          <button type="button" onClick={() => selectFilter("Coop local")}>Ver todos</button>
+        </div>
+
+        <div className="game-grid game-grid--compact">
+          {coopGames.map((game) => (
+            <GameCard key={game.slug} game={game} onOpen={openGame} compact />
+          ))}
+        </div>
       </motion.section>
 
       <motion.section
@@ -233,24 +288,50 @@ export function CatalogShell() {
         aria-labelledby="categories-heading"
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.22 }}
+        viewport={{ once: true, amount: 0.18 }}
         transition={{ duration: 0.45, ease }}
       >
         <span className="catalog-eyebrow">Descoberta</span>
         <h2 id="categories-heading">Categorias</h2>
-        <p>
-          Ação, aventura, terror e outros gêneros serão organizados aqui quando a
-          primeira camada de dados do catálogo estiver pronta.
-        </p>
+        <p>Use as categorias abaixo como atalhos para a biblioteca.</p>
+
+        <div className="category-grid">
+          {categories.map((category) => {
+            const count = games.filter((game) =>
+              category === "Coop local"
+                ? game.localCoop
+                : [...game.genres, ...game.tags].includes(category),
+            ).length;
+
+            return (
+              <motion.button
+                type="button"
+                key={category}
+                onClick={() => selectFilter(category)}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span>{category}</span>
+                <strong>{count}</strong>
+              </motion.button>
+            );
+          })}
+        </div>
       </motion.section>
 
       <footer className="catalog-footer">
         <span>Fusion</span>
         <div>
           <span>Uma experiência Vórtex</span>
-          <span>Sem anúncios invasivos</span>
+          <span>Dados locais de demonstração</span>
         </div>
       </footer>
+
+      <AnimatePresence>
+        {selectedGame && (
+          <GameDetail key={selectedGame.slug} game={selectedGame} onClose={closeGame} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
