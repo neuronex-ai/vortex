@@ -83,6 +83,8 @@ export function CatalogShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState("");
+  const [steamFallbackCount, setSteamFallbackCount] = useState(0);
+  const [authNotice, setAuthNotice] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [cursorStack, setCursorStack] = useState([null]);
@@ -108,10 +110,12 @@ export function CatalogShell() {
         if (!active) return;
         setGames(result.games);
         setHasMore(result.hasMore);
+        setSteamFallbackCount(result.steamFallbackCount ?? 0);
       } catch (error) {
         if (!active) return;
         setGames([]);
         setHasMore(false);
+        setSteamFallbackCount(0);
         setCatalogError(error?.message || "Não foi possível carregar o catálogo.");
       } finally {
         if (active) setLoading(false);
@@ -156,6 +160,25 @@ export function CatalogShell() {
       active = false;
       listener.subscription.unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const authStatus = url.searchParams.get("auth");
+    const signedOut = url.searchParams.get("signed_out");
+
+    if (authStatus === "success") setAuthNotice("Login concluído. Sua conta Fusion está conectada.");
+    if (signedOut === "1") setAuthNotice("Você saiu da sua conta.");
+
+    if (authStatus || signedOut) {
+      url.searchParams.delete("auth");
+      url.searchParams.delete("signed_out");
+      window.history.replaceState({}, "", url);
+      const timeout = window.setTimeout(() => setAuthNotice(""), 4200);
+      return () => window.clearTimeout(timeout);
+    }
+
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -321,11 +344,11 @@ export function CatalogShell() {
 
         <motion.a
           className="catalog-site-link"
-          href="/app/auth.html?next=/app/"
+          href={user ? "/app/account.html" : "/app/auth.html?next=/app/"}
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
         >
-          <span>Entrar</span>
+          <span>{user ? "Minha conta" : "Entrar"}</span>
           {arrowIcon}
         </motion.a>
 
@@ -372,6 +395,11 @@ export function CatalogShell() {
                   {arrowIcon}
                 </a>
               ))}
+              {user && <a href="/app/favorites.html"><span>Favoritos</span>{arrowIcon}</a>}
+              <a href={user ? "/app/account.html" : "/app/auth.html?next=/app/"}>
+                <span>{user ? "Minha conta" : "Entrar"}</span>
+                {arrowIcon}
+              </a>
               <a href="/">Voltar ao site</a>
             </motion.nav>
           </>
@@ -417,7 +445,9 @@ export function CatalogShell() {
           {loading
             ? "Consultando o catálogo..."
             : query
-              ? `Exibindo ${games.length} jogo(s) nesta página para “${query}”.`
+              ? steamFallbackCount
+                ? `Exibindo ${games.length} jogo(s) para “${query}” · ${steamFallbackCount} encontrado(s) agora na Steam.`
+                : `Exibindo ${games.length} jogo(s) nesta página para “${query}”.`
               : "Catálogo conectado ao banco Fusion · Steam como fonte de metadados."}
         </div>
 
@@ -542,6 +572,7 @@ export function CatalogShell() {
               <h2 id="favorites-heading">Favoritos</h2>
               <p>{favoriteError || (favoriteGames.length ? "Jogos que você guardou para jogar depois." : "Marque o coração de um jogo para ele aparecer aqui.")}</p>
             </div>
+            <a className="catalog-section-link" href="/app/favorites.html">Gerenciar favoritos →</a>
           </div>
           {favoriteGames.length > 0 && <div className="game-grid game-grid--compact">{favoriteGames.map((game) => <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite compact />)}</div>}
         </motion.section>
@@ -587,8 +618,28 @@ export function CatalogShell() {
       </footer>
 
       <AnimatePresence>
+        {authNotice && (
+          <motion.div
+            className="catalog-auth-toast"
+            role="status"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+          >
+            {authNotice}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {selectedGame && (
-          <GameDetail key={selectedGame.slug} game={selectedGame} onClose={closeGame} />
+          <GameDetail
+            key={selectedGame.slug}
+            game={selectedGame}
+            onClose={closeGame}
+            isFavorite={favoriteGames.some((item) => item.id === selectedGame.id)}
+            onToggleFavorite={toggleFavorite}
+          />
         )}
       </AnimatePresence>
     </div>
