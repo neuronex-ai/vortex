@@ -7,8 +7,6 @@ import {
 } from "../../services/fusioAI.js";
 import "../../styles/fusio-ai.css";
 
-const STORAGE_KEY = "fusion:fusio-ai:messages:v1";
-
 const MicIcon = ({ active = false }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <rect x="9" y="3" width="6" height="12" rx="3" />
@@ -53,18 +51,6 @@ const suggestions = [
   "Me indique jogos de aventura para dois controles sem precisar do Nucleus.",
 ];
 
-function loadStoredMessages() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((item) => ["user", "assistant"].includes(item?.role) && typeof item?.content === "string")
-      .slice(-40);
-  } catch {
-    return [];
-  }
-}
-
 function LinkifiedText({ text }) {
   const parts = String(text || "").split(/(https?:\/\/[^\s)\]}>,]+)/g);
   return (
@@ -93,7 +79,7 @@ function speechText(value) {
 
 export function FusioAI() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState(loadStoredMessages);
+  const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [listening, setListening] = useState(false);
@@ -118,20 +104,15 @@ export function FusioAI() {
     getFusioAIUser().then((next) => {
       if (active) setUser(next);
     });
-    const unsubscribe = onFusioAIAuthChange((next) => setUser(next));
+    const unsubscribe = onFusioAIAuthChange((next) => {
+      setUser(next);
+      if (!next) setMessages([]);
+    });
     return () => {
       active = false;
       unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-40)));
-    } catch {
-      // Keep the current session in memory when localStorage is unavailable.
-    }
-  }, [messages]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -224,6 +205,8 @@ export function FusioAI() {
       setVoiceMode(autoSend);
       setError("");
 
+      if (!user) return;
+
       if (!speechSupported) {
         setError("O reconhecimento de voz não está disponível neste navegador.");
         return;
@@ -263,7 +246,7 @@ export function FusioAI() {
       recognitionRef.current = recognition;
       recognition.start();
     },
-    [speechSupported],
+    [speechSupported, user],
   );
 
   const stopListening = useCallback(() => {
