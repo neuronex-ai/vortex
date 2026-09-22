@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 const closeIcon = (
@@ -8,13 +8,25 @@ const closeIcon = (
 );
 
 export function GameDetail({ game, onClose }) {
+  const closeRef = useRef(null);
+  const [imageFailed, setImageFailed] = useState(false);
+
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.body.style.overflow = previous;
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [onClose]);
 
   return (
     <motion.div
@@ -28,17 +40,34 @@ export function GameDetail({ game, onClose }) {
     >
       <motion.article
         className="game-detail"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="game-detail-title"
         initial={{ opacity: 0, y: 30, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 18, scale: 0.99 }}
         transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
       >
-        <button className="game-detail__close" type="button" onClick={onClose} aria-label="Fechar detalhes">
+        <button
+          ref={closeRef}
+          className="game-detail__close"
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar detalhes"
+        >
           {closeIcon}
         </button>
 
-        <div className="game-detail__hero">
-          <img src={game.image} alt="" />
+        <div className={imageFailed ? "game-detail__hero is-image-missing" : "game-detail__hero"}>
+          {!imageFailed && (
+            <img src={game.image} alt="" onError={() => setImageFailed(true)} />
+          )}
+          {imageFailed && (
+            <div className="game-detail__fallback" aria-hidden="true">
+              <span>{game.title.slice(0, 1)}</span>
+              <small>Fusion</small>
+            </div>
+          )}
           <div className="game-detail__hero-shade" />
           <div className="game-detail__hero-copy">
             <div className="game-detail__chips">
@@ -46,7 +75,7 @@ export function GameDetail({ game, onClose }) {
               <span>{game.year}</span>
               <span>{game.genres[0]}</span>
             </div>
-            <h2>{game.title}</h2>
+            <h2 id="game-detail-title">{game.title}</h2>
             <p>{game.description}</p>
           </div>
         </div>
