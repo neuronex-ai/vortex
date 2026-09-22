@@ -23,5 +23,17 @@ export function bootApplication() {
     });
   }
 
+  if (page?.id === "account") {
+    import("../pages/account/index.jsx").then(({ mountAccountPage }) => {
+      mountAccountPage();
+    });
+  }
+
+  if (page?.id === "favorites") {
+    import("../pages/favorites/index.jsx").then(({ mountFavoritesPage }) => {
+      mountFavoritesPage();
+    });
+  }
+
   return { appRoot, page };
 }
