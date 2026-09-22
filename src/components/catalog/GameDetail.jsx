@@ -273,7 +273,7 @@ export function GameDetail({
 
   const similarFilterButtons = [
     ["same_screen", "Na mesma tela"],
-    ["local_coop", "Coop local"],
+    ["local_coop", "Coop local nativo"],
     ["online_coop", "Coop online"],
     ["multiplayer", "Multiplayer"],
   ];
