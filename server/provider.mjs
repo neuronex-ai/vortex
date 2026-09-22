@@ -53,7 +53,7 @@ export function parseIndex(html) {
   });
   return [...games.values()];
 }
-const HOSTS = ['gofile.io','megadb.net','buzzheavier.com','1fichier.com','pixeldrain.com','qiwi.gg','datanodes.to'];
+const HOSTS = ['gofile.io','megadb.net','buzzheavier.com','bzzhr.to','1fichier.com','pixeldrain.com','qiwi.gg','datanodes.to'];
 export function safeDownload(href) {
   try { const u = new URL(href); return u.protocol==='https:' && !u.username && !u.password && HOSTS.some(h=>u.hostname===h || u.hostname.endsWith('.'+h)) ? u.href : null; } catch { return null; }
 }
@@ -67,7 +67,7 @@ export function parseDetail(html) {
   if (!name || !article.length) throw new Error('Unknown source layout');
   if (isAdult(`${name} ${category} ${paragraphs.join(' ')}`)) return {blocked:true};
   const downloads = new Map();
-  article.find('a[href]').each((_,e)=>{ const url=safeDownload($(e).attr('href')); if(url) downloads.set(url,{url,host:new URL(url).hostname.replace(/^www\./,'' )}); });
+  article.find('a[href]').each((_,e)=>{ const url=safeDownload(new URL($(e).attr('href'), ORIGIN).href); if(url) downloads.set(url,{url,host:new URL(url).hostname.replace(/^www\./,'' )}); });
   const appLink = article.find('a[href*="store.steampowered.com/app/"]').first().attr('href') || '';
   return {name,downloads:[...downloads.values()],appId:appLink.match(/\/app\/(\d+)/)?.[1],description:paragraphs.map(text).filter(p=>p.length>80&&!/download|password|steamrip/i.test(p)).slice(0,3).join('\n\n')};
 }
