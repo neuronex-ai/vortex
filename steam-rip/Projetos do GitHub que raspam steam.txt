@@ -1,0 +1,6 @@
+Projetos do GitHub que raspam steam-rip para consultar jogos, dados dos jogos e links para download:
+
+https://github.com/Koriebonx98/SteamRip-scraper-
+https://github.com/apollodaniel/steamrip-installer
+https://github.com/AveryChangedMan/SteamRipClient
+https://github.com/dr-miami/steamrip-scraper

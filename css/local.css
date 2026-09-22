@@ -1,0 +1,29 @@
+/* Adaptações para HTML independente, sem React ou serviços do Framer. */
+html { scroll-behavior: smooth; }
+[hidden] { display: none !important; }
+.local-faq { width: 100%; background: rgb(12,12,13); border: 1px solid rgb(23,25,27); border-radius: 14px; color: white; overflow: hidden; }
+.local-faq summary { padding: 24px; cursor: pointer; list-style: none; }
+.local-faq summary::-webkit-details-marker { display: none; }
+.local-faq [data-framer-name="Question"] { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.local-faq [data-framer-name="Title"] { flex: 1; position: static !important; width: auto; min-width: 0; }
+.local-faq [data-framer-name="Icon Container"] { position: relative; flex: 0 0 28px; width: 28px; height: 28px; }
+.local-faq [data-framer-name="Icon Container"] > div { position: absolute; left: 7px; top: 13px; width: 14px; height: 2px; }
+.local-faq [data-framer-name="Icon Container"] > div:last-child { transform: rotate(90deg) !important; }
+.local-faq[open] [data-framer-name="Icon Container"] > div:last-child { opacity: 0; }
+.local-answer { margin: 0 24px; padding: 20px 0 24px; border-top: 1px solid rgb(23,25,27); font: 400 16px/1.6 Inter, sans-serif; color: rgb(146,150,159); white-space: pre-line; }
+.local-mobile-menu { width: 100%; display: flex; flex-direction: column; gap: 4px; padding: 12px 0; }
+.local-mobile-menu a { padding: 12px 16px; color: #92969f; font: 500 16px/1.4 Inter,sans-serif; text-decoration: none; border-radius: 12px; }
+.local-mobile-menu a:hover { color: white; background: #131315; }
+nav:has(.local-mobile-menu:not([hidden])) { height: auto !important; flex-direction: column !important; overflow: visible !important; }
+nav:has(.local-mobile-menu) > [data-framer-name="Logo"] { width: 100%; }
+.local-form-status { font: 400 14px/1.5 Inter,sans-serif; color: #bbb; max-width: 540px; margin: 12px auto; text-align: center; }
+[data-local-menu-toggle] { cursor: pointer; }
+[data-framer-name="Lights"], [data-framer-name="Lights"] *,
+[data-framer-name="Light Rays"], [data-framer-name="Light Rays"] *,
+[data-framer-name="Right Light"], [data-framer-name="Right Light"] * { pointer-events: none !important; }
+.local-carousel { overflow-x: auto !important; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+.local-carousel > ul { width: max-content !important; max-width: none !important; }
+.local-carousel > ul > li { flex-shrink: 0; }
+summary:focus-visible, [data-local-menu-toggle]:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+@media (max-width: 600px) { .local-faq summary { padding: 18px; } .local-answer { margin: 0 18px; font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

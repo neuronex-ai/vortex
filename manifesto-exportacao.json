@@ -1,0 +1,998 @@
+{
+  "source": "https://arquitetodeia.framer.ai",
+  "exportedAt": "2026-09-18T03:51:23.807Z",
+  "pages": [
+    {
+      "url": "https://arquitetodeia.framer.ai/",
+      "file": "index.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/changelog",
+      "file": "changelog.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog",
+      "file": "blog.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/waitlist",
+      "file": "waitlist.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/contact",
+      "file": "contact.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/privacy-policy",
+      "file": "privacy-policy.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/404",
+      "file": "404.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog/enhance-workflow-efficiency-with-custom-filters",
+      "file": "blog/enhance-workflow-efficiency-with-custom-filters.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog/how-to-streamline-projects-for-maximum-efficiency",
+      "file": "blog/how-to-streamline-projects-for-maximum-efficiency.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog/maximize-your-team-s-productivity-with-suprema",
+      "file": "blog/maximize-your-team-s-productivity-with-suprema.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog/mastering-time-management-for-maximum-efficiency",
+      "file": "blog/mastering-time-management-for-maximum-efficiency.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog/boost-team-collaboration-with-effective-task-management",
+      "file": "blog/boost-team-collaboration-with-effective-task-management.html"
+    },
+    {
+      "url": "https://arquitetodeia.framer.ai/blog/top-task-management-tips-for-busy-teams",
+      "file": "blog/top-task-management-tips-for-busy-teams.html"
+    }
+  ],
+  "assets": [
+    {
+      "url": "https://framerusercontent.com/images/vzw2XVnLz0k72IXEQORR7RTfVfA.png?width=1080&height=1080",
+      "file": "assets/5d0cbaa2b34ad9.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1xOqMa4sAAwBCrdkiSJfIXups.png?width=5071&height=3425",
+      "file": "assets/78c7a2a1affec1.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/dOhJ3GIhDMjA2K23BdEru679sw.png?width=1273&height=849",
+      "file": "assets/3ea4ab100b92bf.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/Vo635N8iGZlOjnf2LbSUrJU9fAU.svg?width=219&height=207",
+      "file": "assets/3f5cc1987cd80d.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/59ERbxpl9e7cv8LDhpLQ04KneVo.svg?width=244&height=248",
+      "file": "assets/329954cb7c15d5.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/QrN1Zh1KKnKXYLgrx9PdpIXddo.png?width=871&height=1179",
+      "file": "assets/220d7d8fc8429a.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RCnwWvNMGMr7RraevkNOYwcckg.png?width=1614&height=1171",
+      "file": "assets/bfc60c758ca35f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/0iYvC8WBrzeWXjCFjnd7QGcayw.png?width=1804&height=836",
+      "file": "assets/a9deba14d4a7a2.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/9bBNWtHd8Cmml794u8UIgCkOw.png?width=871&height=848",
+      "file": "assets/5909125fbea38b.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/9KUQ2S1XzWymvuuc631rusF0MU.png?width=589&height=848",
+      "file": "assets/baf7a40378f1ac.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/XlhSFznctlmTCE8txmmrNIZ6Q.svg?width=406&height=415",
+      "file": "assets/b2af13f156969d.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/7WNavCG9lfFGI7YEfLtQjK2Xsg.svg?width=406&height=415",
+      "file": "assets/3879121f397251.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/xrtv9hTiqTKkNFhVrgAyQrqaok.png?width=1024&height=1024",
+      "file": "assets/54af55b1afbcdf.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RN6g00pcccwOXOMeCY8Ilfot6dQ.svg?width=420&height=421",
+      "file": "assets/a1a30ed2dbb017.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ZpmqA0g8sZd5ObaVwBsgzc6dg.svg?width=838&height=836",
+      "file": "assets/a651d36d16b959.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/XlEh7Pv2NjwfqsTVfxb1lsArOVM.png?width=1080&height=1008",
+      "file": "assets/4c9d7ef368e752.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/IrDjLwRaXZwlI1x6WBc40387bbQ.png?width=1201&height=611",
+      "file": "assets/2b738531a04a60.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ZjCB4GVrMopRG4j89tz3PQrfBwI.png?width=361&height=361",
+      "file": "assets/358e4ef0847e72.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/xrtv9hTiqTKkNFhVrgAyQrqaok.png?scale-down-to=512",
+      "file": "assets/6da21777640386.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/Kq7N2UYI9nwYOMfACQkJA3s1BWs.svg?width=133&height=133",
+      "file": "assets/5aa36c85e6bf24.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/u6Gay6NFnAHWNP72J6SfoTL4pk8.svg?width=112&height=112",
+      "file": "assets/5a328ce8ce61e2.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/S4jgTAiTIzalY7sYMnkEQR8uHd0.svg?width=1440&height=555",
+      "file": "assets/36cc0b00478310.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/blMCRxb7YsnyXyxTre9TbAEHmqU.svg?width=607&height=513",
+      "file": "assets/35d50c0f4f3626.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/odEnYdXIAubZLZUmSIluzyObGUE.png?width=1060&height=706",
+      "file": "assets/ab8fa0ffe96ac8.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/QowMKLgvELVtVnktpgt93q4VOM.png?width=740&height=740",
+      "file": "assets/91cb419aaa53b3.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/uSLGPghJr3WwDDEm7mX0bNmxBY.png?width=1060&height=706",
+      "file": "assets/20f720e590d6d6.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/iPxHNnDVXLINUBXaGTVRllpuVtM.png?width=1060&height=706",
+      "file": "assets/497a23ab064f1e.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1lwpIXfVzi47WT8fK0HbWPQHcBc.png?scale-down-to=2048&width=3363&height=1720",
+      "file": "assets/045eba38965a76.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/5ocHeHxeM5wca5z9TaNsgwKJK4Y.png?width=51&height=51",
+      "file": "assets/e6a12cb53c6efa.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/TiWdJn661OUHunSkEUvjml9HWKo.png?width=51&height=51",
+      "file": "assets/ca6d657bc28071.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/GCmfSnroIDWtBTsDqGiZcw9w.png?scale-down-to=512",
+      "file": "assets/a13eb4ec18c94d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/R1k9U59SxlfUc1KXzbdfThP0Ak.png?width=50&height=51",
+      "file": "assets/bd4ea42714b007.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/kBBXIfvNl5VMD2jfyfMwnv8M9ZA.png?width=51&height=51",
+      "file": "assets/3178bfd896492f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/5ocHeHxeM5wca5z9TaNsgwKJK4Y.png",
+      "file": "assets/8157eb048d49f2.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/TiWdJn661OUHunSkEUvjml9HWKo.png",
+      "file": "assets/9f02b035e46b37.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/t0GMsX7RVkn2nuzULkqAzFsEIlk.svg?width=150&height=194",
+      "file": "assets/60b42cc73e04f3.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/H8hbJbLKjJfpGrWoNe4K7c5w6c.svg?width=248&height=251",
+      "file": "assets/8e5386c7019613.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/hIDqfiTbY3IysibAQMXdLAh3FIg.svg?width=722&height=181",
+      "file": "assets/c9e4b064ddd0ee.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?width=2597&height=447",
+      "file": "assets/5661aadc01d4f4.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/HNkUADM1dfQyd9Jdpy2LTPSDDAM.png",
+      "file": "assets/62049ac59b592d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/hIDqfiTbY3IysibAQMXdLAh3FIg.svg",
+      "file": "assets/156e3bc08007d7.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/HCZjQc7lLsn2riEarMNNIDMfuGE.png",
+      "file": "assets/47d4f15cc76e31.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/AK29gH5L0J9sCE64UYDBwf1P4.svg",
+      "file": "assets/93e1528e184aa2.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1Tf6fjkAqjtPFlnFvGiThI4gko.png",
+      "file": "assets/d6e6b90c1bf194.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1xOqMa4sAAwBCrdkiSJfIXups.png?scale-down-to=512&width=5071&height=3425",
+      "file": "assets/9a442c5014b1b2.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1xOqMa4sAAwBCrdkiSJfIXups.png?scale-down-to=1024&width=5071&height=3425",
+      "file": "assets/13eeb89c41ab30.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1xOqMa4sAAwBCrdkiSJfIXups.png?scale-down-to=2048&width=5071&height=3425",
+      "file": "assets/e61be1364a7bf6.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1xOqMa4sAAwBCrdkiSJfIXups.png?scale-down-to=4096&width=5071&height=3425",
+      "file": "assets/d11ff9f78d7fef.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/dOhJ3GIhDMjA2K23BdEru679sw.png?scale-down-to=512&width=1273&height=849",
+      "file": "assets/f0b720f4a7d42f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/dOhJ3GIhDMjA2K23BdEru679sw.png?scale-down-to=1024&width=1273&height=849",
+      "file": "assets/f542bfa9492992.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/QrN1Zh1KKnKXYLgrx9PdpIXddo.png?scale-down-to=1024&width=871&height=1179",
+      "file": "assets/a3a4c6a882af39.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RCnwWvNMGMr7RraevkNOYwcckg.png?scale-down-to=512&width=1614&height=1171",
+      "file": "assets/cf02bcfac9ccfe.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RCnwWvNMGMr7RraevkNOYwcckg.png?scale-down-to=1024&width=1614&height=1171",
+      "file": "assets/ac3e8d46ae365d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/0iYvC8WBrzeWXjCFjnd7QGcayw.png?scale-down-to=512&width=1804&height=836",
+      "file": "assets/dc4b72d8afe2ba.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/0iYvC8WBrzeWXjCFjnd7QGcayw.png?scale-down-to=1024&width=1804&height=836",
+      "file": "assets/46975c35bc7d2f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/9bBNWtHd8Cmml794u8UIgCkOw.png?scale-down-to=512&width=871&height=848",
+      "file": "assets/12ba35318b05dc.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/xrtv9hTiqTKkNFhVrgAyQrqaok.png?scale-down-to=512&width=1024&height=1024",
+      "file": "assets/bc80fa9c6d2ac3.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ZpmqA0g8sZd5ObaVwBsgzc6dg.svg?scale-down-to=512&width=838&height=836",
+      "file": "assets/d57a3c3bbcb2a4.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/IrDjLwRaXZwlI1x6WBc40387bbQ.png?scale-down-to=512&width=1201&height=611",
+      "file": "assets/37365586b5a422.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/IrDjLwRaXZwlI1x6WBc40387bbQ.png?scale-down-to=1024&width=1201&height=611",
+      "file": "assets/a6d3b394b42e6d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/xrtv9hTiqTKkNFhVrgAyQrqaok.png",
+      "file": "assets/04d29e585507aa.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/S4jgTAiTIzalY7sYMnkEQR8uHd0.svg?scale-down-to=512&width=1440&height=555",
+      "file": "assets/6ea2eeac18ff12.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/S4jgTAiTIzalY7sYMnkEQR8uHd0.svg?scale-down-to=1024&width=1440&height=555",
+      "file": "assets/122b96a1e88956.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/blMCRxb7YsnyXyxTre9TbAEHmqU.svg?scale-down-to=512&width=607&height=513",
+      "file": "assets/b52ca4748eda6a.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/odEnYdXIAubZLZUmSIluzyObGUE.png?scale-down-to=512&width=1060&height=706",
+      "file": "assets/8414f84cd733f0.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/odEnYdXIAubZLZUmSIluzyObGUE.png?scale-down-to=1024&width=1060&height=706",
+      "file": "assets/d1e09e66dd9112.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/QowMKLgvELVtVnktpgt93q4VOM.png?scale-down-to=512&width=740&height=740",
+      "file": "assets/a240c7f85a8093.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/uSLGPghJr3WwDDEm7mX0bNmxBY.png?scale-down-to=512&width=1060&height=706",
+      "file": "assets/333ef6bac82936.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/uSLGPghJr3WwDDEm7mX0bNmxBY.png?scale-down-to=1024&width=1060&height=706",
+      "file": "assets/9b40d02787af50.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/iPxHNnDVXLINUBXaGTVRllpuVtM.png?scale-down-to=512&width=1060&height=706",
+      "file": "assets/051f4168f20bb7.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/iPxHNnDVXLINUBXaGTVRllpuVtM.png?scale-down-to=1024&width=1060&height=706",
+      "file": "assets/a38df7f98df73f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1lwpIXfVzi47WT8fK0HbWPQHcBc.png?scale-down-to=512&width=3363&height=1720",
+      "file": "assets/a43ceae9a27ac9.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1lwpIXfVzi47WT8fK0HbWPQHcBc.png?scale-down-to=1024&width=3363&height=1720",
+      "file": "assets/7bb6b530033221.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1lwpIXfVzi47WT8fK0HbWPQHcBc.png?width=3363&height=1720",
+      "file": "assets/ad44d5fca16a2b.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/GCmfSnroIDWtBTsDqGiZcw9w.png?scale-down-to=1024",
+      "file": "assets/b2fcd7dd6a872b.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/GCmfSnroIDWtBTsDqGiZcw9w.png",
+      "file": "assets/50310f75c6dc2b.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/hIDqfiTbY3IysibAQMXdLAh3FIg.svg?scale-down-to=512&width=722&height=181",
+      "file": "assets/af27fd42bcfd54.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?scale-down-to=512&width=2597&height=447",
+      "file": "assets/ce678b6a470178.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?scale-down-to=1024&width=2597&height=447",
+      "file": "assets/15ba26378d7965.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?scale-down-to=2048&width=2597&height=447",
+      "file": "assets/794ae21f06eaf4.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/HNkUADM1dfQyd9Jdpy2LTPSDDAM.png?scale-down-to=512",
+      "file": "assets/ffbab01360b992.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/HNkUADM1dfQyd9Jdpy2LTPSDDAM.png?scale-down-to=1024",
+      "file": "assets/b1756e657563fa.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/hIDqfiTbY3IysibAQMXdLAh3FIg.svg?scale-down-to=512",
+      "file": "assets/5df7ffeca4d56a.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/rE38UbgTFsl8LDZ8A8gGLsu1bDw.svg",
+      "file": "assets/d3749722b25d2f.svg"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/instrumentsans/v3/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0She1YmV.woff2",
+      "file": "assets/b5180db48ebf68.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/instrumentsans/v3/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2",
+      "file": "assets/2a0dbb38aba854.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwadkRFe9.woff2",
+      "file": "assets/bc253db6656f83.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwa5kRFe9.woff2",
+      "file": "assets/782eedc9a77e30.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwaZkRFe9.woff2",
+      "file": "assets/c792a691511948.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwalkRFe9.woff2",
+      "file": "assets/a42f5450fd83d4.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwaVkRFe9.woff2",
+      "file": "assets/d66d9e68cdcf54.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwaRkRFe9.woff2",
+      "file": "assets/31bc9657eabede.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSyv5HMAFg6IuGlBNMjxLsCwapkRA.woff2",
+      "file": "assets/45df02b408ac08.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsK8ah8QA.woff2",
+      "file": "assets/963edb101c2b83.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsD8ah8QA.woff2",
+      "file": "assets/e524272b77d64b.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsL8ah8QA.woff2",
+      "file": "assets/2126d50b052fa3.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsE8ah8QA.woff2",
+      "file": "assets/a7dbe6fb09d31d.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsI8ah8QA.woff2",
+      "file": "assets/6f256c5982d120.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsJ8ah8QA.woff2",
+      "file": "assets/13afee03328d61.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSwv5HMAFg6IuGlBNMjxLsH8ag.woff2",
+      "file": "assets/528f49627ee952.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/rethinksans/v6/AMOIz4SDuXOMCPfdoglY9JQEUWi769174g.woff2",
+      "file": "assets/3405103616bf35.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/rethinksans/v6/AMOIz4SDuXOMCPfdoglY9JQEUWi1690.woff2",
+      "file": "assets/fbe16589792dc9.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/rethinksans/v6/AMOWz4SDuXOMCPfdoglY9JQEWli389k.woff2",
+      "file": "assets/351a7825ee8e6b.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/rethinksans/v6/AMOWz4SDuXOMCPfdoglY9JQEVFi3.woff2",
+      "file": "assets/fd6371574df82f.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5diKskPg.woff2",
+      "file": "assets/0d20b5521ac6cb.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5UiKskPg.woff2",
+      "file": "assets/ba212917e3ac26.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5ciKskPg.woff2",
+      "file": "assets/24d9fe19f79e5a.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5TiKskPg.woff2",
+      "file": "assets/7b8ecf1d3d2ede.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5fiKskPg.woff2",
+      "file": "assets/399f8ba8d39bab.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5eiKskPg.woff2",
+      "file": "assets/62f05a6618c6c2.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGShv5HMAFg6IuGlBNMjxLsC66ZMtb8hyW62x0zrGB5QiKs.woff2",
+      "file": "assets/c7bad580d7b243.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaVi5SkK8.woff2",
+      "file": "assets/dc7a66511983ad.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaXy5SkK8.woff2",
+      "file": "assets/2744835880ac43.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaVy5SkK8.woff2",
+      "file": "assets/b08bdb3dd1a01a.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaWC5SkK8.woff2",
+      "file": "assets/37802b45ca7391.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaVC5SkK8.woff2",
+      "file": "assets/7a18389ec54fbd.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaVS5SkK8.woff2",
+      "file": "assets/4790e7e51cb754.woff2"
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/intertight/v8/NGSnv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjpgiaWy5S.woff2",
+      "file": "assets/ae88dc63b4c7ca.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/5vvr9Vy74if2I6bQbJvbw7SY1pQ.woff2",
+      "file": "assets/ba02b29b109b07.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/EOr0mi4hNtlgWNn9if640EZzXCo.woff2",
+      "file": "assets/d342a035118148.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/Y9k9QrlZAqio88Klkmbd8VoMQc.woff2",
+      "file": "assets/29ec2a1bd44954.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/OYrD2tBIBPvoJXiIHnLoOXnY9M.woff2",
+      "file": "assets/2666a469c59bd1.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/JeYwfuaPfZHQhEG8U5gtPDZ7WQ.woff2",
+      "file": "assets/ca74d670196118.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/GrgcKwrN6d3Uz8EwcLHZxwEfC4.woff2",
+      "file": "assets/5afd6099115c50.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/b6Y37FthZeALduNqHicBT6FutY.woff2",
+      "file": "assets/b055aed328b379.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/DpPBYI0sL4fYLgAkX8KXOPVt7c.woff2",
+      "file": "assets/48d547890ca146.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/4RAEQdEOrcnDkhHiiCbJOw92Lk.woff2",
+      "file": "assets/b7bcaf4d3812f9.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/1K3W8DizY3v4emK8Mb08YHxTbs.woff2",
+      "file": "assets/f5679bd140c345.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/tUSCtfYVM1I1IchuyCwz9gDdQ.woff2",
+      "file": "assets/4c7778edc8ca1c.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/VgYFWiwsAC5OYxAycRXXvhze58.woff2",
+      "file": "assets/388a7c4ebd4346.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/GIryZETIX4IFypco5pYZONKhJIo.woff2",
+      "file": "assets/c0215d82c6dd9e.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/vQyevYAyHtARFwPqUzQGpnDs.woff2",
+      "file": "assets/61418a355f7885.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/DXD0Q7LSl7HEvDzucnyLnGBHM.woff2",
+      "file": "assets/ee85b182495aac.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/H89BbHkbHDzlxZzxi8uPzTsp90.woff2",
+      "file": "assets/1f1f2cc180697d.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/u6gJwDuwB143kpNK1T1MDKDWkMc.woff2",
+      "file": "assets/1f3e1827f7fa5b.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/43sJ6MfOPh1LCJt46OvyDuSbA6o.woff2",
+      "file": "assets/2ca7f647387414.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/wccHG0r4gBDAIRhfHiOlq6oEkqw.woff2",
+      "file": "assets/0c089940c6ec5a.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/WZ367JPwf9bRW6LdTHN8rXgSjw.woff2",
+      "file": "assets/dfa7f96c71c156.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/QxmhnWTzLtyjIiZcfaLIJ8EFBXU.woff2",
+      "file": "assets/bdcf4e44d90c5c.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/2A4Xx7CngadFGlVV4xrO06OBHY.woff2",
+      "file": "assets/e340c6acada33b.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/vxBnBhH8768IFAXAb4Qf6wQHKs.woff2",
+      "file": "assets/501c1ca7558c27.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/zSsEuoJdh8mcFVk976C05ZfQr8.woff2",
+      "file": "assets/0905216cf53b1f.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/b8ezwLrN7h2AUoPEENcsTMVJ0.woff2",
+      "file": "assets/b05cf4e164a5f0.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/mvNEIBLyHbscgHtwfsByjXUz3XY.woff2",
+      "file": "assets/c63e5ea8ac2e94.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/6FI2EneKzM3qBy5foOZXey7coCA.woff2",
+      "file": "assets/10ef0fa08b30bb.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/qrVgiXNd6RuQjETYQiVQ9nqCk.woff2",
+      "file": "assets/6dcb0854b419dc.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/NHHeAKJVP0ZWHk5YZnQQChIsBM.woff2",
+      "file": "assets/20e1fe9e63e6d7.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/hyOgCu0Xnghbimh0pE8QTvtt2AU.woff2",
+      "file": "assets/f291989f74daa4.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/NeGmSOXrPBfEFIy5YZeHq17LEDA.woff2",
+      "file": "assets/847e9200dc8560.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/oYaAX5himiTPYuN8vLWnqBbfD2s.woff2",
+      "file": "assets/a1e9f8dcaf578f.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/lEJLP4R0yuCaMCjSXYHtJw72M.woff2",
+      "file": "assets/a26ba2022eb9eb.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/cRJyLNuTJR5jbyKzGi33wU9cqIQ.woff2",
+      "file": "assets/e46bce5ad89985.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/1ZFS7N918ojhhd0nQWdj3jz4w.woff2",
+      "file": "assets/a4c529c3324d02.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/A0Wcc7NgXMjUuFdquHDrIZpzZw0.woff2",
+      "file": "assets/7cc62c78dddaf2.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/mkY5Sgyq51ik0AMrSBwhm9DJg.woff2",
+      "file": "assets/13550d8ca5fde3.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/X5hj6qzcHUYv7h1390c8Rhm6550.woff2",
+      "file": "assets/5594c72727ccc0.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/gQhNpS3tN86g8RcVKYUUaKt2oMQ.woff2",
+      "file": "assets/e2f3aeecf0fbfd.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/cugnVhSraaRyANCaUtI5FV17wk.woff2",
+      "file": "assets/d26b343d0d0ed3.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/5HcVoGak8k5agFJSaKa4floXVu0.woff2",
+      "file": "assets/8bf56301b6409a.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/jn4BtSPLlS0NDp1KiFAtFKiiY0o.woff2",
+      "file": "assets/7f90c0d16f4abd.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/P2Bw01CtL0b9wqygO0sSVogWbo.woff2",
+      "file": "assets/bb78ccb04c7d6f.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/05KsVHGDmqXSBXM4yRZ65P8i0s.woff2",
+      "file": "assets/18dd5cffb36f04.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/ky8ovPukK4dJ1Pxq74qGhOqCYI.woff2",
+      "file": "assets/a8b12074809ae1.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/vvNSqIj42qeQ2bvCRBIWKHscrc.woff2",
+      "file": "assets/d8c3d066cf3bbc.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/3ZmXbBKToJifDV9gwcifVd1tEY.woff2",
+      "file": "assets/cce22defc0da0c.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/FNfhX3dt4ChuLJq2PwdlxHO7PU.woff2",
+      "file": "assets/533b8b262cd074.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/g0c8vEViiXNlKAgI4Ymmk3Ig.woff2",
+      "file": "assets/39b616fd121371.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/efTfQcBJ53kM2pB1hezSZ3RDUFs.woff2",
+      "file": "assets/829cbb505e078f.woff2"
+    },
+    {
+      "url": "https://framerusercontent.com/images/6aqaBdH6AHtA2WpGNpDalHtAWs.svg",
+      "file": "assets/9a4fc6b615fab8.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/iQHbVLExBj9MSHpinI9SyOjS8g.png",
+      "file": "assets/7e8a03920d2df8.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/MqUdpbfHbKcGLOhaenQt912qS4c.svg",
+      "file": "assets/8f52bd3e23f4ec.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/10GQQ1N7y7aYxFeiluVAwSdHOew.svg",
+      "file": "assets/3c1611480e54b1.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JIMl06XNtWad9Q0ngLwvEp9a59A.svg?width=6&height=7",
+      "file": "assets/868fa1beedc3b0.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/gNQdItzvZFuiSIsDWGweldlvU.svg?width=6&height=7",
+      "file": "assets/d76e518e263d7c.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/INjk2HNyhMakduOXL3vzY0Jtfls.png?width=2040&height=1072",
+      "file": "assets/35004101017a4b.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/1tDXnT3jNTKabPjhxbgvBc0t8A.svg?width=6&height=7",
+      "file": "assets/6a07729ee16a91.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/2IZskyNNdCek6a1YerK7okyCVpE.png?width=2040&height=1072",
+      "file": "assets/3cf86537609178.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png",
+      "file": "assets/de15c03d1b0a0d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/6aqaBdH6AHtA2WpGNpDalHtAWs.svg?scale-down-to=512",
+      "file": "assets/64b92316dc4f8c.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/iQHbVLExBj9MSHpinI9SyOjS8g.png?scale-down-to=512",
+      "file": "assets/9d302903af6460.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/iQHbVLExBj9MSHpinI9SyOjS8g.png?scale-down-to=1024",
+      "file": "assets/1dadf2c48a7a96.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/MqUdpbfHbKcGLOhaenQt912qS4c.svg?scale-down-to=512",
+      "file": "assets/e768604eac7658.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/MqUdpbfHbKcGLOhaenQt912qS4c.svg?scale-down-to=1024",
+      "file": "assets/7be69523282273.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/INjk2HNyhMakduOXL3vzY0Jtfls.png?scale-down-to=512&width=2040&height=1072",
+      "file": "assets/498354a9c1ef20.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/INjk2HNyhMakduOXL3vzY0Jtfls.png?scale-down-to=1024&width=2040&height=1072",
+      "file": "assets/2cbfbd9cff882f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/2IZskyNNdCek6a1YerK7okyCVpE.png?scale-down-to=512&width=2040&height=1072",
+      "file": "assets/705866798c6891.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/2IZskyNNdCek6a1YerK7okyCVpE.png?scale-down-to=1024&width=2040&height=1072",
+      "file": "assets/0ee35183f61b09.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?scale-down-to=512",
+      "file": "assets/bda36fcfbf30c7.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?scale-down-to=1024",
+      "file": "assets/038fdf691cd571.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JA5FLLlT0aN0MGe3mWD1926zo.png?scale-down-to=2048",
+      "file": "assets/916d1cd63762d4.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/xiGAkRPbrVpctFNqYVpqxXuBlk.svg",
+      "file": "assets/b548e1c3cde163.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/GRWmOZOJgbQ4QeaEcxsaskhm4s.svg?width=368&height=227",
+      "file": "assets/18e5410e3afd5d.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/veoRRH5hJ8IFnaXHoRyuiKOTr6c.png?width=1104&height=679",
+      "file": "assets/2624730febb6f5.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ii8K0dCofaX9gutI1w0ERRNVm6w.png?width=1472&height=905",
+      "file": "assets/1a53cc85caceb7.png"
+    },
+    {
+      "url": "https://framerusercontent.com/assets/vdo7vl69SSTV5arCTIp5d25ciuQ.mp4",
+      "file": "assets/36d30e295ca7ee.mp4"
+    },
+    {
+      "url": "https://framerusercontent.com/images/TxrtYguBUY7fHWdmaUwRyWT1Hc.png?width=1104&height=679",
+      "file": "assets/a44354e7f8a8e0.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/lANMMKNefLxHJTmwkH0TDGaKUI.png?width=2250&height=1158",
+      "file": "assets/0aaaa78686ad7d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/JOTxvjO5yvJRLkobxVH3eV36w.png",
+      "file": "assets/5baf24339576b1.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/gMHenlMin8lerFTYCfyTjvAZDFc.png",
+      "file": "assets/45ce6546267477.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/UBOmOgbgEIN2ufesrdD8MxgmM68.png",
+      "file": "assets/0f64626c5282c4.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/L4zLpwoMmJxPyCXFcpRXUX5lPeg.png",
+      "file": "assets/c8f34fa02246e1.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/Q6cR7AH2yUryHdfWCHqQd0G7zI.png",
+      "file": "assets/e5e204206b6c1f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/XyBNcKCW1lswYenIfNcLriPIfPs.png",
+      "file": "assets/d0527268c1049a.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/veoRRH5hJ8IFnaXHoRyuiKOTr6c.png?scale-down-to=512&width=1104&height=679",
+      "file": "assets/66e9ddeda49647.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/veoRRH5hJ8IFnaXHoRyuiKOTr6c.png?scale-down-to=1024&width=1104&height=679",
+      "file": "assets/5ac8a65e140a52.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ii8K0dCofaX9gutI1w0ERRNVm6w.png?scale-down-to=512&width=1472&height=905",
+      "file": "assets/dcb0af76fd6917.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ii8K0dCofaX9gutI1w0ERRNVm6w.png?scale-down-to=1024&width=1472&height=905",
+      "file": "assets/6e933f50cd8752.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/TxrtYguBUY7fHWdmaUwRyWT1Hc.png?scale-down-to=512&width=1104&height=679",
+      "file": "assets/0d93a32acbd247.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/TxrtYguBUY7fHWdmaUwRyWT1Hc.png?scale-down-to=1024&width=1104&height=679",
+      "file": "assets/e265d8c3ee6da1.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/lANMMKNefLxHJTmwkH0TDGaKUI.png?scale-down-to=512&width=2250&height=1158",
+      "file": "assets/6d9fedfa3844cb.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/lANMMKNefLxHJTmwkH0TDGaKUI.png?scale-down-to=1024&width=2250&height=1158",
+      "file": "assets/f82c14fd3d66c1.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/lANMMKNefLxHJTmwkH0TDGaKUI.png?scale-down-to=2048&width=2250&height=1158",
+      "file": "assets/aeb1fc2a8b7536.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/OaIVNUcU6M2DJLuDR5ecET76FTA.svg",
+      "file": "assets/7b2decddc320af.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/S6GKlZOENxVC0ZYk10Z9q08H0.png",
+      "file": "assets/70c04e834b4da9.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/jpWBSm4N9jiCT8X9ZNWJkPQ6s4.png?scale-down-to=2048",
+      "file": "assets/5b0ea5aec7a30e.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/qpPtTp6nU33lI59frprksEsfFE.svg",
+      "file": "assets/dd1cabc13bf0e4.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RC0i4qmNCLvj4QGO4abENwPzU.svg",
+      "file": "assets/1c5886a76a7da7.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/S6GKlZOENxVC0ZYk10Z9q08H0.png?scale-down-to=512",
+      "file": "assets/ca5e438de9a17f.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/S6GKlZOENxVC0ZYk10Z9q08H0.png?scale-down-to=1024",
+      "file": "assets/228f5093dfdff4.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/jpWBSm4N9jiCT8X9ZNWJkPQ6s4.png?scale-down-to=512",
+      "file": "assets/142697ec4d18f0.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/jpWBSm4N9jiCT8X9ZNWJkPQ6s4.png?scale-down-to=1024",
+      "file": "assets/38bd309740b8d8.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/jpWBSm4N9jiCT8X9ZNWJkPQ6s4.png?scale-down-to=4096",
+      "file": "assets/7067cc0c957987.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/jpWBSm4N9jiCT8X9ZNWJkPQ6s4.png",
+      "file": "assets/fc6c21650df1ce.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RC0i4qmNCLvj4QGO4abENwPzU.svg?scale-down-to=512",
+      "file": "assets/c773084f7a0c12.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RC0i4qmNCLvj4QGO4abENwPzU.svg?scale-down-to=1024",
+      "file": "assets/7de53421f1b4a5.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/RN6g00pcccwOXOMeCY8Ilfot6dQ.svg",
+      "file": "assets/095d1e224790bb.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ZpmqA0g8sZd5ObaVwBsgzc6dg.svg",
+      "file": "assets/3059752b9cdade.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/NB9QsjVkFKUG0hizgkG5lqnKdeo.png",
+      "file": "assets/e31ea349fc1551.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/tNXBeDwcihDbZV7JJ80ftpQqg.png",
+      "file": "assets/edc26cee9823c1.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/ZpmqA0g8sZd5ObaVwBsgzc6dg.svg?scale-down-to=512",
+      "file": "assets/b5157416a7fca9.svg"
+    },
+    {
+      "url": "https://framerusercontent.com/images/4uQaO4KDr5MH8htONNsaCk5Ri1Y.png?width=2250&height=1157",
+      "file": "assets/764f97a11e0e2d.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/4uQaO4KDr5MH8htONNsaCk5Ri1Y.png?scale-down-to=512&width=2250&height=1157",
+      "file": "assets/5331bed12df6ea.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/4uQaO4KDr5MH8htONNsaCk5Ri1Y.png?scale-down-to=1024&width=2250&height=1157",
+      "file": "assets/944bd967ebbe34.png"
+    },
+    {
+      "url": "https://framerusercontent.com/images/4uQaO4KDr5MH8htONNsaCk5Ri1Y.png?scale-down-to=2048&width=2250&height=1157",
+      "file": "assets/6dceea031ce1d0.png"
+    }
+  ],
+  "failures": [],
+  "unknownFaq": []
+}

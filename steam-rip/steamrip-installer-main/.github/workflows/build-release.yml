@@ -1,0 +1,70 @@
+name: Build And Release AppImage
+
+on:
+  push:
+    tags-ignore:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Linux AppImage
+        run: bun run build
+
+      - name: Generate release timestamp
+        id: stamp
+        run: echo "value=$(date -u +'%Y%m%d-%H%M%S-%3N')" >> "$GITHUB_OUTPUT"
+
+      - name: Rename AppImage with timestamp
+        id: asset
+        run: |
+          appimage_path="$(find release -type f -name '*.AppImage' -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)"
+
+          if [[ -z "$appimage_path" ]]; then
+            echo "AppImage was not generated." >&2
+            exit 1
+          fi
+
+          release_dir="$(dirname "$appimage_path")"
+          asset_name="SteamRIP-Installer-Linux-${{ steps.stamp.outputs.value }}.AppImage"
+          asset_path="$release_dir/$asset_name"
+
+          mv "$appimage_path" "$asset_path"
+
+          echo "path=$asset_path" >> "$GITHUB_OUTPUT"
+          echo "name=$asset_name" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ steps.stamp.outputs.value }}
+          name: Build ${{ steps.stamp.outputs.value }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: ${{ steps.asset.outputs.path }}
