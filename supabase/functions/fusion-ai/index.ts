@@ -12,8 +12,8 @@ const NVIDIA_API_KEY = Deno.env.get("NVIDIA_API_KEY") ?? "";
 const CONFIGURED_NVIDIA_MODEL = (Deno.env.get("NVIDIA_MODEL") ?? "").trim();
 const FAST_NVIDIA_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b";
 const NVIDIA_MODELS = [...new Set([
-  FAST_FAST_NVIDIA_MODEL,
-  CONFIGURED_FAST_NVIDIA_MODEL,
+  FAST_NVIDIA_MODEL,
+  CONFIGURED_NVIDIA_MODEL,
   "openai/gpt-oss-20b",
 ].filter(Boolean))];
 const NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions";
@@ -645,17 +645,17 @@ function sanitizeMessages(input: unknown) {
 async function callNvidia(messages: any[], toolChoice: any = "auto", includeTools = true) {
   const failures: string[] = [];
 
-  for (const model of FAST_NVIDIA_MODELS) {
+  for (const model of NVIDIA_MODELS) {
     const body: any = {
       model,
       messages,
-      temperature: model === FAST_FAST_NVIDIA_MODEL ? 0.55 : 0.15,
+      temperature: model === FAST_NVIDIA_MODEL ? 0.55 : 0.15,
       top_p: 0.95,
       max_tokens: 1200,
       stream: false,
     };
 
-    if (model === FAST_FAST_NVIDIA_MODEL) {
+    if (model === FAST_NVIDIA_MODEL) {
       body.chat_template_kwargs = { enable_thinking: true };
       body.reasoning_budget = 640;
     }
