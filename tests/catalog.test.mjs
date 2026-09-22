@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { safeExternalUrl, sourcesForGame, mergeCatalogGame, pageCatalog, steamEntry } from '../src/services/catalogModel.mjs';
+import { safeExternalUrl, sourcesForGame, mergeCatalogGame, mergeSources, pageCatalog, steamEntry } from '../src/services/catalogModel.mjs';
 import { matchSourceRecord, validateRecords, providerPage, sourceTitle } from '../scripts/source-adapters.mjs';
 
 const json = async name => JSON.parse(await readFile(new URL(`../data/${name}`, import.meta.url), 'utf8'));
@@ -58,6 +58,20 @@ test('Existing example downloads are disabled while pinned GitHub references are
   assert.equal(sourcesForGame(0, sources, refs).length, 0);
 });
 
+test('Cached provider matches merge by provider without duplicating static entries', () => {
+  const merged = mergeSources(
+    [{ id: 'static', providerName: 'SteamRIP', url: 'https://steamrip.com/old-game/', availability: 'unknown' }],
+    [
+      { id: 'cache', providerName: 'SteamRIP', url: 'https://steamrip.com/current-game/', availability: 'available' },
+      { id: 'fitgirl', providerName: 'FitGirl', url: 'https://fitgirl-repacks.site/game/', availability: 'unknown' },
+    ],
+  );
+  assert.equal(merged.length, 2);
+  assert.equal(merged.find(item => item.providerName === 'SteamRIP').url, 'https://steamrip.com/current-game/');
+  assert.equal(merged.find(item => item.providerName === 'SteamRIP').availability, 'available');
+  assert.ok(merged.some(item => item.providerName === 'FitGirl'));
+});
+
 test('Provider pages must belong to the configured provider, never a lookalike domain', () => {
   const hosts = ['steamrip.com'];
   assert.equal(providerPage('https://steamrip.com.evil.test/game/', hosts), null);
@@ -81,12 +95,38 @@ test('Service integrates metadata, deep links, sources and account favorites usi
   const { build } = await import('vite');
   const saved = new Set([18]);
   const calls = [];
+  const sourceCache = new Map([
+    [367520, {
+      steam_app_id: 367520,
+      sources: [{
+        id: 'steamverde:cached',
+        providerName: 'SteamVerde',
+        url: 'https://steamverde.net/download/hollow-knight/',
+        kind: 'provider_page',
+        status: 'Página externa',
+        availability: 'unknown',
+      }],
+      checked_at: '2026-09-22T09:00:00.000Z',
+      next_check_at: '2999-01-01T00:00:00.000Z',
+    }],
+  ]);
   const rows = [{ id: 18, steam_app_id: 367520, title: 'Hollow Knight', short_description: 'Ancient caverns', header_image: 'cover.jpg', genres: ['Action'] },
     { id: 9, steam_app_id: 413150, title: 'Stardew Valley', local_coop: true },
     { id: 25, steam_app_id: 105600, title: 'Terraria', slug: 'terraria', required_age: 0, adult_content: false, content_descriptors: { ids: [] }, short_description: 'Dig, fight, explore' }];
   let offline = false;
   globalThis.__fusionTestSupabase = {
     auth: { getUser: async () => ({ data: { user: { id: 'test-user' } } }) },
+    functions: {
+      async invoke(name, options) {
+        calls.push({ function: name, body: options?.body });
+        return {
+          data: {
+            results: (options?.body?.appIds ?? []).map(appId => ({ appId, sources: sourceCache.get(appId)?.sources ?? [] })),
+          },
+          error: null,
+        };
+      },
+    },
     rpc(name, params) {
       calls.push({rpc: name, params});
       return { abortSignal: async () => ({ data: params.p_query === 'terraria' ? [105600] : [367520], error: null }) };
@@ -104,6 +144,11 @@ test('Service integrates metadata, deep links, sources and account favorites usi
           calls.push(query);
           if (table === 'games') {
             const selected = rows.filter(row => (!query.ids || query.ids.includes(row.steam_app_id)) && query.filters.every(([key,value]) => row[key] === value));
+            return Promise.resolve({ data: query.single ? selected[0] ?? null : selected, error: offline ? new Error('offline') : null }).then(resolve, reject);
+          }
+          if (table === 'game_source_cache') {
+            const selected = [...sourceCache.values()].filter(row => (!query.ids || query.ids.includes(row.steam_app_id))
+              && query.filters.every(([key, value]) => row[key] === value));
             return Promise.resolve({ data: query.single ? selected[0] ?? null : selected, error: offline ? new Error('offline') : null }).then(resolve, reject);
           }
           if (offline) return Promise.resolve({error:new Error('offline')}).then(resolve,reject);
@@ -128,7 +173,9 @@ test('Service integrates metadata, deep links, sources and account favorites usi
     assert.equal(await service.fetchGameBySlug('cyberpunk-2077'), null);
     assert.equal((await service.fetchGameBySlug('hollow-knight')).image, 'cover.jpg');
     assert.equal((await service.fetchFeaturedCoop())[0].steamAppId, 413150);
-    assert.ok((await service.fetchDistributionSources(367520)).some(source => source.url));
+    const hollowSources = await service.fetchDistributionSources(367520);
+    assert.ok(hollowSources.some(source => source.url));
+    assert.ok(hollowSources.some(source => source.providerName === 'SteamVerde' && source.availability === 'unknown'));
     assert.equal((await service.fetchFavoritePage()).games[0].id, 18);
     await service.addFavorite(9);
     assert.equal((await service.fetchFavoritePage()).count, 2);
