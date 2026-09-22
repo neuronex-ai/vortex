@@ -1,3 +1,5 @@
+import { sameGameTitle } from "./titleMatch.mjs";
+
 export function safeExternalUrl(value) {
   if (typeof value !== 'string' || /example|placeholder/i.test(value)) return null;
   try {
@@ -36,10 +38,9 @@ export function mergeSources(...groups) {
   return [...merged.values()];
 }
 
-const matchTitle = value => String(value ?? '').normalize('NFKC').replace(/[™®]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 export function sourcesForGame(appId, localSources, references, title = '') {
   const candidates = references.sources.filter(item => item.appId === appId
-    || (item.appId == null && title && matchTitle(item.title) === matchTitle(title)));
+    || (item.appId == null && title && sameGameTitle(item.title, title)));
   const unique = candidates.filter(item => candidates.filter(other => other.providerName === item.providerName).length === 1);
   const github = unique.map((item, index) => ({
     id: `github:${appId}:${index}`, providerName: item.providerName ?? item.provider,
