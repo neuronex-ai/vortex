@@ -1,10 +1,11 @@
 /**
- * Steam Catalog API - Client Example
+ * Steam Catalog - Local Client
  * 
  * Este arquivo mostra como consumir os JSONs do catálogo no app Fusion.
  * 
  * Uso:
- *   import { getCatalog, getGameDetails, searchGames } from '@/lib/steam-catalog'
+ *   // Em src/services/:
+ *   import { getCatalog, getGameDetails, searchGames } from '../../lib/steam-catalog-client';
  */
 
 // Tipos TypeScript
@@ -51,11 +52,9 @@ export interface CatalogData {
  * Carrega o catálogo completo
  */
 export async function getCatalog(): Promise<CatalogData> {
-  const response = await fetch('/data/steam-catalog-index.json');
-  if (!response.ok) {
-    throw new Error('Failed to load catalog');
-  }
-  return response.json();
+  // O Vite inclui este JSON na publicação, sem depender de uma rota /data/.
+  const { default: catalog } = await import('../data/steam-catalog-index.json');
+  return catalog as CatalogData;
 }
 
 /**
@@ -63,7 +62,7 @@ export async function getCatalog(): Promise<CatalogData> {
  */
 export async function getFamilyFriendlyCatalog(): Promise<Game[]> {
   const catalog = await getCatalog();
-  return catalog.catalog.filter(game => game.familyFriendly);
+  return catalog.catalog.filter(game => game.familyFriendly === true);
 }
 
 /**
