@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { fetchDistributionSources } from "../../services/gameCatalog.js";
 
 const closeIcon = (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -7,9 +8,17 @@ const closeIcon = (
   </svg>
 );
 
+function sourceActionLabel(source) {
+  if (source.direct) return `Baixar em ${source.providerName}`;
+  if (source.kind === "official_demo") return `Abrir demo em ${source.providerName}`;
+  return `Abrir ${source.providerName}`;
+}
+
 export function GameDetail({ game, onClose }) {
   const closeRef = useRef(null);
   const [imageFailed, setImageFailed] = useState(false);
+  const [sources, setSources] = useState([]);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -28,9 +37,31 @@ export function GameDetail({ game, onClose }) {
     };
   }, [onClose]);
 
+  useEffect(() => {
+    let active = true;
+    setSourcesLoading(true);
+
+    fetchDistributionSources(game.id)
+      .then((items) => {
+        if (active) setSources(items);
+      })
+      .catch(() => {
+        if (active) setSources([]);
+      })
+      .finally(() => {
+        if (active) setSourcesLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [game.id]);
+
   const platforms = Object.entries(game.platforms ?? {})
     .filter(([, enabled]) => enabled)
-    .map(([name]) => name === "windows" ? "Windows" : name === "mac" ? "macOS" : "Linux");
+    .map(([name]) =>
+      name === "windows" ? "Windows" : name === "mac" ? "macOS" : "Linux",
+    );
 
   return (
     <motion.div
@@ -131,26 +162,44 @@ export function GameDetail({ game, onClose }) {
             </div>
           </div>
 
+          <div className="game-detail__section">
+            <span className="catalog-eyebrow">Onde obter</span>
+            {sourcesLoading ? (
+              <div className="game-detail__source-note">Consultando fontes disponíveis...</div>
+            ) : sources.length ? (
+              <div className="game-detail__sources">
+                {sources.map((source) => {
+                  const url = source.downloadUrl || source.landingUrl;
+                  return (
+                    <a
+                      key={source.id}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="game-detail__source"
+                    >
+                      <span>
+                        <strong>{source.providerName}</strong>
+                        <small>
+                          {source.direct ? "Download autorizado" : "Fonte oficial"}
+                        </small>
+                      </span>
+                      <b>{sourceActionLabel(source)} →</b>
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="game-detail__source-note">
+                Nenhuma fonte autorizada cadastrada para este jogo.
+              </div>
+            )}
+          </div>
+
           <div className="game-detail__notice">
             Metadados importados da Steam. O Fusion mantém conteúdo sexual explícito fora
             do catálogo público sem confundir esse filtro com classificação etária por
             violência, terror ou outros temas.
-          </div>
-
-          <div className="game-detail__actions">
-            {game.storeUrl && (
-              <a
-                className="game-detail__steam"
-                href={game.storeUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Ver página oficial na Steam
-              </a>
-            )}
-            <button className="game-detail__download" type="button" disabled>
-              Downloads serão configurados em etapa posterior
-            </button>
           </div>
         </div>
       </motion.article>
