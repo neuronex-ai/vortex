@@ -1,5 +1,7 @@
+import { canonicalGameTitle, sameGameTitle } from "../src/services/titleMatch.mjs";
+
 export function normalizeTitle(value) {
-  return String(value ?? '').normalize('NFKC').replace(/[™®]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  return canonicalGameTitle(value);
 }
 
 export function sourceTitle(value, adapter) {
@@ -13,8 +15,8 @@ export function matchSourceRecord(game, records) {
   if (byId.length === 1) return { record: byId[0], method: 'steam-app-id' };
   if (byId.length > 1) return null;
   const byTitle = records.filter(row => row.appId == null && row.steam_app_id == null
-    && normalizeTitle(row.name ?? row.Name) === normalizeTitle(game.title));
-  return byTitle.length === 1 ? { record: byTitle[0], method: 'exact-unique-title' } : null;
+    && sameGameTitle(row.name ?? row.Name, game.title));
+  return byTitle.length === 1 ? { record: byTitle[0], method: 'normalized-unique-title' } : null;
 }
 
 export function validateRecords(records) {
