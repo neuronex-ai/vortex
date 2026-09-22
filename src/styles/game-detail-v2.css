@@ -235,3 +235,7 @@
   .game-detail-v2__fact-grid,
   .game-detail-v2__requirements { grid-template-columns: 1fr; }
 }
+
+.game-detail-v2__source-unavailable { padding: 12px; border: 1px solid rgba(255,255,255,.055); border-radius: 12px; background: #0e0f10; }
+.game-detail-v2__source-unavailable span { display: grid; gap: 4px; }
+.game-detail-v2__sources a { flex-wrap: wrap; overflow-wrap: anywhere; }

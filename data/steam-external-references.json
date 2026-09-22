@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checkedAt": "2026-09-22T09:08:33.062Z",
+  "checkedAt": "2026-09-22T09:15:39.866Z",
   "providers": [
     {
       "repository": "AveryChangedMan/SteamRipClient",
@@ -17,6 +17,8 @@
       "title": "Hollow Knight",
       "provider": "SteamRipClient",
       "projectUrl": "https://github.com/AveryChangedMan/SteamRipClient",
+      "providerName": "SteamRIP",
+      "externalUrl": "https://steamrip.com/hollow-knight-free-download-d1/",
       "referenceUrl": "https://github.com/AveryChangedMan/SteamRipClient/blob/a13f49bf299b1646299e10dde1e67f91825f44dc/Redist/Deps/steamrip_full_games_may_2026_BASE.json#L125086",
       "matchMethod": "exact-unique-title",
       "sourceTitle": "Hollow Knight",
@@ -30,6 +32,8 @@
       "title": "Stardew Valley",
       "provider": "SteamRipClient",
       "projectUrl": "https://github.com/AveryChangedMan/SteamRipClient",
+      "providerName": "SteamRIP",
+      "externalUrl": "https://steamrip.com/stardew-valley-free-download-2b/",
       "referenceUrl": "https://github.com/AveryChangedMan/SteamRipClient/blob/a13f49bf299b1646299e10dde1e67f91825f44dc/Redist/Deps/steamrip_full_games_may_2026_BASE.json#L128599",
       "matchMethod": "exact-unique-title",
       "sourceTitle": "Stardew Valley",

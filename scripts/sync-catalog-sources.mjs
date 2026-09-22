@@ -1,6 +1,6 @@
 import { readFile, writeFile, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { matchSourceRecord, validateRecords } from './source-adapters.mjs';
+import { matchSourceRecord, validateRecords, providerPage } from './source-adapters.mjs';
 
 const root = new URL('../', import.meta.url);
 const config = JSON.parse(await readFile(new URL('data/github-source-providers.json', root), 'utf8'));
@@ -29,6 +29,8 @@ for (const provider of config.providers.filter(item => item.enabled)) {
     const line = text.slice(0, positions[0].index).split('\n').length;
     sources.push({ appId: game.appId, title: game.title, provider: provider.name,
       projectUrl: `https://github.com/${provider.repository}`,
+      providerName: provider.providerName,
+      externalUrl: providerPage(row.link, provider.allowedHosts ?? []),
       referenceUrl: `https://github.com/${provider.repository}/blob/${provider.commit}/${provider.path}#L${line}`,
       matchMethod: match.method, sourceTitle: row.name,
       size: typeof row.game_size === 'string' ? row.game_size : null,

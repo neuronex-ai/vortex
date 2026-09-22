@@ -34,6 +34,7 @@ export function GameCard({ game, onOpen, onToggleFavorite, isFavorite = false, c
           <div className="game-card__badges">
             {game.localCoop && <span>Coop local</span>}
             <span>{game.year || "Steam"}</span>
+            <span>{game.hasSource ? "Fonte disponível" : "Sem fonte externa"}</span>
           </div>
         </div>
 

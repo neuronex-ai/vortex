@@ -69,7 +69,7 @@ export default defineConfig({
         });
       },
       transformIndexHtml: {
-        order: "post",
+        order: "pre",
         handler() {
           return [
             {

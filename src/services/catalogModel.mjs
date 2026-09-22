@@ -8,9 +8,11 @@ export function safeExternalUrl(value) {
 
 export function sourcesForGame(appId, localSources, references) {
   const github = references.sources.filter(item => item.appId === appId).map((item, index) => ({
-    id: `github:${appId}:${index}`, providerName: item.provider, kind: 'external_reference',
-    url: safeExternalUrl(item.referenceUrl), projectUrl: safeExternalUrl(item.projectUrl),
-    size: item.size, version: item.version, status: 'Informação no GitHub',
+    id: `github:${appId}:${index}`, providerName: item.providerName ?? item.provider,
+    kind: safeExternalUrl(item.externalUrl) ? 'provider_page' : 'external_reference',
+    url: safeExternalUrl(item.externalUrl) ?? safeExternalUrl(item.referenceUrl),
+    referenceUrl: safeExternalUrl(item.referenceUrl), projectUrl: safeExternalUrl(item.projectUrl),
+    size: item.size, version: item.version, status: 'Página externa · referência no GitHub',
     lastCheckedAt: references.checkedAt,
   }));
   const local = (localSources.sources.find(item => item.appId === appId)?.sources ?? []).flatMap(source =>
@@ -26,9 +28,9 @@ export function sourcesForGame(appId, localSources, references) {
 
 export function mergeCatalogGame(entry, steam, sources) {
   return {
-    id: `steam:${entry.appId}`, steamAppId: entry.appId, slug: entry.slug, title: entry.title,
+    id: `steam:${entry.appId}`, steamAppId: entry.appId, title: entry.title,
     description: 'Descrição não disponível.', about: '', image: null, gallery: [],
-    genres: entry.genres ?? [], tags: entry.tags ?? [], categories: [],
+    genres: entry.genres ?? [], categories: [],
     year: entry.releaseYear, developers: [entry.developer].filter(Boolean), publishers: [entry.publisher].filter(Boolean),
     platforms: {}, requirements: {}, players: 'Modo não informado', price: 'Ver na Steam',
     metacritic: entry.metacriticScore, ...steam,

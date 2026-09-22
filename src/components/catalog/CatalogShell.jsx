@@ -54,7 +54,7 @@ const navItems = [
   { label: "Categorias", href: "#categorias" },
 ];
 
-const filters = ["Todos", "Coop local", "Ação", "Terror", "Aventura"];
+const filters = ["Todos", "Com fontes", "Coop local", "Ação", "Aventura", "Indie", "RPG"];
 const categories = [
   "Coop local",
   "Ação",
@@ -83,7 +83,7 @@ export function CatalogShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState("");
-  const [steamFallbackCount, setSteamFallbackCount] = useState(0);
+  const [metadataUnavailable, setMetadataUnavailable] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
@@ -110,12 +110,12 @@ export function CatalogShell() {
         if (!active) return;
         setGames(result.games);
         setHasMore(result.hasMore);
-        setSteamFallbackCount(result.steamFallbackCount ?? 0);
+        setMetadataUnavailable(result.metadataUnavailable ?? false);
       } catch (error) {
         if (!active) return;
         setGames([]);
         setHasMore(false);
-        setSteamFallbackCount(0);
+        setMetadataUnavailable(false);
         setCatalogError(error?.message || "Não foi possível carregar o catálogo.");
       } finally {
         if (active) setLoading(false);
@@ -243,9 +243,9 @@ export function CatalogShell() {
     try {
       if (isFavorite) await removeFavorite(game.id);
       else await addFavorite(game.id);
-    } catch {
+    } catch (error) {
       setFavoriteGames((items) => isFavorite ? [game, ...items] : items.filter((item) => item.id !== game.id));
-      setFavoriteError("Não foi possível atualizar seus favoritos. Tente novamente.");
+      setFavoriteError(error?.message || "Não foi possível atualizar seus favoritos. Tente novamente.");
     }
   }
 
@@ -419,9 +419,8 @@ export function CatalogShell() {
 
         <h1>Encontre seu próximo jogo.</h1>
         <p>
-          Dados reais da Steam, organizados em uma experiência limpa:
-          sem anúncios invasivos, sem conteúdo sexual explícito e com espaço
-          para descobrir desde coop local até terror, ação e aventura.
+          Explore a seleção family-friendly do Fusion, com detalhes da Steam
+          e referências externas para consultar mais informações sobre cada jogo.
         </p>
 
         <motion.form className="catalog-search" onSubmit={submitSearch}>
@@ -445,11 +444,12 @@ export function CatalogShell() {
           {loading
             ? "Consultando o catálogo..."
             : query
-              ? steamFallbackCount
-                ? `Exibindo ${games.length} jogo(s) para “${query}” · ${steamFallbackCount} encontrado(s) agora na Steam.`
-                : `Exibindo ${games.length} jogo(s) nesta página para “${query}”.`
-              : "Catálogo conectado ao banco Fusion · Steam como fonte de metadados."}
+              ? `Exibindo ${games.length} jogo(s) nesta página para “${query}”.`
+              : "Seleção family-friendly · Detalhes da Steam e referências externas."}
         </div>
+
+        {metadataUnavailable && <p role="status">Alguns detalhes da Steam estão indisponíveis. Exibindo as informações salvas no catálogo.</p>}
+        {favoriteError && <p role="alert">{favoriteError}</p>}
 
         <div className="catalog-filter-row" aria-label="Filtros de visualização">
           {filters.map((filter) => (
@@ -552,12 +552,13 @@ export function CatalogShell() {
           <div>
             <span className="catalog-eyebrow">Jogar juntos</span>
             <h2 id="coop-heading">Coop local</h2>
-            <p>Jogos que a própria Steam classifica com coop em tela compartilhada/dividida.</p>
+            <p>Jogos da seleção com coop local informado pela Steam.</p>
           </div>
           <button type="button" onClick={() => selectFilter("Coop local")}>Ver todos</button>
         </div>
 
         <div className="game-grid game-grid--compact">
+          {!coopGames.length && <p>Nenhum jogo com coop local disponível nesta seleção.</p>}
           {coopGames.map((game) => (
             <GameCard key={game.id} game={game} onOpen={openGame} onToggleFavorite={toggleFavorite} isFavorite={favoriteGames.some((item) => item.id === game.id)} compact />
           ))}
@@ -589,7 +590,7 @@ export function CatalogShell() {
       >
         <span className="catalog-eyebrow">Descoberta</span>
         <h2 id="categories-heading">Categorias</h2>
-        <p>Use as categorias como atalhos para uma nova consulta no banco.</p>
+        <p>Explore os jogos da seleção por gênero.</p>
 
         <div className="category-grid">
           {categories.map((category) => (

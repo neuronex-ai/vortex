@@ -1,0 +1,136 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { safeExternalUrl, sourcesForGame, mergeCatalogGame, pageCatalog } from '../src/services/catalogModel.mjs';
+import { matchSourceRecord, validateRecords, providerPage } from '../scripts/source-adapters.mjs';
+
+const json = async name => JSON.parse(await readFile(new URL(`../data/${name}`, import.meta.url), 'utf8'));
+const catalog = await json('steam-catalog-index.json');
+const sources = await json('steam-sources.json');
+const refs = await json('steam-external-references.json');
+const games = catalog.catalog.map(entry => mergeCatalogGame(entry, null, sourcesForGame(entry.appId, sources, refs)));
+
+test('Public list excludes unapproved games even for searches and source filtering', () => {
+  assert.deepEqual(pageCatalog(games).games.map(game => game.title), ['Stardew Valley', 'Hollow Knight']);
+  assert.equal(pageCatalog(games, { query: 'Cyberpunk' }).total, 0);
+  assert.ok(pageCatalog(games, { filter: 'Com fontes' }).games.every(game => game.familyFriendly && game.hasSource));
+});
+
+test('Search includes descriptions, tags and Portuguese genres', () => {
+  const rich = games.map(game => ({ ...game, description: game.title === 'Hollow Knight' ? 'Explore cavernas antigas.' : '' }));
+  assert.equal(pageCatalog(rich, { query: 'cavernas' }).games[0].title, 'Hollow Knight');
+  assert.equal(pageCatalog(games, { query: 'relaxing' }).games[0].title, 'Stardew Valley');
+  assert.equal(pageCatalog(games, { filter: 'Ação' }).games[0].title, 'Hollow Knight');
+});
+
+test('Pagination and each sort are deterministic', () => {
+  const first = pageCatalog(games, { limit: 1 });
+  const second = pageCatalog(games, { limit: 1, cursor: first.nextCursor });
+  assert.equal(first.hasMore, true);
+  assert.equal(second.hasMore, false);
+  assert.notEqual(first.games[0].id, second.games[0].id);
+  assert.equal(pageCatalog(games, { sort: 'nome' }).games[0].title, 'Hollow Knight');
+  assert.equal(pageCatalog(games, { sort: 'recentes' }).games[0].title, 'Hollow Knight');
+});
+
+test('Steam metadata and favorite IDs survive merging; untrusted sources cannot override them', () => {
+  const entry = catalog.catalog.find(game => game.appId === 367520);
+  const merged = mergeCatalogGame(entry, { id: 18, title: entry.title, image: 'cover.jpg', description: 'Steam description', slug: 'database-slug' }, []);
+  assert.equal(merged.id, 18);
+  assert.equal(merged.image, 'cover.jpg');
+  assert.equal(merged.description, 'Steam description');
+  assert.equal(merged.slug, 'hollow-knight');
+  assert.equal(merged.hasSource, false);
+});
+
+test('Links reject executable protocols, credentials and example placeholders', () => {
+  for (const url of ['javascript:alert(1)', 'data:text/html,hello', '/relative', 'https://user:pass@example.net', 'https://pixeldrain.com/u/EXAMPLE5', 'not a URL']) {
+    assert.equal(safeExternalUrl(url), null);
+  }
+  assert.equal(safeExternalUrl('https://github.com/AveryChangedMan/SteamRipClient'), 'https://github.com/AveryChangedMan/SteamRipClient');
+});
+
+test('Existing example downloads are disabled while pinned GitHub references are usable', () => {
+  const items = sourcesForGame(367520, sources, refs);
+  assert.ok(items.some(item => item.kind === 'provider_page' && new URL(item.url).hostname === 'steamrip.com'
+    && item.referenceUrl.includes('/blob/') && item.referenceUrl.includes('#L')));
+  assert.ok(items.filter(item => item.kind === 'external_link').every(item => item.url === null));
+  assert.equal(sourcesForGame(0, sources, refs).length, 0);
+});
+
+test('Provider pages must belong to the configured provider, never a lookalike domain', () => {
+  const hosts = ['steamrip.com'];
+  assert.equal(providerPage('https://steamrip.com.evil.test/game/', hosts), null);
+  assert.equal(providerPage('https://steamrip.com/', hosts), null);
+  assert.equal(providerPage('https://steadownload/', hosts), null);
+  assert.equal(providerPage('https://steamrip.com/hollow-knight-free-download-d1/', hosts), 'https://steamrip.com/hollow-knight-free-download-d1/');
+});
+
+test('Matching never conflates sequels, editions, duplicates or contradictory app IDs', () => {
+  const game = { appId: 367520, title: 'Hollow Knight' };
+  assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight: Silksong' }]), null);
+  assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight Deluxe Edition' }]), null);
+  assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight' }, { name: 'Hollow Knight' }]), null);
+  assert.equal(matchSourceRecord(game, [{ appId: 123, name: 'Hollow Knight' }]), null);
+  assert.equal(matchSourceRecord(game, [{ name: 'Hollow Knight' }]).method, 'exact-unique-title');
+  assert.equal(matchSourceRecord(game, [{ appId: 367520, name: 'Localized title' }]).method, 'steam-app-id');
+  assert.throws(() => validateRecords({ games: [] }));
+});
+
+test('Service integrates metadata, deep links, sources and account favorites using database IDs', async () => {
+  const { build } = await import('vite');
+  const saved = new Set([18]);
+  const calls = [];
+  const rows = [{ id: 18, steam_app_id: 367520, title: 'Hollow Knight', short_description: 'Ancient caverns', header_image: 'cover.jpg', genres: ['Action'] },
+    { id: 9, steam_app_id: 413150, title: 'Stardew Valley', local_coop: true }];
+  let offline = false;
+  globalThis.__fusionTestSupabase = {
+    auth: { getUser: async () => ({ data: { user: { id: 'test-user' } } }) },
+    from(table) {
+      const query = { table, filters: [] };
+      const chain = {
+        select() { return chain; }, in(key, ids) { query.ids = ids; return chain; },
+        eq(key, value) { query.filters.push([key, value]); return chain; },
+        order() { return chain; }, range(from, to) { query.range = [from, to]; return chain; },
+        abortSignal() { return chain; },
+        insert(value) { query.insert = value; return chain; }, delete() { query.remove = true; return chain; },
+        then(resolve, reject) {
+          calls.push(query);
+          if (table === 'games') return Promise.resolve({ data: rows, error: offline ? new Error('offline') : null }).then(resolve, reject);
+          assert.ok(query.insert?.user_id === 'test-user' || query.filters.some(([key, value]) => key === 'user_id' && value === 'test-user'));
+          if (query.insert) saved.add(query.insert.game_id);
+          if (query.remove) saved.delete(query.filters.find(([key]) => key === 'game_id')[1]);
+          const result = [...saved].filter(id => !query.ids || query.ids.includes(id)).map(game_id => ({ game_id }));
+          return Promise.resolve({ data: result, count: result.length, error: null }).then(resolve, reject);
+        },
+      };
+      return chain;
+    },
+  };
+  const built = await build({ configFile: false, logLevel: 'silent', plugins: [{ name: 'mock-database',
+    load(id) { if (id.replaceAll('\\', '/').endsWith('/src/lib/supabase.js')) return 'export const supabase = globalThis.__fusionTestSupabase;'; } }],
+    build: { write: false, minify: false, lib: { entry: 'src/services/gameCatalog.js', formats: ['es'] }, rolldownOptions: { output: { codeSplitting: false } } } });
+  const output = (Array.isArray(built) ? built : [built]).flatMap(item => item.output).find(item => item.type === 'chunk' && item.isEntry);
+  const url = 'data:text/javascript;base64,' + Buffer.from(output.code).toString('base64');
+  try {
+    const service = await import(url);
+    assert.equal((await service.fetchGamePage({ query: 'caverns' })).games[0].id, 18);
+    assert.equal(await service.fetchGameBySlug('cyberpunk-2077'), null);
+    assert.equal((await service.fetchGameBySlug('hollow-knight')).image, 'cover.jpg');
+    assert.equal((await service.fetchFeaturedCoop())[0].steamAppId, 413150);
+    assert.ok((await service.fetchDistributionSources(367520)).some(source => source.url));
+    assert.equal((await service.fetchFavoritePage()).games[0].id, 18);
+    await service.addFavorite(9);
+    assert.equal((await service.fetchFavoritePage()).count, 2);
+    await service.removeFavorite(18);
+    assert.equal((await service.fetchFavoritePage()).games[0].id, 9);
+    assert.equal(calls.filter(call => call.table === 'games').length, 1);
+    offline = true;
+    const fallback = await import(url + '#offline');
+    const page = await fallback.fetchGamePage();
+    assert.equal(page.metadataUnavailable, true);
+    assert.equal(page.games.length, 2);
+    await assert.rejects(() => fallback.addFavorite(page.games[0].id));
+    await assert.rejects(() => fallback.fetchFavoritePage());
+  } finally { delete globalThis.__fusionTestSupabase; }
+});

@@ -4,6 +4,8 @@
       "name": "SteamRipClient",
       "repository": "AveryChangedMan/SteamRipClient",
       "adapter": "steamrip-client-json",
+      "providerName": "SteamRIP",
+      "allowedHosts": ["steamrip.com", "www.steamrip.com"],
       "commit": "a13f49bf299b1646299e10dde1e67f91825f44dc",
       "path": "Redist/Deps/steamrip_full_games_may_2026_BASE.json",
       "license": "AGPL-3.0",

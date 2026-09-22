@@ -13,9 +13,7 @@ const closeIcon = (
 );
 
 function sourceActionLabel(source) {
-  if (source.direct) return `Baixar em ${source.providerName}`;
-  if (source.kind === "official_demo") return `Abrir demo em ${source.providerName}`;
-  return `Abrir ${source.providerName}`;
+  return source.kind === "external_reference" ? "Ver fonte no GitHub" : "Ver download externo";
 }
 
 function AboutContent({ text }) {
@@ -65,6 +63,7 @@ export function GameDetail({
   const closeRef = useRef(null);
   const [detailGame, setDetailGame] = useState(game);
   const [sources, setSources] = useState([]);
+  const [sourcesError, setSourcesError] = useState("");
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [hydrating, setHydrating] = useState(true);
@@ -93,6 +92,7 @@ export function GameDetail({
       .then((nextGame) => {
         if (active && nextGame) setDetailGame(nextGame);
       })
+      .catch(() => { if (active) setDetailGame(game); })
       .finally(() => {
         if (active) setHydrating(false);
       });
@@ -105,13 +105,14 @@ export function GameDetail({
   useEffect(() => {
     let active = true;
     setSourcesLoading(true);
+    setSourcesError("");
 
-    fetchDistributionSources(detailGame.id)
+    fetchDistributionSources(detailGame.steamAppId)
       .then((items) => {
         if (active) setSources(items);
       })
       .catch(() => {
-        if (active) setSources([]);
+        if (active) { setSources([]); setSourcesError("Não foi possível carregar as fontes. Feche e abra os detalhes para tentar novamente."); }
       })
       .finally(() => {
         if (active) setSourcesLoading(false);
@@ -120,7 +121,7 @@ export function GameDetail({
     return () => {
       active = false;
     };
-  }, [detailGame.id]);
+  }, [detailGame.steamAppId]);
 
   const platforms = Object.entries(detailGame.platforms ?? {})
     .filter(([, enabled]) => enabled)
@@ -192,7 +193,7 @@ export function GameDetail({
                 )}
               </AnimatePresence>
               <div className="game-detail-v2__stage-shade" />
-              {hydrating && <span className="game-detail-v2__syncing">Atualizando dados da Steam…</span>}
+              {hydrating && <span className="game-detail-v2__syncing">Carregando detalhes…</span>}
             </div>
 
             {gallery.length > 1 && (
@@ -246,6 +247,8 @@ export function GameDetail({
               <Fact label="Modo" value={detailGame.players} />
               <Fact label="Metacritic" value={detailGame.metacritic ?? "—"} />
               <Fact label="Controle" value={detailGame.controllerSupport || "Não informado"} />
+              <Fact label="Avaliação Steam" value={detailGame.steamRating != null ? `${detailGame.steamRating}%` : "Não informado"} />
+              <Fact label="Tamanho informado pela fonte" value={detailGame.size || "Não informado"} />
             </div>
           </section>
         </div>
@@ -316,24 +319,31 @@ export function GameDetail({
             <section className="game-detail-v2__panel game-detail-v2__panel--compact">
               <div className="game-detail-v2__section-heading">
                 <span>Disponibilidade</span>
-                <h3>Onde obter</h3>
+                <h3>Fontes externas</h3>
               </div>
 
-              {sourcesLoading ? (
+              {sourcesError ? <p role="alert" className="game-detail-v2__muted">{sourcesError}</p> : sourcesLoading ? (
                 <div className="game-detail-v2__muted">Consultando fontes…</div>
               ) : sources.length ? (
                 <div className="game-detail-v2__sources">
                   {sources.map((source) => {
-                    const url = source.downloadUrl || source.landingUrl;
-                    return (
-                      <a key={source.id} href={url} target="_blank" rel="noreferrer">
-                        <span>
-                          <strong>{source.providerName}</strong>
-                          <small>{source.direct ? "Download autorizado" : "Fonte oficial"}</small>
-                        </span>
-                        <b>{sourceActionLabel(source)} →</b>
-                      </a>
-                    );
+                    const content = <>
+                      <span>
+                        <strong>{source.providerName}{source.host ? ' · ' + source.host : ''}</strong>
+                        <small>{source.status}</small>
+                        {source.url && source.size && <small>Tamanho informado: {source.size}</small>}
+                        {source.version && <small>{source.version}</small>}
+                      </span>
+                      {source.url && <b>{sourceActionLabel(source)} ↗</b>}
+                    </>;
+                    return source.url ? (
+                      <div key={source.id}>
+                        <a href={source.url} target="_blank" rel="noopener noreferrer">{content}</a>
+                        {source.referenceUrl && source.referenceUrl !== source.url && (
+                          <a className="game-detail-v2__provenance" href={source.referenceUrl} target="_blank" rel="noopener noreferrer">Consultar referência no GitHub ↗</a>
+                        )}
+                      </div>
+                    ) : <div className="game-detail-v2__source-unavailable" key={source.id}>{content}</div>;
                   })}
                 </div>
               ) : (
@@ -342,8 +352,8 @@ export function GameDetail({
             </section>
 
             <div className="game-detail-v2__safety">
-              O Fusion usa os metadados oficiais da Steam e oculta do catálogo público
-              títulos identificados com conteúdo sexual/adulto explícito.
+              A seleção segue a classificação do catálogo Fusion. As fontes externas
+              são referências de terceiros; o Fusion não hospeda nem baixa arquivos de jogos.
             </div>
           </aside>
         </div>

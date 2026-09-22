@@ -18,3 +18,12 @@ export function validateRecords(records) {
   }
   return records;
 }
+
+export function providerPage(value, allowedHosts) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password || !allowedHosts.includes(url.hostname)
+      || url.pathname === '/' || /example|placeholder/i.test(url.href)) return null;
+    return url.href;
+  } catch { return null; }
+}

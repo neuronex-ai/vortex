@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 8080",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 8080"
+    "preview": "vite preview --host 0.0.0.0 --port 8080",
+    "catalog:sync-sources": "node scripts/sync-catalog-sources.mjs",
+    "test:catalog": "node --test tests/catalog.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
