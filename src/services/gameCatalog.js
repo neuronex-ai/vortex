@@ -335,12 +335,9 @@ export async function addFavorite(gameId) {
 
   const { error } = await supabase
     .from("game_favorites")
-    .upsert(
-      { user_id: user.id, game_id: gameId },
-      { onConflict: "user_id,game_id" },
-    );
+    .insert({ user_id: user.id, game_id: gameId });
 
-  if (error) throw error;
+  if (error && error.code !== "23505") throw error;
 }
 
 export async function removeFavorite(gameId) {
