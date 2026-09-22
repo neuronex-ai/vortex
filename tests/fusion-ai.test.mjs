@@ -35,7 +35,7 @@ test("Fusion AI exposes catalog, provider and Nucleus tools to the agent", async
 });
 
 test("Fusion AI shell mirrors the Synapse launcher pattern without AI branding icons", async () => {
-  const shell = await read("src/components/fusio/FusionAI.jsx");
+  const shell = await read("src/components/fusion/FusionAI.jsx");
   const bootstrap = await read("src/app/bootstrap.js");
 
   assert.match(shell, /Fusion AI/);
