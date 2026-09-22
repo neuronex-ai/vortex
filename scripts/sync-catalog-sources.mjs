@@ -49,3 +49,5 @@ const temporary = new URL('data/steam-external-references.json.tmp', root);
 await writeFile(temporary, JSON.stringify(output, null, 2) + '\n');
 await rename(temporary, target);
 console.log(JSON.stringify({ references: sources.length, providers: reports }, null, 2));
+
+await writeFile(new URL('supabase/functions/resolve-game-sources/provider-snapshot.json', root), JSON.stringify(sources.map(item=>({title:item.title,providerName:item.providerName,externalUrl:item.externalUrl,size:item.size,downloadType:item.downloadType}))));
