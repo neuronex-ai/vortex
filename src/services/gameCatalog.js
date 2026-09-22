@@ -402,7 +402,7 @@ export async function fetchFeaturedCoop() {
   return (await browseCatalog({
     filters: { modes: ["local_coop"] },
     sort: "popular",
-    limit: 4,
+    limit: 10,
   })).games;
 }
 
@@ -547,7 +547,7 @@ export async function fetchFavoritePage({ page = 1, limit = PAGE_SIZE } = {}) {
   };
 }
 
-export async function fetchFavoriteGames(limit = 8) {
+export async function fetchFavoriteGames(limit = 10) {
   return (await fetchFavoritePage({ page: 1, limit })).games;
 }
 
