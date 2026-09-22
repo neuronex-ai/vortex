@@ -282,15 +282,15 @@ function gameRef(row: any, extras: any = {}) {
   };
 }
 
-function filterPayload(args: any, includeNucleus = false) {
+function filterPayload(args: any, includeDynamic = false) {
   const filters: any = {
     genres: Array.isArray(args?.genres) ? args.genres.slice(0, 8) : [],
     tags: Array.isArray(args?.tags) ? args.tags.slice(0, 10) : [],
     modes: Array.isArray(args?.modes) ? args.modes.filter((value: string) => MODE_VALUES.includes(value)).slice(0, 8) : [],
-    has_source: args?.has_external_source === true,
+    has_source: includeDynamic && args?.has_external_source === true,
+    nucleus: includeDynamic && args?.nucleus === true,
     controller: ["any", "full"].includes(args?.controller) ? args.controller : "",
   };
-  if (includeNucleus) filters.nucleus = args?.nucleus === true;
   return filters;
 }
 
@@ -298,7 +298,7 @@ async function browseRows(query: string, args: any, target: number) {
   const filters = filterPayload(args, false);
   const rows: any[] = [];
   const pageSize = 21;
-  const maxPages = args?.nucleus ? 4 : 1;
+  const maxPages = (args?.nucleus || args?.has_external_source) ? 4 : 1;
 
   for (let page = 0; page < maxPages && rows.length < Math.max(target, pageSize); page += 1) {
     const { data, error } = await admin.rpc("browse_fusion_catalog_v2", {
@@ -436,18 +436,34 @@ async function searchCatalog(args: any) {
     }
   }
 
+  let sourceMap = new Map<number, any[]>();
+  if (args?.has_external_source === true && rows.length) {
+    const allSources = [];
+    for (let index = 0; index < rows.length; index += 20) {
+      allSources.push(...await resolveExternalSources(
+        rows.slice(index, index + 20).map((row: any) => Number(row.steam_app_id)),
+      ));
+    }
+    sourceMap = new Map(allSources.map((item: any) => [item.steamAppId, item.sources]));
+    rows = rows.filter((row: any) => (sourceMap.get(Number(row.steam_app_id)) ?? []).length > 0);
+  }
+
   let nucleusMap = new Map<number, any>();
   if (args?.nucleus === true && rows.length) {
-    const checked = await resolveNucleus(rows.slice(0, 60));
+    const checked = [];
+    for (let index = 0; index < rows.length; index += 20) {
+      checked.push(...await resolveNucleus(rows.slice(index, index + 20)));
+    }
     nucleusMap = new Map(checked.map((item: any) => [Number(item.steamAppId), item]));
     rows = rows.filter((row: any) => nucleusMap.get(Number(row.steam_app_id))?.supported);
   }
 
   const selected = rows.slice(0, limit);
-  const sourceRows = args?.has_external_source
-    ? await resolveExternalSources(selected.map((row: any) => Number(row.steam_app_id)))
-    : [];
-  const sourceMap = new Map(sourceRows.map((row: any) => [row.steamAppId, row.sources]));
+
+  if (args?.has_external_source !== true && selected.length) {
+    const sourceRows = await resolveExternalSources(selected.map((row: any) => Number(row.steam_app_id)));
+    sourceMap = new Map(sourceRows.map((item: any) => [item.steamAppId, item.sources]));
+  }
 
   return {
     filters: filterPayload(args, true),
@@ -541,14 +557,22 @@ async function findSimilarGames(args: any) {
 
   let sourceMap = new Map<number, any[]>();
   if (args?.has_external_source === true && rows.length) {
-    const sourceRows = await resolveExternalSources(rows.slice(0, 20).map((row: any) => Number(row.steam_app_id)));
+    const sourceRows = [];
+    for (let index = 0; index < rows.length; index += 20) {
+      sourceRows.push(...await resolveExternalSources(
+        rows.slice(index, index + 20).map((row: any) => Number(row.steam_app_id)),
+      ));
+    }
     sourceMap = new Map(sourceRows.map((item: any) => [item.steamAppId, item.sources]));
     rows = rows.filter((row: any) => (sourceMap.get(Number(row.steam_app_id)) ?? []).length > 0);
   }
 
   let nucleusMap = new Map<number, any>();
   if (args?.nucleus === true && rows.length) {
-    const checked = await resolveNucleus(rows.slice(0, 20));
+    const checked = [];
+    for (let index = 0; index < rows.length; index += 20) {
+      checked.push(...await resolveNucleus(rows.slice(index, index + 20)));
+    }
     nucleusMap = new Map(checked.map((item: any) => [Number(item.steamAppId), item]));
     rows = rows.filter((row: any) => nucleusMap.get(Number(row.steam_app_id))?.supported);
   }
