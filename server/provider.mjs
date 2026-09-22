@@ -1,5 +1,6 @@
 import { load } from 'cheerio';
 import { readFile, writeFile } from 'node:fs/promises';
+import https from 'node:https';
 const ORIGIN = 'https://steamrip.com';
 const CACHE = new URL('../data/catalog.json', import.meta.url);
 // The catalog excludes games whose purpose is erotic or pornographic. Mature
@@ -12,8 +13,35 @@ export function isAdult(value) { return adult.test(String(value || '')); }
 export function safeSteam(data) {
   return !!data?.name && !isAdult(`${data.name} ${data.short_description} ${(data.genres || []).map(x=>x.description).join(' ')}`);
 }
+const sourceHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    Referer: 'https://steamrip.com/'
+};
+async function sourceIp() {
+  const answer = await (await fetch('https://dns.google/resolve?name=steamrip.com&type=A', {signal:AbortSignal.timeout(6000)})).json();
+  const ip = answer.Answer?.find(record => record.type === 1 && /^\d{1,3}(\.\d{1,3}){3}$/.test(record.data))?.data;
+  if (!ip) throw new Error('Source DNS unavailable');
+  return ip;
+}
+async function requestSource(url) {
+  const ip = await sourceIp();
+  return new Promise((resolve,reject) => {
+    const timer = setTimeout(() => request.destroy(new Error('Source timeout')), 12000);
+    const request = https.get(url, {headers:sourceHeaders, servername:'steamrip.com', lookup:(_host,_options,callback)=>callback(null,ip,4)}, response => {
+      const chunks=[]; response.on('data',chunk=>chunks.push(chunk)); response.on('end',()=>{clearTimeout(timer); if(response.statusCode<200||response.statusCode>299) return reject(new Error(`Source HTTP ${response.statusCode}`)); resolve(Buffer.concat(chunks).toString('utf8'));});
+    });
+    request.on('error',error=>{clearTimeout(timer);reject(error)});
+  });
+}
 export async function remote(url, json = false) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(12000), redirect:'error', headers: { 'User-Agent': 'VortexCatalog/1.0', Accept: json ? 'application/json' : 'text/html' } });
+  if (!json && new URL(url).hostname === 'steamrip.com') return requestSource(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(12000), redirect:'error', headers: {
+    'User-Agent': sourceHeaders['User-Agent'],
+    Accept: json ? 'application/json' : sourceHeaders.Accept,
+    'Accept-Language': sourceHeaders['Accept-Language']
+  } });
   if (!response.ok) throw new Error(`Source HTTP ${response.status}`);
   return json ? response.json() : response.text();
 }
