@@ -1,3 +1,4 @@
+import { MotionConfig } from "framer-motion";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { FavoritesScreen } from "../../components/favorites/FavoritesScreen.jsx";
@@ -8,5 +9,5 @@ export function mountFavoritesPage() {
   const root = document.getElementById("fusion-app-root");
   if (!root) return;
   if (!favoritesRoot) favoritesRoot = createRoot(root);
-  favoritesRoot.render(<FavoritesScreen />);
+  favoritesRoot.render(<MotionConfig reducedMotion="user"><FavoritesScreen /></MotionConfig>);
 }

@@ -1,3 +1,4 @@
+import { MotionConfig } from "framer-motion";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { CatalogShell } from "../../components/catalog/CatalogShell.jsx";
@@ -14,5 +15,5 @@ export function mountCatalogPage() {
     catalogRoot = createRoot(root);
   }
 
-  catalogRoot.render(<CatalogShell />);
+  catalogRoot.render(<MotionConfig reducedMotion="user"><CatalogShell /></MotionConfig>);
 }

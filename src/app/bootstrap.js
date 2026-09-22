@@ -1,7 +1,11 @@
 import { ensureAppRoot } from "../components/AppRoot.js";
 import { resolvePage } from "../pages/registry.js";
+import { initializeNavigation } from "./navigation.js";
+import { initializePublicExperience } from "./public-experience.js";
 
 export function bootApplication() {
+  initializeNavigation();
+  initializePublicExperience();
   const page = resolvePage(window.location.pathname);
   const appRoot = ensureAppRoot(document);
 
@@ -33,6 +37,10 @@ export function bootApplication() {
     import("../pages/favorites/index.jsx").then(({ mountFavoritesPage }) => {
       mountFavoritesPage();
     });
+  }
+
+  if (page?.id === "welcome") {
+    import("../pages/welcome/index.jsx").then(({ mountWelcomePage }) => mountWelcomePage());
   }
 
   if (["catalog", "account", "favorites"].includes(page?.id)) {

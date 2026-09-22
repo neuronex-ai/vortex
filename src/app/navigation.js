@@ -18,6 +18,7 @@ export function initializeNavigation() {
     if (event.key === "Escape" && !menu.hidden) { setOpen(false); toggle.focus(); }
   });
   document.addEventListener("click", (event) => { if (!header.contains(event.target)) setOpen(false); });
+  window.matchMedia("(min-width: 851px)").addEventListener("change", () => setOpen(false));
   const update = (user) => {
     header.querySelectorAll("[data-fusion-signin]").forEach((link) => {
       link.textContent = user ? "Minha conta" : "Entrar";

@@ -25,7 +25,10 @@ for (const file of files) {
   $("nav[data-framer-name]").each((_, e) => $(e).parent().remove());
   $(".legal-header").remove();
   $("body").prepend(renderNavigation({ app, path }));
-  $("#fusion-content").removeAttr("id");
+  $("#fusion-content").each((_, e) => {
+    if ($(e).is("div") && $(e).children("#main, #fusion-app-root").length) $(e).replaceWith($(e).contents());
+    else $(e).removeAttr("id");
+  });
   if (app) {
     const old = $("#fusion-app-root");
     old.replaceWith('<div id="fusion-content" tabindex="-1"><div id="fusion-app-root"><p class="fusion-route-loading" role="status">Preparando seu espaço no Fusion…</p></div></div>');

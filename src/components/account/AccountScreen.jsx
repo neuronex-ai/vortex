@@ -8,6 +8,8 @@ function displayName(user) {
 
 export function AccountScreen() {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -17,15 +19,18 @@ export function AccountScreen() {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data, error: sessionError }) => {
       if (!active) return;
+      setAuthLoading(false);
+      if (sessionError && sessionError.name !== "AuthSessionMissingError") setAuthError("Não foi possível verificar sua conta. Tente novamente.");
       const nextUser = data.user ?? null;
       setUser(nextUser);
       setName(displayName(nextUser));
-    });
+    }).catch(() => { if (active) { setAuthLoading(false); setAuthError("Não foi possível verificar sua conta. Tente novamente."); } });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
+      setAuthLoading(false); setAuthError("");
       const nextUser = session?.user ?? null;
       setUser(nextUser);
       setName(displayName(nextUser));
@@ -77,17 +82,18 @@ export function AccountScreen() {
 
   async function signOut() {
     setPending(true);
-    await supabase.auth.signOut();
-    window.location.assign("/app/?signed_out=1");
+    try {
+      const { error: logoutError } = await supabase.auth.signOut();
+      if (logoutError) throw logoutError;
+      window.location.assign("/app/?signed_out=1");
+    } catch { setError("Não foi possível sair. Tente novamente."); setPending(false); }
   }
 
+  if (authLoading) return <main className="fusion-page-shell"><p className="fusion-route-loading" role="status">Verificando seu acesso…</p></main>;
+  if (authError) return <main className="fusion-page-shell"><section className="fusion-account-empty"><h1>Vamos tentar de novo?</h1><p role="alert">{authError}</p><button className="fusion-page-primary" onClick={() => window.location.reload()}>Tentar novamente</button><a className="auth-back" href="/app/">Explorar catálogo</a></section></main>;
   if (!user) {
     return (
       <main className="fusion-page-shell">
-        <header className="fusion-page-header">
-          <a href="/app/" className="fusion-page-brand">Fusion</a>
-          <a href="/" className="fusion-page-ghost">Voltar ao site</a>
-        </header>
         <section className="fusion-account-empty">
           <span className="fusion-page-eyebrow">Sua conta</span>
           <h1>Entre para gerenciar seu perfil.</h1>
@@ -105,14 +111,6 @@ export function AccountScreen() {
 
   return (
     <main className="fusion-page-shell">
-      <header className="fusion-page-header">
-        <a href="/app/" className="fusion-page-brand">Fusion</a>
-        <nav>
-          <a href="/app/">Catálogo</a>
-          <a href="/app/favorites.html">Favoritos</a>
-          <a className="is-active" href="/app/account.html">Conta</a>
-        </nav>
-      </header>
 
       <section className="fusion-page-hero fusion-page-hero--compact">
         <span className="fusion-page-eyebrow">Conta Fusion</span>

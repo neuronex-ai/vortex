@@ -35,18 +35,6 @@ const gridIcon = (
   </svg>
 );
 
-const menuIcon = (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M5 7h14M5 12h14M5 17h14" />
-  </svg>
-);
-
-const closeIcon = (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M6 6l12 12M18 6 6 18" />
-  </svg>
-);
-
 const navItems = [
   { label: "Início", href: "#inicio" },
   { label: "Explorar", href: "#explorar" },
@@ -132,7 +120,7 @@ export function CatalogShell() {
   const [user, setUser] = useState(null);
   const [favoriteError, setFavoriteError] = useState("");
   const [selectedGame, setSelectedGame] = useState(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState("");
   const [steamSearchUnavailable, setSteamSearchUnavailable] = useState(false);
@@ -337,7 +325,7 @@ export function CatalogShell() {
     setQuery(draftQuery.trim());
     setSearchAttempt(value => value + 1);
     resetPagination();
-    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("explorar")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }
 
   function resetFilters() {
@@ -423,18 +411,18 @@ export function CatalogShell() {
       return next;
     });
     setPage((value) => value + 1);
-    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("explorar")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }
 
   function goPrevious() {
     if (page <= 1) return;
     setPage((value) => value - 1);
-    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("explorar")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }
 
   function selectNav(item) {
     setActiveNav(item.label);
-    setMobileOpen(false);
+
   }
 
   return (
@@ -443,106 +431,9 @@ export function CatalogShell() {
       <div className="catalog-ambient catalog-ambient--two" />
       <div className="catalog-grid" aria-hidden="true" />
 
-      <motion.header
-        className="catalog-header"
-        initial={{ opacity: 0, y: -14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease }}
-      >
-        <motion.a
-          className="catalog-brand"
-          href="#inicio"
-          aria-label="Ir para o início do Fusion"
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => {
-            setActiveNav("Início");
-            setMobileOpen(false);
-          }}
-        >
-          <img src="/assets/5d0cbaa2b34ad9.png" alt="" />
-          <span>Fusion</span>
-        </motion.a>
-
-        <nav className="catalog-nav" aria-label="Navegação do Fusion">
-          {navItems.map((item) => (
-            <motion.a
-              key={item.label}
-              href={item.href}
-              className={activeNav === item.label ? "is-active" : undefined}
-              aria-current={activeNav === item.label ? "page" : undefined}
-              onClick={() => selectNav(item)}
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              {item.label}
-            </motion.a>
-          ))}
-        </nav>
-
-        <motion.a
-          className="catalog-site-link"
-          href={user ? "/app/account.html" : "/app/auth.html?next=/app/"}
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <span>{user ? "Minha conta" : "Entrar"}</span>
-          {arrowIcon}
-        </motion.a>
-
-        <motion.button
-          className="catalog-mobile-toggle"
-          type="button"
-          aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((value) => !value)}
-          whileTap={{ scale: 0.94 }}
-        >
-          {mobileOpen ? closeIcon : menuIcon}
-        </motion.button>
-      </motion.header>
-
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.button
-              className="catalog-mobile-backdrop"
-              type="button"
-              aria-label="Fechar menu"
-              onClick={() => setMobileOpen(false)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            />
-            <motion.nav
-              className="catalog-mobile-nav"
-              aria-label="Navegação mobile do Fusion"
-              initial={{ opacity: 0, y: -12, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.99 }}
-              transition={{ duration: 0.2, ease }}
-            >
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className={activeNav === item.label ? "is-active" : undefined}
-                  onClick={() => selectNav(item)}
-                >
-                  <span>{item.label}</span>
-                  {arrowIcon}
-                </a>
-              ))}
-              {user && <a href="/app/favorites.html"><span>Favoritos</span>{arrowIcon}</a>}
-              <a href={user ? "/app/account.html" : "/app/auth.html?next=/app/"}>
-                <span>{user ? "Minha conta" : "Entrar"}</span>
-                {arrowIcon}
-              </a>
-              <a href="/">Voltar ao site</a>
-            </motion.nav>
-          </>
-        )}
-      </AnimatePresence>
+      <nav className="fusion-catalog-sections" aria-label="Seções do catálogo">
+        {navItems.map(item => <a key={item.label} href={item.href} aria-current={activeNav === item.label ? "location" : undefined} onClick={() => selectNav(item)}>{item.label}</a>)}
+      </nav>
 
       <motion.section
         className="catalog-hero"

@@ -1,0 +1,16 @@
+.fusion-welcome { min-height:calc(100svh - 120px); padding:48px 24px 80px; display:grid; place-items:center; color:#f2f2f5; background:radial-gradient(ellipse at 60% 30%,#8980b912,transparent 65%); }
+.fusion-welcome-card { width:min(1040px,100%); display:grid; grid-template-columns:1fr 1fr; overflow:hidden; border:1px solid #ffffff16; border-radius:30px; background:linear-gradient(140deg,#202024,#101013); box-shadow:0 35px 110px #0004,inset 0 1px #ffffff0a; }
+.fusion-welcome-art { display:grid; place-items:center; background:#0b0b0e; }
+.fusion-welcome-art img { width:100%; height:auto; object-fit:contain; }
+.fusion-welcome-copy { padding:56px 44px; display:flex; flex-direction:column; align-items:flex-start; gap:24px; }
+.fusion-welcome h1 { font:500 clamp(32px,3.5vw,48px)/1.08 "Instrument Sans",sans-serif; letter-spacing:-.045em; margin:0; }
+.fusion-welcome h1:focus { outline:none; }
+.fusion-welcome-copy > p:not(.auth-eyebrow) { color:#afafb9; font:16px/1.7 "Instrument Sans",sans-serif; margin:0; min-height:108px; }
+.fusion-welcome-progress { list-style:none; display:flex; gap:8px; padding:0; margin:4px 0 -16px; }
+.fusion-welcome-progress li { width:28px; height:3px; border-radius:5px; background:#ffffff25; }
+.fusion-welcome-progress li[aria-current] { background:#d3c8ff; }
+.fusion-welcome-count { color:#858591; font-size:12px; }
+.fusion-welcome-controls { display:flex; gap:20px; align-items:center; width:100%; }
+.fusion-welcome-controls .auth-primary { flex:1; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media(max-width:767px) { .fusion-welcome { padding:24px 18px 60px; } .fusion-welcome-card { grid-template-columns:1fr; } .fusion-welcome-art { max-height:220px; overflow:hidden; } .fusion-welcome-art img { max-height:220px; } .fusion-welcome-copy { padding:32px 28px; } }

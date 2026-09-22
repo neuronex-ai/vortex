@@ -4,6 +4,7 @@ export const pages = [
   { id: "home", path: "/", source: "index.html" },
   { id: "catalog", path: "/app/", source: "app/index.html" },
   { id: "auth", path: "/app/auth.html", source: "app/auth.html" },
+  { id: "welcome", path: "/app/welcome.html", source: "app/welcome.html" },
   { id: "account", path: "/app/account.html", source: "app/account.html" },
   { id: "favorites", path: "/app/favorites.html", source: "app/favorites.html" },
   { id: "blog", path: "/blog.html", source: "blog.html" },

@@ -1,6 +1,18 @@
 @font-face{font-family:"Instrument Sans";font-style:normal;font-weight:500 700;font-display:swap;src:url("/assets/2a0dbb38aba854.woff2") format("woff2")}
 @font-face{font-family:"Inter Tight";font-style:normal;font-weight:600 700;font-display:swap;src:url("/assets/528f49627ee952.woff2") format("woff2")}
 :root{--fusion-bg:#0c0c0d;--fusion-panel:#131315;--fusion-border:rgba(216,231,242,.1);--fusion-muted:#adb0b7;--fusion-text:#f5f5f7}
+body.fusion-app{margin:0;background:var(--fusion-bg);color:var(--fusion-text);font-family:"Instrument Sans",sans-serif;color-scheme:dark}
+.fusion-route-loading{padding:100px 24px;text-align:center;color:var(--fusion-muted);font-size:15px}
+.fusion-app #fusion-content{outline:none}
+.fusion-app :where(a,button,input):focus-visible{outline:2px solid #c6bcff;outline-offset:4px}
+.fusion-app .auth-page{min-height:calc(100svh - 110px)}
+.fusion-app .auth-legal{font-size:11px;color:#aaaab4}
+.fusion-app .auth-legal a{color:#d4cbee}
+.fusion-catalog-sections{display:flex;position:relative;z-index:1;gap:8px;max-width:1180px;margin:0 auto;padding:18px 24px 0;overflow-x:auto;scrollbar-width:thin}
+.fusion-catalog-sections a{display:flex;align-items:center;min-height:44px;white-space:nowrap;color:#999da7;font-size:13px;text-decoration:none;padding:8px 14px;border-radius:12px}
+.fusion-catalog-sections a[aria-current],.fusion-catalog-sections a:hover{color:#f2f2f5;background:#ffffff07}
+.fusion-app .catalog-page section[id]{scroll-margin-top:115px}
+@media(prefers-reduced-motion:reduce){.fusion-app *{scroll-behavior:auto!important;animation:none!important}}
 .fusion-navigation,.fusion-navigation *{box-sizing:border-box}
 .fusion-navigation{position:sticky;top:12px;z-index:100;width:min(1180px,calc(100% - 48px));margin:16px auto 0;border:1px solid var(--fusion-border);border-radius:20px;background:rgba(12,12,13,.92);color:var(--fusion-text);backdrop-filter:blur(24px);box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 14px 45px -24px #000;font:500 13px/1.4 "Instrument Sans",sans-serif}
 .fusion-navigation-inner{display:flex;align-items:center;min-height:68px;padding:8px 14px;gap:24px}
