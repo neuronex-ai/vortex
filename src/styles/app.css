@@ -1,0 +1,6 @@
+/*
+ * Reserved for application-level styles.
+ *
+ * The current Vórtex visual layer intentionally remains in /css so the
+ * Vite migration does not change the exported site's appearance.
+ */
