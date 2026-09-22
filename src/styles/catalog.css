@@ -920,3 +920,65 @@ button { color: inherit; }
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Authorized distribution sources */
+.game-detail__sources {
+  display: grid;
+  gap: 9px;
+}
+
+.game-detail__source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 64px;
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  background: #151517;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.game-detail__source:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.12);
+  background: #19191b;
+}
+
+.game-detail__source > span {
+  display: grid;
+  gap: 4px;
+}
+
+.game-detail__source strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.game-detail__source small,
+.game-detail__source-note {
+  color: #747881;
+  font-size: 10px;
+}
+
+.game-detail__source b {
+  color: #e8e9eb;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.game-detail__source-note {
+  padding: 14px 15px;
+  border: 1px dashed rgba(255,255,255,.06);
+  border-radius: 13px;
+  background: rgba(255,255,255,.02);
+}
+
+@media (max-width: 560px) {
+  .game-detail__source {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
