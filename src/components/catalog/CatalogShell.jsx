@@ -74,6 +74,18 @@ const quickFilters = [
   { label: "Aventura", kind: "genre", value: "Aventura" },
 ];
 
+const categories = [
+  "Coop local",
+  "Ação",
+  "Aventura",
+  "Terror",
+  "Terror de Sobrevivência",
+  "Sobrevivência",
+  "Indie",
+  "RPG",
+  "Estratégia",
+];
+
 const advancedGroups = [
   {
     label: "Gêneros",
@@ -258,6 +270,28 @@ export function CatalogShell() {
     openFromUrl();
     window.addEventListener("popstate", openFromUrl);
     return () => window.removeEventListener("popstate", openFromUrl);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function handleFusionOpenGame(event) {
+      const slug = event?.detail?.slug;
+      if (!slug) return;
+
+      try {
+        const game = await fetchGameBySlug(slug);
+        if (!cancelled && game) openGame(game);
+      } catch {
+        // Keep the current screen unchanged if the referenced game is no longer available.
+      }
+    }
+
+    window.addEventListener("fusion:open-game", handleFusionOpenGame);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("fusion:open-game", handleFusionOpenGame);
+    };
   }, []);
 
   function resetPagination() {
@@ -536,7 +570,7 @@ export function CatalogShell() {
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.target.value)}
             autoComplete="off"
-            placeholder="Pesquise por nome, gênero ou descrição..."
+            placeholder="Pesquise por nome, gênero, tema ou descrição..."
             aria-label="Pesquisar jogos"
           />
           <motion.button type="submit" whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}>
@@ -794,7 +828,7 @@ export function CatalogShell() {
       >
         <span className="catalog-eyebrow">Descoberta</span>
         <h2 id="categories-heading">Categorias</h2>
-        <p>Explore os jogos da seleção por gênero.</p>
+        <p>Explore por gênero, tema ou forma de jogar.</p>
 
         <div className="category-grid">
           {categories.map((category) => (
@@ -854,6 +888,7 @@ export function CatalogShell() {
             onClose={closeGame}
             isFavorite={favoriteGames.some((item) => item.id === selectedGame.id)}
             onToggleFavorite={toggleFavorite}
+            onOpenGame={openGame}
           />
         )}
       </AnimatePresence>
