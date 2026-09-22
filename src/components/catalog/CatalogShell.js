@@ -21,22 +21,22 @@ const gridIcon = `
 
 export function renderCatalogShell(root) {
   root.innerHTML = `
-    <div class="catalog-page">
+    <div class="catalog-page" id="inicio">
       <div class="catalog-ambient catalog-ambient--one"></div>
       <div class="catalog-ambient catalog-ambient--two"></div>
       <div class="catalog-grid" aria-hidden="true"></div>
 
       <header class="catalog-header">
-        <a class="catalog-brand" href="/" aria-label="Voltar para o site Vórtex">
+        <a class="catalog-brand" href="#inicio" aria-label="Ir para o início do Fusion">
           <img src="/assets/5d0cbaa2b34ad9.png" alt="" />
-          <span>Vórtex</span>
+          <span>Fusion</span>
         </a>
 
-        <nav class="catalog-nav" aria-label="Navegação do catálogo">
-          <a href="/">Início</a>
-          <a class="is-active" href="/app/" aria-current="page">Explorar</a>
-          <button type="button" disabled>Coop local</button>
-          <button type="button" disabled>Categorias</button>
+        <nav class="catalog-nav" aria-label="Navegação do Fusion">
+          <a data-nav-link href="#inicio">Início</a>
+          <a data-nav-link class="is-active" href="#explorar" aria-current="page">Explorar</a>
+          <a data-nav-link href="#coop-local">Coop local</a>
+          <a data-nav-link href="#categorias">Categorias</a>
         </nav>
 
         <a class="catalog-site-link" href="/">
@@ -48,7 +48,7 @@ export function renderCatalogShell(root) {
       <section class="catalog-hero">
         <div class="catalog-kicker">
           <span class="catalog-kicker__mark">${gridIcon}</span>
-          <span>Catálogo Vórtex</span>
+          <span>Catálogo Fusion</span>
         </div>
 
         <h1>Encontre seu próximo jogo.</h1>
@@ -77,16 +77,16 @@ export function renderCatalogShell(root) {
           A busca visual já está pronta. Os dados serão conectados em uma etapa posterior.
         </div>
 
-        <div class="catalog-filter-row" aria-label="Filtros que serão habilitados posteriormente">
-          <button class="is-selected" type="button" disabled>Todos</button>
-          <button type="button" disabled>Coop local</button>
-          <button type="button" disabled>Ação</button>
-          <button type="button" disabled>Terror</button>
-          <button type="button" disabled>Aventura</button>
+        <div class="catalog-filter-row" aria-label="Filtros de visualização">
+          <button class="is-selected" type="button" data-filter="Todos" aria-pressed="true">Todos</button>
+          <button type="button" data-filter="Coop local" aria-pressed="false">Coop local</button>
+          <button type="button" data-filter="Ação" aria-pressed="false">Ação</button>
+          <button type="button" data-filter="Terror" aria-pressed="false">Terror</button>
+          <button type="button" data-filter="Aventura" aria-pressed="false">Aventura</button>
         </div>
       </section>
 
-      <section class="catalog-content" aria-labelledby="catalog-heading">
+      <section class="catalog-content" id="explorar" aria-labelledby="catalog-heading">
         <div class="catalog-content__heading">
           <div>
             <span class="catalog-eyebrow">Biblioteca</span>
@@ -99,18 +99,36 @@ export function renderCatalogShell(root) {
           <div class="catalog-empty__icon">${gridIcon}</div>
           <h3>O catálogo começa aqui.</h3>
           <p>
-            Nesta primeira etapa deixamos a interface pronta e vazia de propósito.
-            Na próxima fase podemos definir os cards e a navegação antes de conectar
-            qualquer fonte externa.
+            A estrutura está pronta para receber os cards dos jogos. Antes de conectar
+            qualquer fonte externa, vamos definir como a biblioteca deve se comportar
+            e quais informações cada card precisa mostrar.
           </p>
         </div>
       </section>
 
+      <section class="catalog-secondary-section" id="coop-local" aria-labelledby="coop-heading">
+        <span class="catalog-eyebrow">Jogar juntos</span>
+        <h2 id="coop-heading">Coop local</h2>
+        <p>
+          Esta área será dedicada a títulos para jogar no mesmo PC, incluindo jogos de
+          tela dividida quando esse recurso estiver disponível.
+        </p>
+      </section>
+
+      <section class="catalog-secondary-section" id="categorias" aria-labelledby="categories-heading">
+        <span class="catalog-eyebrow">Descoberta</span>
+        <h2 id="categories-heading">Categorias</h2>
+        <p>
+          Ação, aventura, terror e outros gêneros serão organizados aqui quando a
+          primeira camada de dados do catálogo estiver pronta.
+        </p>
+      </section>
+
       <footer class="catalog-footer">
-        <span>Vórtex</span>
+        <span>Fusion</span>
         <div>
+          <span>Uma experiência Vórtex</span>
           <span>Sem anúncios invasivos</span>
-          <span>Interface em construção</span>
         </div>
       </footer>
     </div>
@@ -118,6 +136,8 @@ export function renderCatalogShell(root) {
 
   const form = root.querySelector("[data-catalog-search]");
   const note = root.querySelector("[data-search-note]");
+  const filterButtons = [...root.querySelectorAll("[data-filter]")];
+  const navLinks = [...root.querySelectorAll("[data-nav-link]")];
 
   form?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -126,5 +146,30 @@ export function renderCatalogShell(root) {
     note.textContent = query
       ? `A busca por “${query}” será ativada quando conectarmos os dados do catálogo.`
       : "Digite um nome ou gênero. A busca real será conectada em uma etapa posterior.";
+  });
+
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      filterButtons.forEach((item) => {
+        const selected = item === button;
+        item.classList.toggle("is-selected", selected);
+        item.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+
+      note.textContent = button.dataset.filter === "Todos"
+        ? "Mostrando a estrutura geral do catálogo."
+        : `O filtro “${button.dataset.filter}” já responde ao clique. Os jogos entram na próxima camada de dados.`;
+    });
+  });
+
+  navLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      navLinks.forEach((item) => {
+        item.classList.toggle("is-active", item === link);
+        item.removeAttribute("aria-current");
+      });
+
+      link.setAttribute("aria-current", "page");
+    });
   });
 }
