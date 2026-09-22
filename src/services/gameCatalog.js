@@ -27,8 +27,12 @@ const gameFields = [
   "shared_split_screen",
   "controller_support",
   "genres",
+  "steam_genre_ids",
   "categories",
+  "steam_category_ids",
   "tags",
+  "steam_tag_ids",
+  "franchises",
   "developers",
   "publishers",
   "platforms",
@@ -85,12 +89,44 @@ function formatPrice(row) {
   }
 }
 
+function capabilityFlags(row) {
+  const ids = new Set((row.steam_category_ids ?? []).map(Number));
+  return {
+    singlePlayer: ids.has(2),
+    multiplayer: ids.has(1),
+    coopAny: ids.has(9),
+    onlineCoop: ids.has(38),
+    localCoop: ids.has(39),
+    sameScreen: ids.has(24) || ids.has(37) || ids.has(39),
+    lanCoop: ids.has(48),
+    onlinePvp: ids.has(36),
+    localPvp: ids.has(37),
+    crossplay: ids.has(27),
+    remoteTogether: ids.has(44),
+    fullController: ids.has(28),
+    anyController: ids.has(18) || ids.has(28) || ids.has(60),
+  };
+}
+
 function playerLabel(row) {
-  if (row.local_coop) return "Coop local";
-  const categories = row.categories ?? [];
-  if (categories.some((item) => /co-op/i.test(item))) return "Co-op online";
-  if (categories.some((item) => /multijogador|multi-player/i.test(item))) return "Multijogador";
+  const flags = capabilityFlags(row);
+  if (flags.localCoop) return "Coop local nativo";
+  if (flags.onlineCoop) return "Coop online";
+  if (flags.coopAny) return "Coop";
+  if (flags.multiplayer) return "Multiplayer";
   return "Um jogador";
+}
+
+function simplePlayLabels(row) {
+  const flags = capabilityFlags(row);
+  const labels = [];
+  if (flags.localCoop) labels.push("Coop local");
+  if (flags.sameScreen) labels.push("Na mesma tela");
+  if (flags.onlineCoop) labels.push("Coop online");
+  if (flags.lanCoop) labels.push("LAN");
+  if (!labels.length && flags.multiplayer) labels.push("Multiplayer");
+  if (!labels.length && flags.singlePlayer) labels.push("Um jogador");
+  return labels;
 }
 
 export function mapGameRow(row) {
@@ -132,8 +168,14 @@ export function mapGameRow(row) {
     splitScreen: row.shared_split_screen,
     controllerSupport: row.controller_support,
     genres: row.genres ?? [],
+    genreIds: row.steam_genre_ids ?? [],
     categories: row.categories ?? [],
-    tags: (row.tags?.length ? row.tags : row.categories ?? []).slice(0, 12),
+    categoryIds: row.steam_category_ids ?? [],
+    tags: (row.tags?.length ? row.tags : row.categories ?? []).slice(0, 20),
+    tagIds: row.steam_tag_ids ?? [],
+    franchises: row.franchises ?? [],
+    capabilities: capabilityFlags(row),
+    playLabels: simplePlayLabels(row),
     developers: row.developers ?? [],
     publishers: row.publishers ?? [],
     platforms: row.platforms ?? {},
@@ -164,14 +206,14 @@ function safeOffset(cursor) {
 
 async function browseCatalog(options = {}) {
   const query = options.query?.trim() ?? "";
-  const filter = options.filter || "Todos";
+  const filters = options.filters ?? {};
   const sort = options.sort || "popular";
   const limit = Math.min(Math.max(Number(options.limit) || PAGE_SIZE, 1), PAGE_SIZE);
   const offset = safeOffset(options.cursor);
 
-  const { data, error } = await supabase.rpc("browse_fusion_catalog", {
+  const { data, error } = await supabase.rpc("browse_fusion_catalog_v2", {
     p_query: query,
-    p_filter: filter,
+    p_filters: filters,
     p_sort: sort,
     p_offset: offset,
     p_limit: Math.min(limit + 1, PAGE_SIZE + 1),
@@ -443,4 +485,81 @@ export async function removeFavorite(gameId) {
     .eq("game_id", gameId);
 
   if (error) throw error;
+}
+
+
+export async function fetchNucleusSupport(games = []) {
+  const payload = (Array.isArray(games) ? games : [games])
+    .filter(Boolean)
+    .map((game) => ({
+      steamAppId: Number(game.steamAppId),
+      title: game.title,
+    }))
+    .filter((game) => Number.isSafeInteger(game.steamAppId) && game.steamAppId > 0 && game.title)
+    .slice(0, 20);
+
+  if (!payload.length) return [];
+
+  const { data, error } = await supabase.functions.invoke("resolve-nucleus-support", {
+    body: { games: payload },
+  });
+
+  if (error) throw error;
+  return Array.isArray(data?.results) ? data.results : [];
+}
+
+function matchesClientFilters(game, filters = {}) {
+  const wantedModes = new Set(filters.modes ?? []);
+  const flags = game.capabilities ?? {};
+  for (const mode of wantedModes) {
+    if (mode === "single_player" && !flags.singlePlayer) return false;
+    if (mode === "multiplayer" && !flags.multiplayer) return false;
+    if (mode === "coop_any" && !flags.coopAny) return false;
+    if (mode === "online_coop" && !flags.onlineCoop) return false;
+    if (mode === "local_coop" && !flags.localCoop) return false;
+    if (mode === "same_screen" && !flags.sameScreen) return false;
+    if (mode === "lan_coop" && !flags.lanCoop) return false;
+    if (mode === "online_pvp" && !flags.onlinePvp) return false;
+    if (mode === "local_pvp" && !flags.localPvp) return false;
+    if (mode === "crossplay" && !flags.crossplay) return false;
+    if (mode === "remote_together" && !flags.remoteTogether) return false;
+  }
+  if (filters.controller === "full" && !flags.fullController) return false;
+  if (filters.controller === "any" && !flags.anyController) return false;
+  if (filters.genres?.length && !filters.genres.every((genre) => game.genres.some((item) => item.toLowerCase() === genre.toLowerCase()))) return false;
+  if (filters.tags?.length) {
+    const haystack = [...game.tags, ...game.genres, ...game.categories].map((item) => item.toLowerCase());
+    if (!filters.tags.every((tag) => haystack.includes(tag.toLowerCase()))) return false;
+  }
+  return true;
+}
+
+export async function fetchSimilarGames(game, filters = {}, limit = 12) {
+  const count = Math.min(Math.max(Number(limit) || 12, 1), 20);
+  const { data: ids, error: idError } = await supabase.rpc("steam_more_like_this_ids", {
+    p_app_id: Number(game.steamAppId),
+    p_count: Math.min(30, Math.max(count * 2, 16)),
+  });
+  if (idError) throw idError;
+
+  const appIds = (Array.isArray(ids) ? ids : []).map(Number).filter(Boolean);
+  if (!appIds.length) return [];
+
+  const { data, error } = await supabase
+    .from("fusion_public_games")
+    .select(gameFields)
+    .in("steam_app_id", appIds);
+  if (error) throw error;
+
+  const byId = new Map(rememberRows(data ?? []).map((item) => [item.steamAppId, item]));
+  let ordered = appIds.map((id) => byId.get(id)).filter(Boolean);
+  ordered = ordered.filter((item) => matchesClientFilters(item, filters));
+
+  if (filters.nucleus && ordered.length) {
+    const support = await fetchNucleusSupport(ordered.slice(0, 20));
+    const supported = new Set(support.filter((item) => item.supported).map((item) => Number(item.steamAppId)));
+    ordered = ordered.filter((item) => supported.has(item.steamAppId));
+  }
+
+  return ordered.slice(0, count);
 }
