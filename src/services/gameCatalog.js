@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabase.js";
 import { getCatalog, getFamilyFriendlyCatalog } from "../../lib/steam-catalog-client.ts";
-import { mergeCatalogGame, pageCatalog, sourcesForGame, steamEntry } from "./catalogModel.mjs";
+import { mergeCatalogGame, mergeSources, pageCatalog, sourcesForGame, steamEntry } from "./catalogModel.mjs";
 
 export const PAGE_SIZE = 20;
 
@@ -171,17 +171,45 @@ async function loadPublicCatalog() {
       getFamilyFriendlyCatalog(), import("../../data/steam-sources.json"), import("../../data/steam-external-references.json"),
     ]);
     const metadata = new Map();
+    const cachedSources = new Map();
     let metadataUnavailable = false;
     for (let start = 0; start < entries.length; start += 100) {
+      const appIds = entries.slice(start, start + 100).map(game => game.appId);
       try {
         const { data, error } = await supabase.from("games").select(gameFields)
-          .in("steam_app_id", entries.slice(start, start + 100).map(game => game.appId))
+          .in("steam_app_id", appIds)
           .abortSignal(AbortSignal.timeout(10000));
         if (error) throw error;
         for (const row of data ?? []) metadata.set(Number(row.steam_app_id), mapGameRow(row));
       } catch { metadataUnavailable = true; }
+
+      try {
+        const { data, error } = await supabase.from("game_source_cache")
+          .select("steam_app_id,sources,checked_at,next_check_at")
+          .in("steam_app_id", appIds)
+          .abortSignal(AbortSignal.timeout(10000));
+        if (error) throw error;
+        for (const row of data ?? []) cachedSources.set(Number(row.steam_app_id), row);
+      } catch {
+        // Static provider references remain available if the cache cannot be read.
+      }
     }
-    return { games: entries.map(entry => mergeCatalogGame(entry, metadata.get(entry.appId), sourcesForGame(entry.appId, localSources, references))), metadataUnavailable };
+    return {
+      games: entries.map((entry) => {
+        const staticSources = sourcesForGame(entry.appId, localSources, references, entry.title);
+        const cache = cachedSources.get(entry.appId);
+        const dynamicSources = (cache?.sources ?? []).map((source) => ({
+          ...source,
+          lastCheckedAt: source.lastCheckedAt ?? cache.checked_at ?? null,
+        }));
+        return mergeCatalogGame(
+          entry,
+          metadata.get(entry.appId),
+          mergeSources(staticSources, dynamicSources),
+        );
+      }),
+      metadataUnavailable,
+    };
   })().catch(error => { catalogCache = null; cacheExpires = 0; throw error; });
   return catalogCache;
 }
@@ -250,8 +278,57 @@ export async function fetchFeaturedCoop() {
   return (await fetchGamePage({ filter: "Coop local", limit: 4 })).games;
 }
 
+async function readSourceCache(appId) {
+  const { data, error } = await supabase.from("game_source_cache")
+    .select("steam_app_id,sources,checked_at,next_check_at")
+    .eq("steam_app_id", appId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
+}
+
+async function resolveSourceCache(appId) {
+  if (!supabase.functions?.invoke) return [];
+  const { data, error } = await supabase.functions.invoke("resolve-game-sources", {
+    body: { appIds: [appId] },
+  });
+  if (error) throw error;
+  const result = data?.results?.find((item) => Number(item?.appId) === appId);
+  return Array.isArray(result?.sources) ? result.sources : [];
+}
+
 export async function fetchDistributionSources(appId) {
-  return discovered.get(Number(appId))?.sources ?? (await loadPublicCatalog()).games.find(game => game.steamAppId === Number(appId))?.sources ?? [];
+  const numericAppId = Number(appId);
+  if (!Number.isSafeInteger(numericAppId) || numericAppId <= 0) return [];
+
+  const knownGame = discovered.get(numericAppId)
+    ?? (await loadPublicCatalog()).games.find(game => game.steamAppId === numericAppId);
+  const staticSources = knownGame?.sources ?? [];
+
+  let cache = null;
+  try {
+    cache = await readSourceCache(numericAppId);
+  } catch {
+    // Keep static provider matches available when the cache is temporarily unreachable.
+  }
+
+  const cachedSources = (cache?.sources ?? []).map((source) => ({
+    ...source,
+    lastCheckedAt: source.lastCheckedAt ?? cache?.checked_at ?? null,
+  }));
+
+  const nextCheck = Date.parse(cache?.next_check_at ?? "");
+  const stale = !cache || !Number.isFinite(nextCheck) || nextCheck <= Date.now();
+  let resolvedSources = [];
+  if (stale) {
+    try {
+      resolvedSources = await resolveSourceCache(numericAppId);
+    } catch {
+      // Existing static/cache links are still returned if revalidation cannot run.
+    }
+  }
+
+  return mergeSources(staticSources, cachedSources, resolvedSources);
 }
 
 async function currentUser() {
