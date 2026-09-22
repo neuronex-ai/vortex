@@ -40,7 +40,7 @@ for (const file of files) {
   }
   $("link[data-fusion-style]").remove();
   $("head").append('<link data-fusion-style rel="stylesheet" href="/css/fusion-navigation.css">');
-  if (!app) $("head").append('<link data-fusion-style rel="stylesheet" href="/css/fusion-public.css">');
+  if (!app) $("head").append('<link data-fusion-style rel="stylesheet" href="/css/fusion-public.css"><link data-fusion-style rel="stylesheet" href="/css/fusion-motion.css">');
   const meta = article ? [`${article.title} — Fusion`, article.description] : pageCopy[file];
   if (meta) {
     text("title", meta[0]);
@@ -126,7 +126,20 @@ for (const file of files) {
     $(".fusion-public-hero").attr("data-fusion-hero", "");
     $(".framer-ap69l4").addClass("fusion-hero-copy");
     $(".framer-1ib1p16").find("p").filter((_, e) => $(e).text().length > 100).text("Descubra jogos de PC, encontre companhia para a próxima partida e guarde seus favoritos. Tudo começa com uma boa escolha.");
-    if (!$(".fusion-product-stage").length) $(".fusion-public-hero").append('<figure class="fusion-product-stage" data-fusion-reveal><img src="/assets/fusion/notebook%20com%20gameplay%20do%20forza.png" alt="Notebook com uma cena de corrida, ilustração de uma próxima partida" width="1536" height="1024" fetchpriority="high"><figcaption>Encontre o que faz você querer jogar.</figcaption></figure>');
+    $(".fusion-product-stage, .fusion-notebook-story").remove();
+    $(".fusion-public-hero").after(`<section class="fusion-notebook-story" data-fusion-notebook aria-labelledby="fusion-notebook-title">
+      <div class="fusion-notebook-sticky">
+        <div class="fusion-story-glow" aria-hidden="true"></div>
+        <div class="fusion-story-copy"><span class="fusion-story-eyebrow">01 / Descoberta</span><h2 id="fusion-notebook-title">Encontre o jogo que chama você.</h2><p>Uma busca pode abrir um mundo inteiro.</p></div>
+        <figure class="fusion-device" role="img" aria-label="Notebook Fusion se abrindo para revelar uma corrida ilustrativa de Forza Horizon 6">
+          <span class="fusion-device-lid" aria-hidden="true"></span><span class="fusion-device-base" aria-hidden="true"></span>
+        </figure>
+        <div class="fusion-story-bottom"><span>Descubra. Escolha. Jogue.</span><span class="fusion-story-scroll">Role para descobrir <span aria-hidden="true">↓</span></span></div>
+      </div>
+    </section>`);
+    $("section[data-framer-name='Catálogo vivo']").addClass("fusion-next-chapter").attr({ id: "descoberta", "data-fusion-next-chapter": "" });
+    $("section[data-framer-name='Catálogo vivo'] h2").first().text("Descubra mais.\nProcure menos.");
+    $("section[data-framer-name='Catálogo vivo'] h2").eq(1).text("Escolha rápido.\nJogue melhor.");
     $(".framer-7hgh73 img").attr({ src: "/assets/fusion/3.png", alt: "Ilustração da biblioteca Fusion" });
     $(".framer-15he270").addClass("fusion-access-grid").html(`<article class="fusion-access-card"><span class="fusion-eyebrow">Comece explorando</span><h3>Uma descoberta<br>puxa a próxima.</h3><p>O catálogo é aberto. Pesquise jogos, combine filtros e consulte os detalhes.</p><a class="fusion-button" href="/app/">Explorar catálogo <span aria-hidden="true">↗</span></a></article><article class="fusion-access-card"><span class="fusion-eyebrow">Faça do seu jeito</span><h3>Vale guardar.<br>Vale voltar.</h3><p>Crie sua conta para salvar favoritos e encontrar sua lista em outros dispositivos.</p><a class="fusion-button fusion-button-secondary" href="${authHref("create")}">Criar minha conta</a></article>`);
     $(".framer-976y6w").remove();
@@ -191,8 +204,7 @@ for (const file of files) {
   $(".fusion-section > .fusion-section-inner, .fusion-article-body > section").attr("data-fusion-reveal", "");
   let output = $.html();
   // Keep the exported markup's body separators stable between authoring runs.
-  output = output.replace('</header>\n  \n  \n  <!-- Start of bodyStart -->', '</header>\n  \n  <!-- Start of bodyStart -->');
-  output = output.replace('</header>\n  \n  \n  <div id="fusion-content"', '</header>\n  \n  <div id="fusion-content"');
+  output = output.replace(/<\/header>\n(?:  \n)+  (<!-- Start of bodyStart -->|<div id="fusion-content")/g, '</header>\n  \n  $1');
   writeFileSync(resolve(root, file), output);
 }
 
