@@ -1,6 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { categories, gameMatchesQuery, games } from "../../data/games.js";
+import {
+  fetchFeaturedCoop,
+  fetchGameBySlug,
+  fetchGamePage,
+  PAGE_SIZE,
+} from "../../services/gameCatalog.js";
 import { GameCard } from "./GameCard.jsx";
 import { GameDetail } from "./GameDetail.jsx";
 import "../../styles/catalog-enhancements.css";
@@ -46,20 +51,101 @@ const navItems = [
 ];
 
 const filters = ["Todos", "Coop local", "Ação", "Terror", "Aventura"];
+const categories = [
+  "Coop local",
+  "Ação",
+  "Aventura",
+  "Terror",
+  "Casual",
+  "Indie",
+  "RPG",
+  "Estratégia",
+];
+
 const ease = [0.22, 1, 0.36, 1];
 
 export function CatalogShell() {
   const [activeNav, setActiveNav] = useState("Explorar");
   const [activeFilter, setActiveFilter] = useState("Todos");
+  const [draftQuery, setDraftQuery] = useState("");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("popular");
+  const [games, setGames] = useState([]);
+  const [coopGames, setCoopGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [cursorStack, setCursorStack] = useState([null]);
+
+  const currentCursor = cursorStack[page - 1] ?? null;
 
   useEffect(() => {
-    const openFromUrl = () => {
+    let active = true;
+
+    async function loadCatalog() {
+      setLoading(true);
+      setCatalogError("");
+
+      try {
+        const result = await fetchGamePage({
+          query,
+          filter: activeFilter,
+          sort,
+          cursor: currentCursor,
+          limit: PAGE_SIZE,
+        });
+
+        if (!active) return;
+        setGames(result.games);
+        setHasMore(result.hasMore);
+      } catch (error) {
+        if (!active) return;
+        setGames([]);
+        setHasMore(false);
+        setCatalogError(error?.message || "Não foi possível carregar o catálogo.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadCatalog();
+    return () => {
+      active = false;
+    };
+  }, [activeFilter, currentCursor, page, query, sort]);
+
+  useEffect(() => {
+    let active = true;
+    fetchFeaturedCoop()
+      .then((items) => {
+        if (active) setCoopGames(items);
+      })
+      .catch(() => {
+        if (active) setCoopGames([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const openFromUrl = async () => {
       const slug = new URLSearchParams(window.location.search).get("game");
-      setSelectedGame(games.find((game) => game.slug === slug) ?? null);
+      if (!slug) {
+        setSelectedGame(null);
+        return;
+      }
+
+      try {
+        const game = await fetchGameBySlug(slug);
+        setSelectedGame(game);
+      } catch {
+        setSelectedGame(null);
+      }
     };
 
     openFromUrl();
@@ -67,27 +153,10 @@ export function CatalogShell() {
     return () => window.removeEventListener("popstate", openFromUrl);
   }, []);
 
-  const filteredGames = useMemo(() => {
-    let list = games.filter((game) => {
-      if (!gameMatchesQuery(game, query)) return false;
-      if (activeFilter === "Todos") return true;
-      if (activeFilter === "Coop local") return game.localCoop;
-      return [...game.genres, ...game.tags].includes(activeFilter);
-    });
-
-    list = [...list].sort((a, b) => {
-      if (sort === "recentes") return b.year - a.year;
-      if (sort === "nome") return a.title.localeCompare(b.title, "pt-BR");
-      return b.popularity - a.popularity;
-    });
-
-    return list;
-  }, [activeFilter, query, sort]);
-
-  const coopGames = useMemo(
-    () => games.filter((game) => game.localCoop).sort((a, b) => b.popularity - a.popularity).slice(0, 4),
-    [],
-  );
+  function resetPagination() {
+    setPage(1);
+    setCursorStack([null]);
+  }
 
   function openGame(game) {
     const url = new URL(window.location.href);
@@ -105,11 +174,39 @@ export function CatalogShell() {
 
   function submitSearch(event) {
     event.preventDefault();
+    setQuery(draftQuery.trim());
+    resetPagination();
     document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function selectFilter(filter) {
     setActiveFilter(filter);
+    resetPagination();
+    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function changeSort(event) {
+    setSort(event.target.value);
+    resetPagination();
+  }
+
+  function goNext() {
+    if (!hasMore || !games.length) return;
+    const nextCursor = games.at(-1)?.cursor;
+    if (!nextCursor) return;
+
+    setCursorStack((current) => {
+      const next = current.slice(0, page);
+      next[page] = nextCursor;
+      return next;
+    });
+    setPage((value) => value + 1);
+    document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function goPrevious() {
+    if (page <= 1) return;
+    setPage((value) => value - 1);
     document.getElementById("explorar")?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -233,7 +330,7 @@ export function CatalogShell() {
 
         <h1>Encontre seu próximo jogo.</h1>
         <p>
-          Uma biblioteca de jogos de PC pensada para ser simples de explorar:
+          Dados reais da Steam, organizados em uma experiência limpa:
           sem anúncios invasivos, sem conteúdo sexual explícito e com espaço
           para descobrir desde coop local até terror, ação e aventura.
         </p>
@@ -243,8 +340,8 @@ export function CatalogShell() {
           <input
             type="search"
             name="query"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={draftQuery}
+            onChange={(event) => setDraftQuery(event.target.value)}
             autoComplete="off"
             placeholder="Pesquise por nome, gênero ou descrição..."
             aria-label="Pesquisar jogos"
@@ -256,9 +353,11 @@ export function CatalogShell() {
         </motion.form>
 
         <div className="catalog-search-note" aria-live="polite">
-          {query
-            ? `${filteredGames.length} resultado(s) para “${query}”.`
-            : "Busca por título, gênero, tags e descrição — usando dados locais temporários."}
+          {loading
+            ? "Consultando o catálogo..."
+            : query
+              ? `Exibindo ${games.length} jogo(s) nesta página para “${query}”.`
+              : "Catálogo conectado ao banco Fusion · Steam como fonte de metadados."}
         </div>
 
         <div className="catalog-filter-row" aria-label="Filtros de visualização">
@@ -294,10 +393,12 @@ export function CatalogShell() {
           </div>
 
           <div className="catalog-toolbar">
-            <span className="catalog-status">{filteredGames.length} jogos</span>
+            <span className="catalog-status">
+              Página {page} · {games.length}/{PAGE_SIZE}
+            </span>
             <label className="catalog-sort">
               <span>Ordenar</span>
-              <select value={sort} onChange={(event) => setSort(event.target.value)}>
+              <select value={sort} onChange={changeSort}>
                 <option value="popular">Populares</option>
                 <option value="recentes">Mais recentes</option>
                 <option value="nome">Nome A–Z</option>
@@ -306,26 +407,45 @@ export function CatalogShell() {
           </div>
         </div>
 
-        <AnimatePresence mode="popLayout">
-          {filteredGames.length ? (
+        {catalogError ? (
+          <div className="catalog-empty">
+            <div className="catalog-empty__icon">{gridIcon}</div>
+            <h3>Não foi possível carregar os jogos.</h3>
+            <p>{catalogError}</p>
+          </div>
+        ) : loading ? (
+          <div className="game-grid" aria-label="Carregando jogos">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div className="game-skeleton" key={index} />
+            ))}
+          </div>
+        ) : games.length ? (
+          <>
             <motion.div className="game-grid" layout>
-              {filteredGames.map((game) => (
-                <GameCard key={game.slug} game={game} onOpen={openGame} />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {games.map((game) => (
+                  <GameCard key={game.id} game={game} onOpen={openGame} />
+                ))}
+              </AnimatePresence>
             </motion.div>
-          ) : (
-            <motion.div
-              className="catalog-empty"
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div className="catalog-empty__icon">{gridIcon}</div>
-              <h3>Nenhum jogo encontrado.</h3>
-              <p>Tente outro termo ou volte para “Todos”.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+            <div className="catalog-pagination" aria-label="Paginação do catálogo">
+              <button type="button" onClick={goPrevious} disabled={page === 1}>
+                ← Anterior
+              </button>
+              <span>Página {page} · máximo de {PAGE_SIZE} jogos</span>
+              <button type="button" onClick={goNext} disabled={!hasMore}>
+                Próxima →
+              </button>
+            </div>
+          </>
+        ) : (
+          <motion.div className="catalog-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="catalog-empty__icon">{gridIcon}</div>
+            <h3>Nenhum jogo encontrado.</h3>
+            <p>Tente outro termo ou volte para “Todos”.</p>
+          </motion.div>
+        )}
       </motion.section>
 
       <motion.section
@@ -341,14 +461,14 @@ export function CatalogShell() {
           <div>
             <span className="catalog-eyebrow">Jogar juntos</span>
             <h2 id="coop-heading">Coop local</h2>
-            <p>Uma seleção rápida para jogar no mesmo PC, lado a lado.</p>
+            <p>Jogos que a própria Steam classifica com coop em tela compartilhada/dividida.</p>
           </div>
           <button type="button" onClick={() => selectFilter("Coop local")}>Ver todos</button>
         </div>
 
         <div className="game-grid game-grid--compact">
           {coopGames.map((game) => (
-            <GameCard key={game.slug} game={game} onOpen={openGame} compact />
+            <GameCard key={game.id} game={game} onOpen={openGame} compact />
           ))}
         </div>
       </motion.section>
@@ -364,29 +484,21 @@ export function CatalogShell() {
       >
         <span className="catalog-eyebrow">Descoberta</span>
         <h2 id="categories-heading">Categorias</h2>
-        <p>Use as categorias abaixo como atalhos para a biblioteca.</p>
+        <p>Use as categorias como atalhos para uma nova consulta no banco.</p>
 
         <div className="category-grid">
-          {categories.map((category) => {
-            const count = games.filter((game) =>
-              category === "Coop local"
-                ? game.localCoop
-                : [...game.genres, ...game.tags].includes(category),
-            ).length;
-
-            return (
-              <motion.button
-                type="button"
-                key={category}
-                onClick={() => selectFilter(category)}
-                whileHover={{ y: -3 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span>{category}</span>
-                <strong>{count}</strong>
-              </motion.button>
-            );
-          })}
+          {categories.map((category) => (
+            <motion.button
+              type="button"
+              key={category}
+              onClick={() => selectFilter(category)}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span>{category}</span>
+              <strong>Explorar</strong>
+            </motion.button>
+          ))}
         </div>
       </motion.section>
 
@@ -394,7 +506,7 @@ export function CatalogShell() {
         <span>Fusion</span>
         <div>
           <span>Uma experiência Vórtex</span>
-          <span>Dados locais de demonstração</span>
+          <span>Metadados: Steam</span>
         </div>
       </footer>
 
