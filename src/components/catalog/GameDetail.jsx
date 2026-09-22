@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   fetchDistributionSources,
+  fetchNucleusSupport,
+  fetchSimilarGames,
   hydrateGameDetails,
 } from "../../services/gameCatalog.js";
 import "../../styles/game-detail-v2.css";
@@ -54,11 +56,78 @@ function Fact({ label, value }) {
   );
 }
 
+const requirementAliases = new Map([
+  ["so", "Sistema"],
+  ["os", "Sistema"],
+  ["sistema operacional", "Sistema"],
+  ["processor", "Processador"],
+  ["processador", "Processador"],
+  ["memory", "RAM"],
+  ["memória", "RAM"],
+  ["memoria", "RAM"],
+  ["graphics", "Vídeo"],
+  ["gráficos", "Vídeo"],
+  ["graficos", "Vídeo"],
+  ["placa de vídeo", "Vídeo"],
+  ["placa de video", "Vídeo"],
+  ["directx", "DirectX"],
+  ["network", "Internet"],
+  ["rede", "Internet"],
+  ["storage", "Espaço"],
+  ["armazenamento", "Espaço"],
+  ["sound card", "Áudio"],
+  ["placa de som", "Áudio"],
+  ["additional notes", "Observações"],
+  ["observações", "Observações"],
+  ["observacoes", "Observações"],
+]);
+
+function parseRequirements(value) {
+  const lines = String(value || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const rows = [];
+  for (const line of lines) {
+    const match = line.match(/^([^:]{1,38}):\s*(.+)$/);
+    if (match) {
+      const raw = match[1].trim();
+      const label = requirementAliases.get(raw.toLowerCase()) || raw;
+      rows.push({ label, value: match[2].trim() });
+    } else if (rows.length) {
+      rows[rows.length - 1].value += " " + line;
+    } else {
+      rows.push({ label: "Detalhes", value: line });
+    }
+  }
+  return rows;
+}
+
+function RequirementsList({ value }) {
+  const rows = parseRequirements(value);
+  if (!rows.length) return <p className="game-detail-v2__muted">Não informado pela Steam.</p>;
+  return (
+    <dl className="game-detail-v2__requirements-list">
+      {rows.map((row, index) => (
+        <div key={row.label + index}>
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function toggleListValue(list, value) {
+  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
+
 export function GameDetail({
   game,
   onClose,
   isFavorite = false,
   onToggleFavorite,
+  onOpenGame,
 }) {
   const closeRef = useRef(null);
   const [detailGame, setDetailGame] = useState(game);
@@ -67,6 +136,17 @@ export function GameDetail({
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [hydrating, setHydrating] = useState(true);
+  const [nucleus, setNucleus] = useState(null);
+  const [similarOpen, setSimilarOpen] = useState(false);
+  const [similarGames, setSimilarGames] = useState([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [similarError, setSimilarError] = useState("");
+  const [similarFilters, setSimilarFilters] = useState({
+    modes: [],
+    has_source: false,
+    nucleus: false,
+    controller: "",
+  });
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -123,6 +203,42 @@ export function GameDetail({
     };
   }, [detailGame.steamAppId]);
 
+  useEffect(() => {
+    let active = true;
+    setNucleus(null);
+    fetchNucleusSupport([detailGame])
+      .then((items) => {
+        if (active) setNucleus(items[0] ?? null);
+      })
+      .catch(() => {
+        if (active) setNucleus(null);
+      });
+    return () => { active = false; };
+  }, [detailGame.steamAppId, detailGame.title]);
+
+  useEffect(() => {
+    if (!similarOpen) return undefined;
+    let active = true;
+    setSimilarLoading(true);
+    setSimilarError("");
+
+    fetchSimilarGames(detailGame, similarFilters, 12)
+      .then((items) => {
+        if (active) setSimilarGames(items);
+      })
+      .catch(() => {
+        if (active) {
+          setSimilarGames([]);
+          setSimilarError("Não foi possível carregar jogos similares agora.");
+        }
+      })
+      .finally(() => {
+        if (active) setSimilarLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [detailGame.steamAppId, similarOpen, similarFilters]);
+
   const platforms = Object.entries(detailGame.platforms ?? {})
     .filter(([, enabled]) => enabled)
     .map(([name]) =>
@@ -149,6 +265,18 @@ export function GameDetail({
   const downloads = sources.filter(canOpenSource);
   const developer = detailGame.developers?.join(", ");
   const publisher = detailGame.publishers?.join(", ");
+  const minimumRequirements = parseRequirements(detailGame.requirements?.minimum);
+  const recommendedRequirements = parseRequirements(detailGame.requirements?.recommended);
+  const storageRequirement = recommendedRequirements.find((item) => item.label === "Espaço")
+    || minimumRequirements.find((item) => item.label === "Espaço");
+  const capabilities = detailGame.capabilities ?? {};
+
+  const similarFilterButtons = [
+    ["same_screen", "Na mesma tela"],
+    ["local_coop", "Coop local"],
+    ["online_coop", "Coop online"],
+    ["multiplayer", "Multiplayer"],
+  ];
 
   return (
     <motion.div
@@ -221,8 +349,10 @@ export function GameDetail({
 
           <section className="game-detail-v2__summary">
             <div className="game-detail-v2__chips">
-              {detailGame.localCoop && <span>Coop local</span>}
-              {detailGame.splitScreen && <span>Tela dividida</span>}
+              {capabilities.localCoop && <span>Coop local nativo</span>}
+              {capabilities.sameScreen && <span>Na mesma tela</span>}
+              {capabilities.onlineCoop && <span>Coop online</span>}
+              {nucleus?.supported && <span>Nucleus{nucleus.verified ? " verificado" : ""}</span>}
               {detailGame.year && <span>{detailGame.year}</span>}
               {detailGame.requiredAge > 0 && <span>{detailGame.requiredAge}+</span>}
             </div>
@@ -250,6 +380,13 @@ export function GameDetail({
                   {isFavorite ? "♥ Salvo nos favoritos" : "♡ Adicionar aos favoritos"}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setSimilarOpen((value) => !value)}
+                aria-expanded={similarOpen}
+              >
+                {similarOpen ? "Fechar similares" : "Ver similares"}
+              </button>
               {detailGame.storeUrl && (
                 <a href={detailGame.storeUrl} target="_blank" rel="noreferrer">
                   Ver na Steam ↗
@@ -259,11 +396,11 @@ export function GameDetail({
 
             <div className="game-detail-v2__fact-grid">
               <Fact label="Preço" value={detailGame.price} />
-              <Fact label="Modo" value={detailGame.players} />
+              <Fact label="Como jogar" value={(detailGame.playLabels ?? []).join(" · ") || detailGame.players} />
               <Fact label="Metacritic" value={detailGame.metacritic ?? "—"} />
               <Fact label="Controle" value={detailGame.controllerSupport || "Não informado"} />
               <Fact label="Avaliação Steam" value={detailGame.steamRating != null ? `${detailGame.steamRating}%` : "Não informado"} />
-              <Fact label="Tamanho informado pela fonte" value={detailGame.size || "Não informado"} />
+              <Fact label="Espaço no PC" value={storageRequirement?.value || "Não informado"} />
             </div>
           </section>
         </div>
@@ -282,30 +419,128 @@ export function GameDetail({
 
             <section className="game-detail-v2__panel">
               <div className="game-detail-v2__section-heading">
-                <span>Recursos</span>
-                <h3>Como você pode jogar</h3>
+                <span>Modos</span>
+                <h3>Como dá para jogar?</h3>
               </div>
-              <div className="game-detail-v2__tag-cloud">
-                {[...detailGame.genres, ...detailGame.categories, ...platforms]
+              <div className="game-detail-v2__play-grid">
+                {capabilities.singlePlayer && <span><b>Um jogador</b><small>Jogar sozinho</small></span>}
+                {capabilities.multiplayer && <span><b>Multiplayer</b><small>Mais de uma pessoa</small></span>}
+                {capabilities.onlineCoop && <span><b>Coop online</b><small>Juntos pela internet</small></span>}
+                {capabilities.localCoop && <span><b>Coop local</b><small>Nativo, sem Nucleus</small></span>}
+                {capabilities.sameScreen && <span><b>Na mesma tela</b><small>Tela compartilhada/dividida</small></span>}
+                {capabilities.lanCoop && <span><b>Coop em LAN</b><small>Rede local</small></span>}
+                {capabilities.onlinePvp && <span><b>PvP online</b><small>Competitivo pela internet</small></span>}
+                {capabilities.crossplay && <span><b>Crossplay</b><small>Entre plataformas</small></span>}
+                {capabilities.remoteTogether && <span><b>Remote Play Together</b><small>Recurso da Steam</small></span>}
+                {nucleus?.supported && (
+                  <span className="is-nucleus">
+                    <b>Nucleus</b>
+                    <small>{nucleus.verified ? "Handler verificado" : "Handler disponível"}{nucleus.maxPlayers ? " · até " + nucleus.maxPlayers + " jogadores" : ""}</small>
+                  </span>
+                )}
+              </div>
+              {!capabilities.localCoop && nucleus?.supported && (
+                <p className="game-detail-v2__muted">
+                  O modo local é feito via Nucleus; a Steam não informa coop local nativo para este jogo.
+                </p>
+              )}
+              <div className="game-detail-v2__tag-cloud game-detail-v2__tag-cloud--taxonomy">
+                {[...detailGame.genres, ...detailGame.tags]
                   .filter(Boolean)
-                  .slice(0, 18)
+                  .filter((tag, index, list) => list.indexOf(tag) === index)
+                  .slice(0, 20)
                   .map((tag) => <span key={tag}>{tag}</span>)}
               </div>
             </section>
 
+            {similarOpen && (
+              <section className="game-detail-v2__panel game-detail-v2__similar">
+                <div className="game-detail-v2__section-heading">
+                  <span>Descobrir</span>
+                  <h3>Jogos similares</h3>
+                  <p>A base vem das recomendações da Steam e os filtros abaixo refinam o resultado no Fusion.</p>
+                </div>
+
+                <div className="game-detail-v2__similar-filters">
+                  {similarFilterButtons.map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={similarFilters.modes.includes(value) ? "is-selected" : undefined}
+                      onClick={() => setSimilarFilters((current) => ({
+                        ...current,
+                        modes: toggleListValue(current.modes, value),
+                      }))}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={similarFilters.controller === "any" ? "is-selected" : undefined}
+                    onClick={() => setSimilarFilters((current) => ({
+                      ...current,
+                      controller: current.controller === "any" ? "" : "any",
+                    }))}
+                  >
+                    Com controle
+                  </button>
+                  <button
+                    type="button"
+                    className={similarFilters.nucleus ? "is-selected" : undefined}
+                    onClick={() => setSimilarFilters((current) => ({ ...current, nucleus: !current.nucleus }))}
+                  >
+                    Nucleus
+                  </button>
+                  <button
+                    type="button"
+                    className={similarFilters.has_source ? "is-selected" : undefined}
+                    onClick={() => setSimilarFilters((current) => ({ ...current, has_source: !current.has_source }))}
+                  >
+                    Com fonte
+                  </button>
+                </div>
+
+                {similarLoading ? (
+                  <p className="game-detail-v2__muted">Buscando similares…</p>
+                ) : similarError ? (
+                  <p className="game-detail-v2__muted">{similarError}</p>
+                ) : similarGames.length ? (
+                  <div className="game-detail-v2__similar-list">
+                    {similarGames.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => onOpenGame?.(item)}
+                      >
+                        {item.image && <img src={item.image} alt="" loading="lazy" />}
+                        <span>
+                          <strong>{item.title}</strong>
+                          <small>{[item.year, ...(item.playLabels ?? []).slice(0, 2)].filter(Boolean).join(" · ")}</small>
+                        </span>
+                        <b>→</b>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="game-detail-v2__muted">Nenhum similar encontrado com essa combinação.</p>
+                )}
+              </section>
+            )}
+
             <section className="game-detail-v2__panel">
               <div className="game-detail-v2__section-heading">
-                <span>PC</span>
-                <h3>Requisitos do sistema</h3>
+                <span>Seu PC</span>
+                <h3>Meu PC roda?</h3>
               </div>
               <div className="game-detail-v2__requirements">
                 <div>
-                  <span>Mínimos</span>
-                  <p>{detailGame.requirements.minimum || "Não informado pela Steam."}</p>
+                  <span>Mínimo</span>
+                  <RequirementsList value={detailGame.requirements.minimum} />
                 </div>
                 <div>
-                  <span>Recomendados</span>
-                  <p>{detailGame.requirements.recommended || "Não informado pela Steam."}</p>
+                  <span>Recomendado</span>
+                  <RequirementsList value={detailGame.requirements.recommended} />
                 </div>
               </div>
             </section>
