@@ -1,0 +1,141 @@
+/* Public landing only. Hero and its manually positioned artwork are untouched.
+   Apple HIG: layout (alignment/adaptability), motion (brief, optional feedback). */
+.framer-yLbTn main.framer-1w30fu2 {
+  --landing-space: clamp(64px, 7vw, 104px);
+  --landing-ease: cubic-bezier(.22, 1, .36, 1);
+  max-width: 1280px;
+  padding: clamp(40px, 4vw, 64px) clamp(20px, 4vw, 48px) var(--landing-space);
+  gap: var(--landing-space);
+}
+.framer-yLbTn main > section { isolation: isolate; scroll-margin-top: 120px; }
+.framer-yLbTn main :is(h2, h3) { text-wrap: balance; }
+.framer-yLbTn main h2 {
+  font-size: clamp(32px, 4.2vw, 64px);
+  line-height: 1.08;
+  letter-spacing: -.04em;
+}
+.framer-yLbTn main :is(.framer-1lbom4u, .framer-6ywkq6, .framer-1e01fso, .framer-1fxvou6, .framer-wqhyt7) {
+  text-shadow: 0 4px 24px #ffffff0a;
+}
+.framer-yLbTn main :is(.framer-jwc1zq, .framer-1gofnfu, .framer-1m5pe8e) {
+  height: auto;
+  max-width: 800px;
+  padding: 0;
+  gap: 24px;
+}
+.framer-yLbTn main :is(.framer-g7ksac, .framer-jwc1zq, .framer-1gofnfu) {
+  width: 100%;
+  max-width: 720px;
+}
+.framer-yLbTn main :is(.framer-g7ksac, .framer-jwc1zq, .framer-1gofnfu) p {
+  text-wrap: pretty;
+  font-size: clamp(16px, 1.5vw, 20px);
+  line-height: 1.6;
+}
+
+/* Remove the exported 240/250px spacer; anchor the rings to the introduction. */
+.framer-yLbTn main .framer-q7ty0w { padding: 0; gap: 40px; }
+.framer-yLbTn main .framer-3a29qp {
+  top: 0;
+  bottom: auto;
+  height: clamp(280px, 40vw, 440px);
+  pointer-events: none;
+  opacity: .55;
+  z-index: 0;
+}
+.framer-yLbTn main .framer-oguefi {
+  width: min(100%, 440px);
+  height: auto;
+  aspect-ratio: 1;
+  left: 50%;
+  right: auto;
+  top: 0;
+  transform: translateX(-50%);
+  overflow: visible;
+}
+/* Framer's inline transform:none had displaced every concentric layer. */
+.framer-yLbTn main :is(.framer-11fhr5n, .framer-1nan4v1, .framer-1w0wy55, .framer-od4q17) {
+  transform: translate(-50%, -50%) !important;
+  height: auto;
+  aspect-ratio: 1;
+  will-change: auto !important;
+}
+.framer-yLbTn main .framer-11fhr5n { width: 94%; }
+.framer-yLbTn main .framer-1nan4v1 { width: 88%; }
+.framer-yLbTn main .framer-1w0wy55 { width: 81%; }
+.framer-yLbTn main .framer-od4q17 { width: 120%; }
+.framer-yLbTn main .framer-e8romx { padding: 0; gap: clamp(24px, 4vw, 48px); }
+.framer-yLbTn main .framer-td806k { flex-shrink: 1; }
+
+/* Content determines height; decorative artwork stays within its own section. */
+.framer-yLbTn main .framer-1xmtor { padding: 0; gap: 28px; }
+.framer-yLbTn main .framer-1658ugq { gap: 40px; }
+.framer-yLbTn main .framer-1mj5hkq { inset: 0; height: 100%; pointer-events: none; }
+.framer-yLbTn main .framer-yfdw53 { top: 0; height: 100%; opacity: .55 !important; }
+.framer-yLbTn main .framer-1bc4siq {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  height: auto;
+  aspect-ratio: 1440 / 555;
+  transform: translateY(-50%) !important;
+  pointer-events: none;
+  z-index: -1;
+}
+.framer-yLbTn main .framer-1bc4siq img { object-fit: contain !important; }
+.framer-yLbTn main .framer-yit79s { margin-top: calc(-.5 * var(--landing-space)); }
+.framer-yLbTn main .framer-1jble4v { gap: 24px; align-items: stretch; }
+.framer-yLbTn main :is(.framer-f0ncfq, .framer-6jpgb5, .framer-153he4y, .framer-b1z55f) {
+  height: 100%;
+  padding: clamp(24px, 3vw, 40px);
+  gap: 20px;
+  border-radius: 24px;
+}
+.framer-yLbTn main .framer-113odid { width: 100%; max-width: 900px; flex: none; }
+.framer-yLbTn main .framer-ufjcbz {
+  flex: none;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 607 / 513;
+  padding-bottom: clamp(20px, 4vw, 40px);
+}
+.framer-yLbTn main .framer-7jdzj2 { padding: 0; gap: 48px; }
+.framer-yLbTn main .framer-1g201zm {
+  top: 50%;
+  bottom: auto;
+  height: auto;
+  aspect-ratio: 3363 / 1720;
+  transform: translateY(-50%) !important;
+  pointer-events: none;
+  opacity: .5 !important;
+  z-index: -1;
+}
+.framer-yLbTn main .framer-1g201zm img { object-fit: contain !important; }
+.framer-yLbTn main :is(.framer-1fol9vq, .framer-1od16wy) { gap: 40px; }
+.framer-yLbTn main .framer-1ossc8g { padding: 0; }
+.framer-yLbTn main .framer-976y6w { padding: 24px 0 0; gap: 24px; }
+.framer-yLbTn main .framer-ihjroi { max-width: 900px; }
+.framer-yLbTn main .local-faq { margin-bottom: 12px; }
+.framer-yLbTn main .framer-ydbbkc { padding: clamp(36px, 5vw, 64px) clamp(20px, 3vw, 40px) 32px; }
+.framer-yLbTn main .framer-87c1tu { width: min(100%, 650px); left: 50%; transform: translateX(-50%); pointer-events: none; z-index: 0; }
+.framer-yLbTn main .framer-1g6uvix { z-index: 1; padding: 0; gap: 40px; }
+.framer-yLbTn main .framer-1msplsh { gap: 32px; }
+.framer-yLbTn main .framer-lih3q7 img { object-fit: contain !important; }
+.framer-yLbTn footer .framer-1i0wgu3 { padding-top: 48px; gap: 48px; }
+.framer-yLbTn footer :is(.framer-cpfzqv, .framer-1c6u5ir) { max-height: 100%; pointer-events: none; }
+
+.framer-yLbTn main :is(a, summary):focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
+.framer-yLbTn main a[data-framer-name="Button"] { transition: translate 180ms ease-out, filter 180ms ease-out; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .framer-yLbTn main a[data-framer-name="Button"]:hover { translate: 0 -2px; filter: brightness(1.08); }
+}
+@media (max-width: 809.98px) {
+  .framer-yLbTn main.framer-1w30fu2 { max-width: 600px; }
+  .framer-yLbTn main .framer-q7ty0w { gap: 32px; }
+  .framer-yLbTn main :is(.framer-1fol9vq, .framer-1od16wy, .framer-7jdzj2) { gap: 32px; }
+  .framer-yLbTn main .framer-1jble4v { gap: 16px; }
+  .framer-yLbTn main .framer-1g201zm { min-height: 180px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .framer-yLbTn main, .framer-yLbTn main * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
