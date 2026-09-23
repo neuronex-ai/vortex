@@ -16,6 +16,13 @@ test("Fusion AI persists conversations through the authenticated Supabase client
   assert.match(history, /appendFusionAIMessage/);
 });
 
+test("Fusion AI restores the newest persisted messages in chronological display order", async () => {
+  const history = await read("src/services/fusionAIHistory.js");
+
+  assert.match(history, /\.order\("created_at", \{ ascending: false \}\)/);
+  assert.match(history, /messages: \[\.\.\.\(messagesResult\.data \?\? \[\]\)\]\.reverse\(\)/);
+});
+
 test("Fusion AI restores recent history without putting persistence on the response critical path", async () => {
   const shell = await read("src/components/fusion/FusionAI.jsx");
 
