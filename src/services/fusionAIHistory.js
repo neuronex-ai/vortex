@@ -97,7 +97,7 @@ export async function loadFusionAIConversation(conversationId, { messageLimit = 
       .select(MESSAGE_FIELDS)
       .eq("conversation_id", id)
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(safeLimit),
   ]);
 
@@ -107,7 +107,7 @@ export async function loadFusionAIConversation(conversationId, { messageLimit = 
 
   return {
     conversation: conversationResult.data,
-    messages: messagesResult.data ?? [],
+    messages: [...(messagesResult.data ?? [])].reverse(),
   };
 }
 
