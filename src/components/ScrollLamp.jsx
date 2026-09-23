@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
-import '../styles/scroll-lamp.css';
 
 // Adapted from the supplied 21st.dev / Aceternity Lamp reference.
 // Continuous scroll progress replaces its one-time whileInView transition.
