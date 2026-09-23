@@ -4,6 +4,7 @@ import {
   getFusionAIUser,
   onFusionAIAuthChange,
   sendFusionAIMessage,
+  warmFusionAI,
 } from "../../services/fusionAI.js";
 import "../../styles/fusion-ai.css";
 
@@ -219,6 +220,22 @@ export function FusionAI() {
   }, [open]);
 
   useEffect(() => {
+    if (!open || !user) return undefined;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      warmFusionAI(messages).then((ready) => {
+        if (!cancelled && !ready) {
+          // Warmup is opportunistic. The send path retries/returns the concrete error.
+        }
+      });
+    }, 40);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [open, user]);
+
+  useEffect(() => {
     if (!viewportRef.current) return undefined;
     const frame = window.requestAnimationFrame(() => {
       viewportRef.current?.scrollTo({
@@ -295,8 +312,14 @@ export function FusionAI() {
         if (code === "AUTH_REQUIRED") {
           setUser(null);
           setError("Entre na sua conta Fusion para usar o Fusion AI.");
-        } else if (code === "FUSION_NOT_CONFIGURED") {
-          setError("O Fusion AI ainda está aguardando a chave NVIDIA no servidor.");
+        } else if (code === "DEEPGRAM_NOT_CONFIGURED") {
+          setError("O Fusion AI ainda está aguardando a chave da Deepgram no servidor.");
+        } else if (code === "DEEPGRAM_TOKEN_FAILED" || code === "DEEPGRAM_CONNECT_TIMEOUT" || code === "DEEPGRAM_SOCKET_ERROR") {
+          setError("Não consegui iniciar a sessão rápida do Fusion AI. Tente novamente em instantes.");
+        } else if (code === "DEEPGRAM_TURN_TIMEOUT") {
+          setError("A resposta passou do limite de 12 segundos. Tente novamente.");
+        } else if (code === "DEEPGRAM_BUSY" || code === "FUSION_AI_BUSY") {
+          setError("O Fusion AI ainda está concluindo a resposta anterior.");
         } else {
           setError("Não foi possível consultar o Fusion AI agora. Tente novamente.");
         }
@@ -559,7 +582,7 @@ export function FusionAI() {
               <div className="fusion-ai__signin">
                 <div>
                   <strong>Entre para conversar</strong>
-                  <span>A conexão com a NVIDIA fica protegida no servidor.</span>
+                  <span>A conexão do Fusion AI fica protegida no servidor.</span>
                 </div>
                 <a href="/app/auth.html?next=/app/">Entrar</a>
               </div>
