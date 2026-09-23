@@ -1,18 +1,10 @@
-import { createClient } from "npm:@supabase/supabase-js@2.57.4";
-
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY") ?? "";
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -26,15 +18,6 @@ Deno.serve(async (request) => {
 
   if (!DEEPGRAM_API_KEY) {
     return json({ error: "Deepgram não configurado.", code: "deepgram_not_configured" }, 503);
-  }
-
-  const authHeader = request.headers.get("authorization") ?? "";
-  const accessToken = authHeader.replace(/^Bearer\s+/i, "").trim();
-  if (!accessToken) return json({ error: "Faça login para usar o Fusion AI.", code: "auth_required" }, 401);
-
-  const { data, error } = await admin.auth.getUser(accessToken);
-  if (error || !data.user) {
-    return json({ error: "Faça login para usar o Fusion AI.", code: "auth_required" }, 401);
   }
 
   try {
