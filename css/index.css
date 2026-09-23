@@ -4,3 +4,5 @@ html,body,#main{margin:0;padding:0;box-sizing:border-box}:root{-webkit-font-smoo
 
 
 html body { background: var(--token-6983c6fb-b015-43ea-b1f0-cc4b720dc51e, rgb(0, 0, 0)); }
+/* Fusion overview: full notebook image at every breakpoint. */
+body .framer-yLbTn .framer-td806k { width: min(100%, 1100px); max-width: 100%; height: auto; aspect-ratio: 1728 / 1129; }
