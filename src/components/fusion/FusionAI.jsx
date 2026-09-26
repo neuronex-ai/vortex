@@ -3,10 +3,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   getFusionAIUser,
   onFusionAIAuthChange,
+  resetFusionAIRealtime,
   sendFusionAIMessage,
   warmFusionAI,
 } from "../../services/fusionAI.js";
+import {
+  appendFusionAIMessage,
+  createFusionAIConversation,
+  listFusionAIConversations,
+  loadFusionAIConversation,
+} from "../../services/fusionAIHistory.js";
 import "../../styles/fusion-ai.css";
+
+const REALTIME_IDLE_MS = 30_000;
 
 const MicIcon = ({ active = false }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -176,6 +185,25 @@ function openGameInFusion(game) {
   window.location.assign("/app/?game=" + encodeURIComponent(game.slug));
 }
 
+function hydrateStoredMessage(message) {
+  const role = message?.role === "assistant" ? "assistant" : "user";
+  const metadata = message?.metadata && typeof message.metadata === "object" ? message.metadata : {};
+  return {
+    id: message?.id || role + "-stored-" + Math.random().toString(36).slice(2),
+    role,
+    content: String(message?.content ?? ""),
+    ...(role === "assistant"
+      ? {
+          meta: {
+            ...metadata,
+            model: message?.model ?? metadata.model ?? null,
+            latencyMs: message?.latency_ms ?? metadata.latencyMs ?? null,
+          },
+        }
+      : {}),
+  };
+}
+
 export function FusionAI() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -186,10 +214,13 @@ export function FusionAI() {
   const [user, setUser] = useState(undefined);
   const [error, setError] = useState("");
   const [activity, setActivity] = useState("");
+  const [conversationId, setConversationId] = useState(null);
+  const [historyReady, setHistoryReady] = useState(false);
   const viewportRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
   const sendRef = useRef(null);
+  const conversationIdRef = useRef(null);
 
   const speechSupported = useMemo(
     () =>
@@ -199,13 +230,22 @@ export function FusionAI() {
   );
 
   useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
+
+  useEffect(() => {
     let active = true;
     getFusionAIUser().then((next) => {
       if (active) setUser(next);
     });
     const unsubscribe = onFusionAIAuthChange((next) => {
       setUser(next);
-      if (!next) setMessages([]);
+      setHistoryReady(false);
+      if (!next) {
+        setMessages([]);
+        setConversationId(null);
+        conversationIdRef.current = null;
+      }
     });
     return () => {
       active = false;
@@ -220,7 +260,41 @@ export function FusionAI() {
   }, [open]);
 
   useEffect(() => {
-    if (!open || !user) return undefined;
+    if (!open || !user || historyReady) return undefined;
+    let cancelled = false;
+
+    const restoreLatest = async () => {
+      try {
+        const conversations = await listFusionAIConversations({ limit: 1 });
+        const latest = conversations[0];
+        if (!latest || cancelled) return;
+
+        const stored = await loadFusionAIConversation(latest.id, { messageLimit: 40 });
+        if (!stored || cancelled) return;
+
+        setConversationId(latest.id);
+        conversationIdRef.current = latest.id;
+        setMessages(
+          stored.messages
+            .filter((message) => message?.role === "user" || message?.role === "assistant")
+            .map(hydrateStoredMessage)
+            .slice(-40),
+        );
+      } catch {
+        // History is additive. A temporary persistence failure must not block realtime chat.
+      } finally {
+        if (!cancelled) setHistoryReady(true);
+      }
+    };
+
+    void restoreLatest();
+    return () => {
+      cancelled = true;
+    };
+  }, [historyReady, open, user]);
+
+  useEffect(() => {
+    if (!open || !user || !historyReady) return undefined;
     let cancelled = false;
     const timer = window.setTimeout(() => {
       warmFusionAI(messages).then((ready) => {
@@ -233,7 +307,21 @@ export function FusionAI() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, user]);
+  }, [conversationId, historyReady, open, user]);
+
+  useEffect(() => {
+    if (open) return undefined;
+    resetFusionAIRealtime();
+    return undefined;
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !user || sending || listening) return undefined;
+    const timer = window.setTimeout(() => {
+      resetFusionAIRealtime();
+    }, REALTIME_IDLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [listening, messages, open, sending, user]);
 
   useEffect(() => {
     if (!viewportRef.current) return undefined;
@@ -253,7 +341,10 @@ export function FusionAI() {
     if (typeof window !== "undefined") window.speechSynthesis?.cancel?.();
   }, []);
 
-  useEffect(() => () => stopAudio(), [stopAudio]);
+  useEffect(() => () => {
+    stopAudio();
+    resetFusionAIRealtime();
+  }, [stopAudio]);
 
   const speak = useCallback((text) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -265,6 +356,14 @@ export function FusionAI() {
     utterance.rate = 0.98;
     utterance.pitch = 1;
     window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const ensureConversation = useCallback(async () => {
+    if (conversationIdRef.current) return conversationIdRef.current;
+    const created = await createFusionAIConversation();
+    conversationIdRef.current = created.id;
+    setConversationId(created.id);
+    return created.id;
   }, []);
 
   const sendMessage = useCallback(
@@ -285,6 +384,16 @@ export function FusionAI() {
       setSending(true);
       setActivity("Consultando o catálogo…");
 
+      const conversationPromise = ensureConversation().catch(() => null);
+      const userPersistence = conversationPromise.then((id) => {
+        if (!id) return null;
+        return appendFusionAIMessage({
+          conversationId: id,
+          role: "user",
+          content: text,
+        }).catch(() => null);
+      });
+
       try {
         const result = await sendFusionAIMessage(history);
         const assistantMessage = {
@@ -300,6 +409,22 @@ export function FusionAI() {
           },
         };
         setMessages((current) => [...current, assistantMessage].slice(-40));
+
+        void userPersistence.then(async () => {
+          const id = await conversationPromise;
+          if (!id) return;
+          await appendFusionAIMessage({
+            conversationId: id,
+            role: "assistant",
+            content: result.reply,
+            model: result.model,
+            latencyMs: result.latencyMs,
+            metadata: {
+              games: result.games ?? [],
+              actions: result.actions ?? [],
+            },
+          }).catch(() => null);
+        });
 
         const openAction = result.actions.find((action) => action?.type === "open_game" && action?.game?.slug);
         if (openAction) {
@@ -328,7 +453,7 @@ export function FusionAI() {
         setActivity("");
       }
     },
-    [messages, sending, speak, user, voiceMode],
+    [ensureConversation, messages, sending, speak, user, voiceMode],
   );
 
   sendRef.current = sendMessage;
@@ -391,11 +516,15 @@ export function FusionAI() {
 
   const clearConversation = () => {
     stopAudio();
+    resetFusionAIRealtime();
+    conversationIdRef.current = null;
+    setConversationId(null);
     setMessages([]);
     setDraft("");
     setError("");
     setActivity("");
     setVoiceMode(false);
+    setHistoryReady(true);
   };
 
   useEffect(() => {
